@@ -1,0 +1,13 @@
+---
+title: "Skeleton_of_Outputs"
+author: "Sophie Berube"
+date: "3/19/2020"
+output: pdf_document
+---
+
+This is a document for a code skeleton for the outputs section of the project. 
+```{r, message=FALSE, echo=TRUE, warning=FALSE}
+
+rnorm(1000,0,1)
+
+```
