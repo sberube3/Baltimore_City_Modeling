@@ -37,13 +37,13 @@ data[5:17,] %>%
   xlab(NULL)
 
 ## Pull out population data
-MO.pop <- data[5:17,]$Estimate
+BC.pop <- data[5:17,]$Estimate
 
 ## aggregate the data such that oldest class is 75 and up
 ## this is to match with the socialmixr matrix
-MO.pop[12] <- MO.pop[12] + MO.pop[13]
-MO.pop <- MO.pop[1:12]
-Ncomp <- length(MO.pop)
+BC.pop[12] <- BC.pop[12] + BC.pop[13]
+BC.pop <- BC.pop[1:12]
+Ncomp <- length(BC.pop)
 
 ## setup polymod matrix
 ## use age classes in the data
@@ -55,7 +55,7 @@ W <- contact_matrix(polymod, countries = "United Kingdom", age.limits = c(0,5,10
 
 ## test cases to check behavior of R0
 ## sanity checks in the case of equal mixing and equal populations
-# MO.pop <- rep(mean(MO.pop),Ncomp)
+# BC.pop <- rep(mean(BC.pop),Ncomp)
 # W <- waifw <- matrix(.4,Ncomp,Ncomp)
 
 ## we want the max eigen value of our input matrix to be 1 such that we can say R0 is just beta / gamma
@@ -66,7 +66,7 @@ A <- matrix(0,Ncomp,Ncomp)
 
 for (i in 1:Ncomp){
   for (j in 1:Ncomp){
-    A[i,j] <- W[i,j]*MO.pop[i]/MO.pop[j]
+    A[i,j] <- W[i,j]*BC.pop[i]/BC.pop[j]
   }
 }
 
@@ -80,7 +80,7 @@ A1 <- matrix(0,Ncomp,Ncomp)
 
 for (i in 1:Ncomp){
   for (j in 1:Ncomp){
-    A1[i,j] <- W[i,j]*MO.pop[i]/MO.pop[j]*(1/alpha)
+    A1[i,j] <- W[i,j]*BC.pop[i]/BC.pop[j]*(1/alpha)
   }
 }
 
@@ -95,16 +95,16 @@ W <- W / alpha
 ## set initial conditions
 ## I'm not entirely sure what to put for these currently...
 ICs <- c(
-  S = MO.pop * 1,
-  A = rep(100,length(MO.pop)),
-  I = rep(1,length(MO.pop)),
-  R = MO.pop,
+  S = BC.pop * 1,
+  A = rep(100,length(BC.pop)),
+  I = rep(1,length(BC.pop)),
+  R = BC.pop,
   incid = rep(0,Ncomp)
 )
 
 ## set the R compartment
 ## crudely just set anything negative to be zero but we can fine tune this more depending on what we assume S0 does
-ICs[(3*Ncomp+1):(4*Ncomp)] <- MO.pop -  ICs[1:Ncomp] - ICs[(Ncomp+1):(2*Ncomp)] - ICs[(2*Ncomp+1):(3*Ncomp)]
+ICs[(3*Ncomp+1):(4*Ncomp)] <- BC.pop -  ICs[1:Ncomp] - ICs[(Ncomp+1):(2*Ncomp)] - ICs[(2*Ncomp+1):(3*Ncomp)]
 ICs[(3*Ncomp+1):(4*Ncomp)] [ICs[(3*Ncomp+1):(4*Ncomp)]  < 0 ] <- 0
 
 ## prop_serious : proportion of cases requiring serious attention / hospitalization
@@ -120,7 +120,7 @@ prop_symptomatic <- 0.40
 ## all model parameters should be in units of days!
 
 ## population sizes by demographic data
-N <- MO.pop
+N <- BC.pop
 
 ## units in days
 ## infectious period
@@ -150,7 +150,7 @@ R0.mat <- matrix(0,Ncomp,Ncomp)
 
 for (i in 1:Ncomp){
   for (j in 1:Ncomp){
-    R0.mat[i,j] <- W[i,j]*MO.pop[i]/MO.pop[j]*beta0 / gamma
+    R0.mat[i,j] <- W[i,j]*BC.pop[i]/BC.pop[j]*beta0 / gamma
   }
 }
 
