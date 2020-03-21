@@ -51,8 +51,8 @@ theme_set(theme_classic(base_size=12))
 ## assumes the additional of healthcare workers and homeless does not decrease from their respective age group 
 make_age_structure_matrix <- function(age_data_file, homeless_n, healthcare_n){
   ## Pull out population data
-  n_age_classes <- nrow(age_data_file)-1
-  BC_pop <- age_data_file[2:nrow(age_data_file),]$Estimate
+  n_age_classes <- nrow(data)-1
+  BC_pop <- age_data_file[2:nrow(data),]$Estimate
   ## aggregate the data such that oldest class is 75 and up
   ## this is to match with the socialmixr matrix
   BC_pop[(n_age_classes-1)] <- BC_pop[(n_age_classes-1)] + BC_pop[n_age_classes]
@@ -108,7 +108,6 @@ rescale_age_matrix <- function(Ncomp, W, BC_pop){
 sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   C = params$C; W = params$W; 
   beta0 = params$beta0; beta1 = params$beta1; phase = params$phase; mu = params$mu; v = params$v
-  N=params$N; gamma=params$gamma; prop_symptomatic=params$prop_symptomatic
   ## set up a matrix to store values in by variable and time
   ## each X[it,] is the variable at one hour
   x <- matrix(NA,length(time),Ncomp * 5)
@@ -205,24 +204,22 @@ setup_seir_model <- function(stoch){
     }
   }
   print(eigen(R0.mat)$values[1]) ## just a check
-  return(list(C = C, W = W, beta0 = beta0, beta1 = beta1, phase = phase, mu = mu, v = v, ICs = ICs, Ncomp = Ncomp,
-              N=N, gamma=gamma,prop_symptomatic=prop_symptomatic))
+  return(list(C = C, W = W, beta0 = beta0, beta1 = beta1, phase = phase, mu = mu, v = v, ICs = ICs, Ncomp = Ncomp))
 }
 
 all_prelim_info <- setup_seir_model(stoch = TRUE)
 
 ## how long to run the model for?
-## currently set to be 100 days integrated at the day
-delta.t <- 1/1
+## currently set to be 100 days integrated at by hour
+delta.t <- 1/24
 time <- seq(1,100,by = delta.t)
 Ncomp = all_prelim_info$Ncomp
 ICs = all_prelim_info$ICs
-params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v,
-              N=all_prelim_info$N, gamma=all_prelim_info$gamma,prop_symptomatic=all_prelim_info$prop_symptomatic)
+params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v)
 
 ## test run
 seir_results <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
-# write.csv(seir_results, file = 'SEIR_results_test.csv')
+
 ## running some different simulations and making some basic plots
 nsim <- 10
 
