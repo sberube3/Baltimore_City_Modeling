@@ -43,7 +43,9 @@ BC.pop <- data[5:17,]$Estimate
 ## this is to match with the socialmixr matrix
 BC.pop[12] <- BC.pop[12] + BC.pop[13]
 BC.pop <- BC.pop[1:12]
-Ncomp <- length(BC.pop)
+BC.pop[13] = 10000 ## healthcare workers
+BC.pop[14] = 2000 ## homeless
+Ncomp <- length(BC.pop) 
 
 ## setup polymod matrix
 ## use age classes in the data
@@ -52,7 +54,8 @@ Ncomp <- length(BC.pop)
 library(socialmixr)
 data(polymod)
 W <- contact_matrix(polymod, countries = "United Kingdom", age.limits = c(0,5,10,15,20,25,35,45,55,60,65,75,85,90))$matrix
-
+W[13,] = W[8,] ## same as 45-55 year olds
+W[14,] = W[8,] ## same as 45-55 year olds
 ## test cases to check behavior of R0
 ## sanity checks in the case of equal mixing and equal populations
 # BC.pop <- rep(mean(BC.pop),Ncomp)
@@ -92,6 +95,10 @@ stopifnot(all.equal(specrad.1,1))
 ## now the matrix is rescaled have R0  = 1, so beta0 can be scaled to be real transmission
 W <- W / alpha
 
+
+## now the matrix is rescaled have R0  = 1, so beta0 can be scaled to be real transmission
+C <- matrix(1,nrow(W),ncol(W))
+
 ## set initial conditions
 ## I'm not entirely sure what to put for these currently...
 ICs <- c(
@@ -127,7 +134,7 @@ N <- BC.pop
 gamma <- 1/6.5
 
 ## R0
-R0 <- 2.5
+R0 <- 2.5 ## make a range? 
 
 ## set beta based on that value
 beta0 <- R0*gamma
@@ -185,7 +192,7 @@ seir_step <- function(stoch = F) {
 
   for(it in 1:(length(time) - 1)){
 
-    WI <- W%*%(A[it,] + I[it,])
+    WI <- C%*%W%*%(A[it,] + I[it,])
     WI[!is.finite(WI)] <- 0
 
     births <-rep(0,Ncomp)
@@ -257,7 +264,7 @@ for(n in 1:nsim){
     rowSums() -> totalincid
 
   daily_incid <- unname(tapply(totalincid, (seq_along(totalincid)-1) %/% (1/delta.t), sum))
-
+## will need to be changed
   cases_requiring_attention <- totalI * prop_serious
 
   daily_cases_requiring_attention <- unname(tapply(cases_requiring_attention, (seq_along(cases_requiring_attention)-1) %/% (1/delta.t), sum))
