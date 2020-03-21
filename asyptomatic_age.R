@@ -210,8 +210,8 @@ setup_seir_model <- function(stoch){
 all_prelim_info <- setup_seir_model(stoch = TRUE)
 
 ## how long to run the model for?
-## currently set to be 100 days integrated at by hour
-delta.t <- 1/24
+## currently set to be 100 days integrated at the day
+delta.t <- 1/1
 time <- seq(1,100,by = delta.t)
 Ncomp = all_prelim_info$Ncomp
 ICs = all_prelim_info$ICs
@@ -219,7 +219,7 @@ params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_i
 
 ## test run
 seir_results <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
-
+# write.csv(seir_results, file = 'SEIR_results_test.csv')
 ## running some different simulations and making some basic plots
 nsim <- 10
 for(n in 1:nsim){
