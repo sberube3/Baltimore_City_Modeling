@@ -113,7 +113,7 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   N=params$N; gamma=params$gamma; prop_symptomatic=params$prop_symptomatic
   ## set up a matrix to store values in by variable and time
   ## each X[it,] is the variable at one hour
-  x <- matrix(NA,length(time),Ncomp * 5)
+  x <- matrix(NA,length(time),Ncomp * 6)
   x[1,] <- round(ICs)
 
   S <- x[,1:Ncomp]; ## susceptible individuals
@@ -121,7 +121,8 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   I <- x[,(2*Ncomp+1):(3*Ncomp)];## symp individuals
   R <- x[,(3*Ncomp+1):(4*Ncomp)] ## recovered individuals
   ## incidence
-  incid <- x[,(4*Ncomp+1):(5*Ncomp)];
+  incid_A <- x[,(4*Ncomp+1):(5*Ncomp)];
+  incid_I <-   incid_A <- x[,(5*Ncomp+1):(6*Ncomp)];
   ## seasonal transmission
   seas <- beta0 * (1 + beta1 * cos(2 * pi * time/365 - phase))
   for(it in 1:(length(time) - 1)){
@@ -150,7 +151,8 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
       A[it + 1, ] <- A[it,] +  (1 - prop_symptomatic) * new_inf - new_rec_A - rbinom(n = Ncomp, size = round(A[it]), prob = death_prob)
       I[it + 1, ] <- I[it,] +  prop_symptomatic * new_inf - new_rec_I - rbinom(n = Ncomp, size = round(I[it]), prob = death_prob)
       R[it + 1, ] <- R[it,] +  new_rec_I + new_rec_A - rbinom(n = Ncomp, size = round(R[it]), prob = death_prob)
-      incid[it, ] <-  new_rec_I + new_rec_A
+      incid_A[it, ] <-  new_rec_I 
+      incid_I[it,] <- new_rec_A
     }
     
     ## deterministic equations to check
@@ -159,10 +161,12 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
       A[it + 1, ] <- A[it,] + delta.t * ( (1 - prop_symptomatic) *  seas[it] * WI * S[it,] * dw / N - A[it,]*(gamma - deaths))
       I[it + 1, ] <- I[it,] + delta.t * (  prop_symptomatic *  seas[it] * WI * S[it,] * dw / N - I[it,]*(gamma - deaths))
       R[it + 1, ] <- R[it,] + delta.t * (A[it,]*gamma+ I[it,]*gamma - R[it,]* deaths)
-      incid[it,] <-  delta.t*(A[it,]*gamma+ I[it,]*gamma )
+      incid_A[it,] <-  delta.t*(A[it,]*gamma)
+      incid_I[it,] <- delta.t*(I[it,]*gamma )
+      
     }
   }
-  out <- data.frame(cbind(time,S,A,I,R,incid))
+  out <- data.frame(cbind(time,S,A,I,R,incid_A, incid_I))
   names(out) <- c('time',names(ICs))
   ## output is the number in each class per time point per age-category+homeless+healthcare workers
   return(out)
@@ -172,7 +176,7 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
 setup_seir_model <- function(stoch, R0, c_scale_vec){
   ## set prop_symtomatic
   ## right now just set it to be 5% but
-  prop_symptomatic <- 0.20 ## will need to update/change
+  prop_symptomatic <- 0.2 ## will need to update/change
   data <- read.csv('Baltimore_AgePopulation.csv')
   age_data <- make_age_structure_matrix(data, homeless_n = 2000, healthcare_n = 5000)
   BC_pop = age_data$BC_pop
@@ -181,7 +185,7 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
   rescale_mixing <- rescale_age_matrix(Ncomp, W, BC_pop, c_scale_vec)
   W <- rescale_mixing$W; C <- rescale_mixing$C
   ## set initial conditions
-  ICs <- c(S = BC_pop * 1, A = rep(100,length(BC_pop)), I = rep(1,length(BC_pop)), R = BC_pop, incid = rep(0,Ncomp))
+  ICs <- c(S = BC_pop * 1, A = rep(8,length(BC_pop)), I = rep(2,length(BC_pop)), R = BC_pop, incid_A = rep(0,Ncomp), incid_I = rep(0,Ncomp))
   ## set the R compartment
   ## crudely just set anything negative to be zero but we can fine tune this more depending on what we assume S0 does
   ICs[(3*Ncomp+1):(4*Ncomp)] <- BC_pop -  ICs[1:Ncomp] - ICs[(Ncomp+1):(2*Ncomp)] - ICs[(2*Ncomp+1):(3*Ncomp)]
@@ -211,18 +215,31 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
 }
 
 
-
 ## how long to run the model for?
 ## currently set to be 100 days integrated at the day
+all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.2, c_scale_vec = 1.0)
 delta.t <- 1/1
 time <- seq(1,100,by = delta.t)
 Ncomp = all_prelim_info$Ncomp
 ICs = all_prelim_info$ICs
-all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.2, c_scale_vec = 1.0)
+
 params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, gamma=all_prelim_info$gamma,prop_symptomatic=all_prelim_info$prop_symptomatic)
 ## running some different simulations and making some basic plots
 
+
+single.sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
+single.sim %>% ggplot(aes(time,I5))+geom_line()
+single.sim %>% dplyr::select(paste0('I',1:Ncomp)) %>% rowSums() -> totalI
+single.sim %>% dplyr::select(paste0('incid_I',1:Ncomp)) %>% rowSums() -> totalincid_I
+single.sim %>% dplyr::select(paste0('incid_A',1:Ncomp)) %>% rowSums() -> totalincid_A
+single.sim <- cbind(single.sim, totalincid_A)
+single.sim <- cbind(single.sim, totalincid_I)
+par(mfrow=c(1,2))
+plot(single.sim$totalincid_A)
+plot(single.sim$totalincid_I)
+
 test_sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
+
 run_index = rep(0, nrow(test_sim))
 test_sim <- cbind(run_index, test_sim)
                     
@@ -244,7 +261,7 @@ write.csv(all_sim, file = 'TestRun/SEIR_results__n500__r02_2__c1.csv')
 Sys.time()
 
 ### loop over r0 and c values
-write_output_files = FALSE
+write_output_files = TRUE
 r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
 c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
 
@@ -274,11 +291,12 @@ for(ii in 1:length(r0_values)){
       all_sim[start_index[n]:(start_index[n+1]-1),] = single.sim
     }
     if(write_output_files == TRUE){
-      write.csv(all_sim, file = paste(paste(paste('TestRun/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
+      write.csv(all_sim, file = paste(paste(paste('Output_20200322/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
     }
   }
 }
 
+## c(0.9797704, 9.487135e-05, 5.578693e-05, 8.364770e-05, 0.01999531)
 write_summary_files = TRUE
 if(write_summary_files == TRUE){
   library(tidyverse)
@@ -305,7 +323,9 @@ if(write_summary_files == TRUE){
   }
 }
 
-
+# 
+  #   daily_incid <- unname(tapply(totalincid, (seq_along(totalincid)-1) %/% (1/delta.t), sum))
+# ## will need to be changed
 
 
 
