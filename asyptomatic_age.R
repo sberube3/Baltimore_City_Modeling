@@ -136,8 +136,8 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   ## seasonal transmission
   seas <- beta0 * (1 + beta1 * cos(2 * pi * time/365 - phase))
   for(it in 1:(length(time) - 1)){
-  ##  WI <- C%*%W%*%(E[it,] + A[it,] + I[it,])
-    
+  #  WI <- C%*%W%*%(A[it,] + I[it,])
+    C = 0.1
     WI <- (C*W)%*%(A[it,] + I[it,])
     
     WI[!is.finite(WI)] <- 0
@@ -174,7 +174,7 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
       incid_I[it, ] <- prop_symptomatic * new_inf
     }
     
-    ## deterministic equations to check
+    ## deterministic equations to check -- does not currently work 
     if(stoch == F){
       S[it + 1, ] <- S[it,] + delta.t * (births - seas[it] * WI * S[it,] * dw / N  - deaths*S[it,])
       A[it + 1, ] <- A[it,] + delta.t * ( (1 - prop_symptomatic) *  seas[it] * WI * S[it,] * dw / N - A[it,]*(gamma - deaths))
@@ -229,12 +229,17 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
   ## now check to make sure the R0 we get is the R0 we put in
   ## using the same formula as above
   R0.mat <- matrix(0,Ncomp,Ncomp)
-  
   for (i in 1:Ncomp){
     for (j in 1:Ncomp){
-      R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]* beta0 * (gamma + v) * (sigma +v )/sigma
+      R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]* beta0 * sigma / ( (sigma + v) * (v + gamma))
     }
   }
+  # 
+  # for (i in 1:Ncomp){
+  #   for (j in 1:Ncomp){
+  #     R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]* beta0 * (gamma + v) * (sigma +v )/sigma
+  #   }
+  # }
   print(eigen(R0.mat)$values[1]) ## just a check
   return(list(C = C, W = W, beta0 = beta0, beta1 = beta1, phase = phase, mu = mu, v = v, ICs = ICs, Ncomp = Ncomp, N=N, gamma=gamma,sigma = sigma,prop_symptomatic=prop_symptomatic))
 }
@@ -242,11 +247,11 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
 
 ## how long to run the model for?
 ## currently set to be 100 days integrated at the day
-all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.0, c_scale_vec = 1.0)
+all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.0, c_scale_vec = 1)
 ## what is printed should be R0 
 
 delta.t <- 1/1
-time <- seq(1,100,by = delta.t)
+time <- seq(1,300,by = delta.t)
 Ncomp = all_prelim_info$Ncomp
 ICs = all_prelim_info$ICs
 
@@ -266,6 +271,9 @@ plot(single.sim$totalincid_A,type='l')
 plot(single.sim$totalincid_I,type='l')
 
 test_sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
+run_index = rep(n, nrow(test_sim))
+test_sim <- cbind(run_index, test_sim)
+all_sim <- rbind(all_sim, test_sim)
 
 run_index = rep(0, nrow(test_sim))
 test_sim <- cbind(run_index, test_sim)
@@ -291,24 +299,26 @@ Sys.time()
 ### loop over r0 and c values
 write_output_files = TRUE
 r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
-c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
+#c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
 
 delta.t <- 1/1
-time <- seq(1,100,by = delta.t)
+time <- seq(1,365,by = delta.t)
 Ncomp = all_prelim_info$Ncomp
 ICs = all_prelim_info$ICs
 
 for(ii in 1:length(r0_values)){
-  for(jj in 1:length(c_values)){
+#  for(jj in 1:length(c_values)){
     R0_test = r0_values[ii]
-    c_test = c_values[jj]
-    print(c(R0_test, c_test))
+    c_test = 1
+    print(R0_test)
+#    c_test = c_values[jj]
+#    print(c(R0_test, c_test))
     nsim <- 500
     start_index <- seq(1, nsim*length(time)+1, by = length(time))
-    all_sim <- matrix(,1,(Ncomp*5)+2)
+    all_sim <- matrix(,1,(Ncomp*7)+2)
     colnames(all_sim) <- colnames(test_sim)#matrix(,nsim*length(time),(Ncomp*5)+2) ## +2 -> time step, run index
-    all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = R0_test, c_scale_vec = c_test)
-    params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, gamma=all_prelim_info$gamma,prop_symptomatic=all_prelim_info$prop_symptomatic)
+    all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = R0_test, c_scale_vec = 1)
+    params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, gamma=all_prelim_info$gamma,prop_symptomatic=all_prelim_info$prop_symptomatic, sigma = all_prelim_info$sigma)
     for(n in 1:nsim){
       #  prop_serious <- 0.2 ### will update later
       ## run the simulation one time
@@ -321,8 +331,10 @@ for(ii in 1:length(r0_values)){
     if(write_output_files == TRUE){
       write.csv(all_sim, file = paste(paste(paste('Output_20200322/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
     }
-  }
 }
+
+
+#}
 
 ## c(0.9797704, 9.487135e-05, 5.578693e-05, 8.364770e-05, 0.01999531)
 write_summary_files = TRUE
