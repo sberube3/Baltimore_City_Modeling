@@ -56,16 +56,28 @@ Now calculate the number in of severe, hospitalized, ICU and vented infections a
 
 ```{r, message=FALSE, echo=TRUE, warning=FALSE}
 #calculate number of incident cases that get classified as severe,  of those, 
-#number that get hospitalized or those that die, then those that get classified as ICU and then of those that get put on a vent
+#number that die, of those remaining, those thatget hospitalized , of that then those that get classified as ICU and then of those that get put on a vent
 #this is for each age group (+ HCW and homeless)
 
 
 counts_array<- array(NA, dim=c(nrow(data_incident),ncol(data_incident),ncol(prob_matrix)))
 
-c
-
-
+for(i in 1:nrow(data_incident)){
+  for(j in 1:ncol(data_incident)){
+      counts_array[i,j,1]<- data_incident[i,j]*prob_matrix[j,1]
+      counts_array[i,j,2]<- counts_array[i,j,1]*prob_matrix[j,2]
+      counts_array[i,j,3]<- (counts_array[i,j,1]-counts_array[i,j,2])*prob_matrix[j,3]
+      counts_array[i,j,4]<- counts_array[i,j,3]*prob_matrix[j,4]
+      counts_array[i,j,5]<- counts_array[i,j,4]*prob_matrix[j,5]
+    
+  }
+}
 
 ```
 
-Now  load in a dataset that gives estimates of how long people stay hospitalized, in ICU 
+Now  load in a dataset that gives estimates of how long people stay hospitalized, in ICU or on vents
+
+```{r,message=FALSE, warning=FALSE, echo=TRUE}
+#for now we are supposing we get a point estimate to determine how long people stay 
+
+```
