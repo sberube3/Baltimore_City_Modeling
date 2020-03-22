@@ -182,7 +182,6 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
       R[it + 1, ] <- R[it,] + delta.t * (A[it,]*gamma+ I[it,]*gamma - R[it,]* deaths)
       incid_A[it,] <-  delta.t*(A[it,]*gamma)
       incid_I[it,] <- delta.t*(I[it,]*gamma )
-      
     }
   }
   out <- data.frame(cbind(time,S,E,A,I,R,incid_A, incid_I))
@@ -207,8 +206,8 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
   ## set initial conditions
   ICs <- c(S = BC_pop * 1, 
            E = rep(0,length(BC_pop)),
-           A = rep(0,length(BC_pop)),
-           I = rep(1,length(BC_pop)), 
+           A = rep(8,length(BC_pop)),
+           I = rep(2,length(BC_pop)), 
            R = BC_pop,
            incid_A = rep(0,Ncomp),
            incid_I = rep(0,Ncomp))
@@ -220,21 +219,20 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
   N <- BC_pop         
   ## units in days!! 
   gamma <- 1/6.5 ## infectious period
-  sigma <- 1/ 5.2 ## latent period
+  sigma <- 1/5.2 ## latent period
   phase <- 0 ## when should seasonal forcing peak?
   mu <- 0 ## set births to be zero currently
   v <- 0 ## set natural death rate to be zero currently
   #R0 <- 2.5 ## make a range?   ## R0 = beta * sigma / ((sigma + v) * (v + gamma)) for SEAIR model with split proportion into A-I and only A and I contributing to infection
   beta0 <- R0 * (gamma + v) * (sigma + v) / sigma ## set beta based on that value
   beta1 <- 0.0 ## seasonal forcing should be modest here
- 
   ## now check to make sure the R0 we get is the R0 we put in
   ## using the same formula as above
   R0.mat <- matrix(0,Ncomp,Ncomp)
   
   for (i in 1:Ncomp){
     for (j in 1:Ncomp){
-      R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]* beta0 * (sigma + gamma) / (sigma * gamma)
+      R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]* beta0 * (gamma + v) * (sigma +v )/sigma
     }
   }
   print(eigen(R0.mat)$values[1]) ## just a check
@@ -244,7 +242,8 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
 
 ## how long to run the model for?
 ## currently set to be 100 days integrated at the day
-all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.2, c_scale_vec = 1.0)
+all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.0, c_scale_vec = 1.0)
+## what is printed should be R0 
 
 delta.t <- 1/1
 time <- seq(1,100,by = delta.t)
@@ -274,8 +273,8 @@ test_sim <- cbind(run_index, test_sim)
 
 nsim <- 500
 start_index <- seq(1, nsim*length(time)+1, by = length(time))
-all_sim <- matrix(,1,(Ncomp*5)+2)
-colnames(all_sim) <- colnames(test_sim)#matrix(,nsim*length(time),(Ncomp*5)+2) ## +2 -> time step, run index
+all_sim <- matrix(,1,(Ncomp*7)+2)
+colnames(all_sim) <- c('run_index', colnames(test_sim))#matrix(,nsim*length(time),(Ncomp*5)+2) ## +2 -> time step, run index
 Sys.time()
 for(n in 1:nsim){
 #  prop_serious <- 0.2 ### will update later
@@ -286,7 +285,7 @@ for(n in 1:nsim){
   all_sim <- rbind(all_sim, single.sim)
   all_sim[start_index[n]:(start_index[n+1]-1),] = single.sim
 }
-write.csv(all_sim, file = 'TestRun/SEIR_results__n500__r02_2__c1.csv')
+write.csv(all_sim, file = 'Output_20200322/TEST_SEIR_results__n500__r02_2__c1.csv')
 Sys.time()
 
 ### loop over r0 and c values
