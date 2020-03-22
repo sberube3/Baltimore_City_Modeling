@@ -1,13 +1,71 @@
 ---
 title: "Skeleton_of_Outputs"
-author: "Sophie Berube"
+author: ""
 date: "3/19/2020"
 output: pdf_document
 ---
 
-This is a document for a code skeleton for the outputs section of the project. 
+This is a document for a code skeleton for the outputs section of the project.
+
+Loading in relevant data sources for this: 
 ```{r, message=FALSE, echo=TRUE, warning=FALSE}
 
-rnorm(1000,0,1)
+setwd('~/Dropbox/COVID-BaltimoreCity//')
+
+require(socialmixr)
+require(xlsx)
+require(magrittr)
+require(stringr)
+require(reshape2)
+require(dplyr)
+require(ggplot2) 
+#load in data, subset incident cases/day (eventually should be symptomatic incident cases)
+data_infected<- read.csv("SEIR_results_test.csv")
+
+data_incident<- data_infected%>%
+  select(incid1,incid2,incid3,incid4,incid5,incid6,incid7,incid8,incid9,incid10,incid11,
+         incid12,incid13,incid14)
+
+#load some sort of matrix that designates probabilities for symptomatics being severe, 
+#then conditional on being severe the probability of being hospitalized, or dead, then 
+#conditional on being hospitalized the prob of being in ICU and then conditional on being in ICU
+#the prob of being on a vent and then a global probability of death in each category. 
+
+prob_severe<- c(seq(from=0.05, by = 0.05, length=12),max(seq(from=0.05, by = 0.05, length=12)),
+                      max(seq(from=0.05, by = 0.05, length=12)))
+prob_death<- c(0.002, 0.0020, 0.002, 0.004, 0.004, 
+               0.004, 0.013,0.013,0.036,0.036,0.08,
+               0.15,0.036,0.08)
+prob_hospitalized<- c(seq(from=0.3, by = 0.05, length=12),max(seq(from=0.3, by = 0.05, length=12)),
+                      max(seq(from=0.3, by = 0.05, length=12)))
+prob_ICU<- c(seq(from=0.1, by = 0.05, length=12),max(seq(from=0.3, by = 0.05, length=12)),
+                      max(seq(from=0.3, by = 0.05, length=12)))
+prob_vent<-c(seq(from=0.1, by = 0.05, length=12),max(seq(from=0.3, by = 0.05, length=12)),
+                      max(seq(from=0.3, by = 0.05, length=12)))
+
+prob_matrix<- cbind(prob_severe,prob_death,prob_hospitalized,prob_ICU,
+                    prob_vent)
+
+
 
 ```
+
+
+Now calculate the number in of severe, hospitalized, ICU and vented infections at each timepoint (day) in each group (age groups 1-12 and healthcare workers and homeless). 
+
+
+```{r, message=FALSE, echo=TRUE, warning=FALSE}
+#calculate number of incident cases that get classified as severe,  of those, 
+#number that get hospitalized or those that die, then those that get classified as ICU and then of those that get put on a vent
+#this is for each age group (+ HCW and homeless)
+
+
+counts_array<- array(NA, dim=c(nrow(data_incident),ncol(data_incident),ncol(prob_matrix)))
+
+c
+
+
+
+```
+
+Now  load in a dataset that gives estimates of how long people stay hospitalized, in ICU 
