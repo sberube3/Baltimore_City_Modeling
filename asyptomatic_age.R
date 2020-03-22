@@ -49,6 +49,7 @@ theme_set(theme_classic(base_size=12))
 ### load [location] age structured demographic data. This code assumes that the first row will be the total population and the following rows are the ages broken down by age groups.
 ## If you do not want homeless or healthcare workers, just set these values to zero
 ## assumes the additional of healthcare workers and homeless does not decrease from their respective age group 
+
 make_age_structure_matrix <- function(age_data_file, homeless_n, healthcare_n){
   ## Pull out population data
   n_age_classes <- nrow(age_data_file)-1
@@ -87,7 +88,8 @@ make_polymod_matrix <- function(){
 ## we want the max eigen value of our input matrix to be 1 such that we can say R0 is just beta / gamma
 ## the following formula gives the R0 calculation for age strucutred matrix models
 ## ref : http://www.sherrytowers.com/towers_feng_2012.pdf page 242 right side (matrix is called C_ij)
-rescale_age_matrix <- function(Ncomp, W, BC_pop){
+
+rescale_age_matrix <- function(Ncomp, W, BC_pop, c_scale_vec){
   A <- matrix(0,Ncomp,Ncomp)
   for (ii in 1:Ncomp){
     for (jj in 1:Ncomp){
@@ -100,7 +102,7 @@ rescale_age_matrix <- function(Ncomp, W, BC_pop){
   alpha <- max(Re(lam))
   W <- W / alpha
   ## now the matrix is rescaled have R0  = 1, so beta0 can be scaled to be real transmission
-  C <- matrix(1,nrow(W),ncol(W)) ## a special contact matrix to be used to rescale health facility worker contact rates - when set to 1, it is turned off 
+  C <- matrix(c_scale_vec,nrow(W),ncol(W)) ## a special contact matrix to be used to rescale health facility worker contact rates - when set to 1, it is turned off 
   return(list(W = W, C = C))
 }
 
@@ -167,7 +169,7 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
 }
 
 ### main function to set up and organize the mixing data, inital conditions, parameters, etc.  
-setup_seir_model <- function(stoch){
+setup_seir_model <- function(stoch, R0, c_scale_vec){
   ## set prop_symtomatic
   ## right now just set it to be 5% but
   prop_symptomatic <- 0.20 ## will need to update/change
@@ -176,7 +178,7 @@ setup_seir_model <- function(stoch){
   BC_pop = age_data$BC_pop
   Ncomp = age_data$Ncomp
   W <- make_polymod_matrix()
-  rescale_mixing <- rescale_age_matrix(Ncomp, W, BC_pop)
+  rescale_mixing <- rescale_age_matrix(Ncomp, W, BC_pop, c_scale_vec)
   W <- rescale_mixing$W; C <- rescale_mixing$C
   ## set initial conditions
   ICs <- c(S = BC_pop * 1, A = rep(100,length(BC_pop)), I = rep(1,length(BC_pop)), R = BC_pop, incid = rep(0,Ncomp))
@@ -188,7 +190,7 @@ setup_seir_model <- function(stoch){
   N <- BC_pop         
   ## units in days!! 
   gamma <- 1/6.5 ## infectious period
-  R0 <- 2.5 ## make a range?   ## R0
+  #R0 <- 2.5 ## make a range?   ## R0
   beta0 <- R0*gamma ## set beta based on that value
   beta1 <- 0.0 ## seasonal forcing should be modest here
   phase <- 0 ## when should seasonal forcing peak?
@@ -205,11 +207,10 @@ setup_seir_model <- function(stoch){
     }
   }
   print(eigen(R0.mat)$values[1]) ## just a check
-  return(list(C = C, W = W, beta0 = beta0, beta1 = beta1, phase = phase, mu = mu, v = v, ICs = ICs, Ncomp = Ncomp,
-              N=N, gamma=gamma,prop_symptomatic=prop_symptomatic))
+  return(list(C = C, W = W, beta0 = beta0, beta1 = beta1, phase = phase, mu = mu, v = v, ICs = ICs, Ncomp = Ncomp, N=N, gamma=gamma,prop_symptomatic=prop_symptomatic))
 }
 
-all_prelim_info <- setup_seir_model(stoch = TRUE)
+
 
 ## how long to run the model for?
 ## currently set to be 100 days integrated at the day
@@ -217,52 +218,120 @@ delta.t <- 1/1
 time <- seq(1,100,by = delta.t)
 Ncomp = all_prelim_info$Ncomp
 ICs = all_prelim_info$ICs
-params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v,
-              N=all_prelim_info$N, gamma=all_prelim_info$gamma,prop_symptomatic=all_prelim_info$prop_symptomatic)
-
-## test run
-seir_results <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
-# write.csv(seir_results, file = 'SEIR_results_test.csv')
+all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.2, c_scale_vec = 1.0)
+params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, gamma=all_prelim_info$gamma,prop_symptomatic=all_prelim_info$prop_symptomatic)
 ## running some different simulations and making some basic plots
-nsim <- 10
 
+test_sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
+run_index = rep(0, nrow(test_sim))
+test_sim <- cbind(run_index, test_sim)
+                    
+nsim <- 500
+start_index <- seq(1, nsim*length(time)+1, by = length(time))
+all_sim <- matrix(,1,(Ncomp*5)+2)
+colnames(all_sim) <- colnames(test_sim)#matrix(,nsim*length(time),(Ncomp*5)+2) ## +2 -> time step, run index
+Sys.time()
 for(n in 1:nsim){
-  prop_serious <- 0.19 ### will update later
+#  prop_serious <- 0.2 ### will update later
   ## run the simulation one time
   single.sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
+  run_index = rep(n, nrow(single.sim))
+  single.sim <- cbind(run_index, single.sim)
+  all_sim <- rbind(all_sim, single.sim)
+  all_sim[start_index[n]:(start_index[n+1]-1),] = single.sim
+}
+write.csv(all_sim, file = 'TestRun/SEIR_results__n500__r02_2__c1.csv')
+Sys.time()
 
-  single.sim %>%
-    ggplot(aes(time,I5))+geom_line()
+### loop over r0 and c values
+r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
+c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
 
-  single.sim %>%
-    dplyr::select(paste0('I',1:Ncomp)) %>%
-    rowSums() -> totalI
+delta.t <- 1/1
+time <- seq(1,100,by = delta.t)
+Ncomp = all_prelim_info$Ncomp
+ICs = all_prelim_info$ICs
 
-  single.sim %>%
-    dplyr::select(paste0('incid',1:Ncomp)) %>%
-    rowSums() -> totalincid
-
-  daily_incid <- unname(tapply(totalincid, (seq_along(totalincid)-1) %/% (1/delta.t), sum))
-## will need to be changed
-  cases_requiring_attention <- totalI * prop_serious
-
-  daily_cases_requiring_attention <- unname(tapply(cases_requiring_attention, (seq_along(cases_requiring_attention)-1) %/% (1/delta.t), sum))
-
-  dailytime <- single.sim$time[seq(1,nrow(single.sim),(1/delta.t))]
-
-  single.daily.data <- data.frame('days'=dailytime,'daily_cases_requiring_attention'=daily_cases_requiring_attention)
-  single.daily.data$sim <- n
-
-  if(n == 1){
-    daily.data <- single.daily.data
-  }else{
-    daily.data <- rbind(daily.data,single.daily.data)
+for(ii in 1:length(r0_values)){
+  for(jj in 1:length(c_values)){
+    R0_test = r0_values[ii]
+    c_test = c_values[jj]
+    print(c(R0_test, c_test))
+    nsim <- 500
+    start_index <- seq(1, nsim*length(time)+1, by = length(time))
+    all_sim <- matrix(,1,(Ncomp*5)+2)
+    colnames(all_sim) <- colnames(test_sim)#matrix(,nsim*length(time),(Ncomp*5)+2) ## +2 -> time step, run index
+    all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = R0_test, c_scale_vec = c_test)
+    params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, gamma=all_prelim_info$gamma,prop_symptomatic=all_prelim_info$prop_symptomatic)
+    for(n in 1:nsim){
+      #  prop_serious <- 0.2 ### will update later
+      ## run the simulation one time
+      single.sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
+      run_index = rep(n, nrow(single.sim))
+      single.sim <- cbind(run_index, single.sim)
+      all_sim <- rbind(all_sim, single.sim)
+      all_sim[start_index[n]:(start_index[n+1]-1),] = single.sim
+    }
+    write.csv(all_sim, file = paste(paste(paste('TestRun/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
   }
 }
 
-daily.data %>%
-  ggplot(aes(days,daily_cases_requiring_attention,color=factor(sim)))+
-  geom_line()+
-  xlim(0,max(time) - 1)
+library(tidyverse)
+for(ii in 1:length(r0_values)){
+  for(jj in 1:length(c_values)){
+    R0_test = r0_values[ii]
+    c_test = c_values[jj]
+    file_name = paste(paste(paste('TestRun/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
+    data_file <- read.csv(file_name)
+    for(bb in 1:length(cat_list)){
+      values <- file_name[,c(2,3,bb)]
+      sub_data <- values %>% group_by(time) %>% summarise(mean_value = mean(), median_value = median(), iqr_value = IQR(), bottom_quantile_value = quantile(, c(0.025)), upper_quantile_value = quantile(,c(0.975)))
+    }
+    sub_data <- file_name %>% group_by(run_index) %>% group_by(time) %>% 
+  }
+}
+
+
+
+
+
+
+# 
+# 
+# 
+# 
+#   single.sim %>%
+#     ggplot(aes(time,I5))+geom_line()
+# 
+#   single.sim %>%
+#     dplyr::select(paste0('I',1:Ncomp)) %>%
+#     rowSums() -> totalI
+# 
+#   single.sim %>%
+#     dplyr::select(paste0('incid',1:Ncomp)) %>%
+#     rowSums() -> totalincid
+# 
+#   daily_incid <- unname(tapply(totalincid, (seq_along(totalincid)-1) %/% (1/delta.t), sum))
+# ## will need to be changed
+#   cases_requiring_attention <- totalI * prop_serious
+# 
+#   daily_cases_requiring_attention <- unname(tapply(cases_requiring_attention, (seq_along(cases_requiring_attention)-1) %/% (1/delta.t), sum))
+# 
+#   dailytime <- single.sim$time[seq(1,nrow(single.sim),(1/delta.t))]
+# 
+#   single.daily.data <- data.frame('days'=dailytime,'daily_cases_requiring_attention'=daily_cases_requiring_attention)
+#   single.daily.data$sim <- n
+# 
+#   if(n == 1){
+#     daily.data <- single.daily.data
+#   }else{
+#     daily.data <- rbind(daily.data,single.daily.data)
+#   }
+# }
+# 
+# daily.data %>%
+#   ggplot(aes(days,daily_cases_requiring_attention,color=factor(sim)))+
+#   geom_line()+
+#   xlim(0,max(time) - 1)
 
 
