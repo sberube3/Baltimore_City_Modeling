@@ -60,6 +60,10 @@ make_age_structure_matrix <- function(age_data_file, homeless_n, healthcare_n){
   BC_pop <- BC_pop[1:(n_age_classes-1)]
   BC_pop[(n_age_classes)] = healthcare_n ## healthcare workers
   BC_pop[(n_age_classes+1)] = homeless_n ## number homeless
+  
+  ## test case of equal pops
+  ## BC_pop <- rep(mean(BC_pop),length(BC_pop))
+  
   Ncomp <- length(BC_pop) 
   return(list(Ncomp = Ncomp, BC_pop = BC_pop))  
 }
@@ -74,9 +78,14 @@ make_polymod_matrix <- function(){
   age_mix <- contact_matrix(polymod, countries = "United Kingdom", age.limits = c(0,5,10,15,20,25,35,45,55,60,65,75,85,90))$matrix
   ## assumes homeless and healthcare workers have the same mixing as 45-55 year olds
   W <- matrix(NA,nrow(age_mix)+2, ncol(age_mix)+2)
+  
   rownames(W) <- c(rownames(age_mix), 'healthcare', 'homeless')
   colnames(W) <- c(colnames(age_mix), 'healthcare', 'homeless')
   W[1:nrow(age_mix),1:ncol(age_mix)] <- age_mix
+  
+  ## test case of uniform contact
+  ## W[1:nrow(age_mix),1:ncol(age_mix)] <- 1
+  
   W[nrow(age_mix)+1,] = W[grep('45,55', rownames(W)),] ## healthcare
   W[nrow(age_mix)+2,] = W[grep('45,55', rownames(W)),] ## homeless
   W[,nrow(age_mix)+1] = W[,grep('45,55', rownames(W))] ## healthcare
@@ -110,23 +119,27 @@ rescale_age_matrix <- function(Ncomp, W, BC_pop, c_scale_vec){
 sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   C = params$C; W = params$W; 
   beta0 = params$beta0; beta1 = params$beta1; phase = params$phase; mu = params$mu; v = params$v
-  N=params$N; gamma=params$gamma; prop_symptomatic=params$prop_symptomatic
+  N=params$N; sigma = params$sigma; gamma=params$gamma; prop_symptomatic=params$prop_symptomatic
   ## set up a matrix to store values in by variable and time
   ## each X[it,] is the variable at one hour
-  x <- matrix(NA,length(time),Ncomp * 6)
+  x <- matrix(NA,length(time),Ncomp * 7)
   x[1,] <- round(ICs)
 
   S <- x[,1:Ncomp]; ## susceptible individuals
-  A <- x[,(Ncomp+1):(2*Ncomp)]; ## asymptomatic individuals
-  I <- x[,(2*Ncomp+1):(3*Ncomp)];## symp individuals
-  R <- x[,(3*Ncomp+1):(4*Ncomp)] ## recovered individuals
+  E <- x[,(Ncomp+1):(2*Ncomp)]; ## exposed individuals 
+  A <- x[,(2*Ncomp+1):(3*Ncomp)]; ## asymptomatic individuals
+  I <- x[,(3*Ncomp+1):(4*Ncomp)];## symp individuals
+  R <- x[,(4*Ncomp+1):(5*Ncomp)] ## recovered individuals
   ## incidence
-  incid_A <- x[,(4*Ncomp+1):(5*Ncomp)];
-  incid_I <-   incid_A <- x[,(5*Ncomp+1):(6*Ncomp)];
+  incid_A <- x[,(5*Ncomp+1):(6*Ncomp)];
+  incid_I <- x[,(6*Ncomp+1):(7*Ncomp)];
   ## seasonal transmission
   seas <- beta0 * (1 + beta1 * cos(2 * pi * time/365 - phase))
   for(it in 1:(length(time) - 1)){
-    WI <- C%*%W%*%(A[it,] + I[it,])
+  ##  WI <- C%*%W%*%(E[it,] + A[it,] + I[it,])
+    
+    WI <- (C*W)%*%(A[it,] + I[it,])
+    
     WI[!is.finite(WI)] <- 0
     births <-rep(0,Ncomp)
     births[1] <- mu
@@ -139,20 +152,26 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
     }
     ## declare transitions in model
     foi_prob <- 1 - exp( - seas[it] * WI/N * dw * delta.t)
+    exposed_prob <- 1 - exp( - sigma * delta.t)
     inf_prob <- 1 - exp( - gamma * delta.t)
     death_prob <- 1 - exp( - deaths * delta.t)
     
     ## stochastic formulation of the model
     if(stoch == T){
-      new_inf <- rbinom(n = Ncomp, size = round(S[it,]), prob = foi_prob)
+      new_exp <- rbinom(n = Ncomp, size = round(S[it,]), prob = foi_prob)
+      new_inf <- rbinom(n = Ncomp, size = round(E[it,]) , prob = exposed_prob)
       new_rec_A <- rbinom(n = Ncomp, size = round(A[it,]), prob = inf_prob)
       new_rec_I <- rbinom(n = Ncomp, size = round(I[it,]), prob = inf_prob)
-      S[it + 1, ] <- S[it,] +  births*delta.t - new_inf - rbinom(n = Ncomp, size = round(S[it]), prob = death_prob)
-      A[it + 1, ] <- A[it,] +  (1 - prop_symptomatic) * new_inf - new_rec_A - rbinom(n = Ncomp, size = round(A[it]), prob = death_prob)
-      I[it + 1, ] <- I[it,] +  prop_symptomatic * new_inf - new_rec_I - rbinom(n = Ncomp, size = round(I[it]), prob = death_prob)
-      R[it + 1, ] <- R[it,] +  new_rec_I + new_rec_A - rbinom(n = Ncomp, size = round(R[it]), prob = death_prob)
-      incid_A[it, ] <-  new_rec_I 
-      incid_I[it,] <- new_rec_A
+      
+      S[it + 1, ] <- S[it,] +  births*delta.t - new_exp - rbinom(n = Ncomp, size = round(S[it,]), prob = death_prob)
+      E[it + 1, ] <- E[it,] +  new_exp - new_inf - rbinom(n = Ncomp, size = round(E[it,]), prob = death_prob )
+      A[it + 1, ] <- A[it,] +  (1 - prop_symptomatic) * new_inf - new_rec_A - rbinom(n = Ncomp, size = round(A[it,]), prob = death_prob)
+      I[it + 1, ] <- I[it,] +  prop_symptomatic * new_inf - new_rec_I - rbinom(n = Ncomp, size = round(I[it,]), prob = death_prob)
+      R[it + 1, ] <- R[it,] +  new_rec_I + new_rec_A - rbinom(n = Ncomp, size = round(R[it,]), prob = death_prob)
+      
+      ## make incidence the new number of daily individuals becoming infected
+      incid_A[it, ] <- (1 - prop_symptomatic) * new_inf 
+      incid_I[it, ] <- prop_symptomatic * new_inf
     }
     
     ## deterministic equations to check
@@ -166,11 +185,12 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
       
     }
   }
-  out <- data.frame(cbind(time,S,A,I,R,incid_A, incid_I))
+  out <- data.frame(cbind(time,S,E,A,I,R,incid_A, incid_I))
   names(out) <- c('time',names(ICs))
   ## output is the number in each class per time point per age-category+homeless+healthcare workers
   return(out)
 }
+
 
 ### main function to set up and organize the mixing data, inital conditions, parameters, etc.  
 setup_seir_model <- function(stoch, R0, c_scale_vec){
@@ -185,45 +205,53 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
   rescale_mixing <- rescale_age_matrix(Ncomp, W, BC_pop, c_scale_vec)
   W <- rescale_mixing$W; C <- rescale_mixing$C
   ## set initial conditions
-  ICs <- c(S = BC_pop * 1, A = rep(8,length(BC_pop)), I = rep(2,length(BC_pop)), R = BC_pop, incid_A = rep(0,Ncomp), incid_I = rep(0,Ncomp))
+  ICs <- c(S = BC_pop * 1, 
+           E = rep(0,length(BC_pop)),
+           A = rep(0,length(BC_pop)),
+           I = rep(1,length(BC_pop)), 
+           R = BC_pop,
+           incid_A = rep(0,Ncomp),
+           incid_I = rep(0,Ncomp))
   ## set the R compartment
   ## crudely just set anything negative to be zero but we can fine tune this more depending on what we assume S0 does
-  ICs[(3*Ncomp+1):(4*Ncomp)] <- BC_pop -  ICs[1:Ncomp] - ICs[(Ncomp+1):(2*Ncomp)] - ICs[(2*Ncomp+1):(3*Ncomp)]
-  ICs[(3*Ncomp+1):(4*Ncomp)] [ICs[(3*Ncomp+1):(4*Ncomp)]  < 0 ] <- 0
+  ICs[(4*Ncomp+1):(5*Ncomp)] <- BC_pop -  ICs[1:Ncomp] - ICs[(Ncomp+1):(2*Ncomp)] - ICs[(2*Ncomp+1):(3*Ncomp)] - ICs[(3*Ncomp+1):(4*Ncomp)]
+  ICs[(4*Ncomp+1):(5*Ncomp)] [ICs[(4*Ncomp+1):(5*Ncomp)]  < 0 ] <- 0
   ## population sizes by demographic data
   N <- BC_pop         
   ## units in days!! 
   gamma <- 1/6.5 ## infectious period
-  #R0 <- 2.5 ## make a range?   ## R0
-  beta0 <- R0*gamma ## set beta based on that value
-  beta1 <- 0.0 ## seasonal forcing should be modest here
+  sigma <- 1/ 5.2 ## latent period
   phase <- 0 ## when should seasonal forcing peak?
   mu <- 0 ## set births to be zero currently
   v <- 0 ## set natural death rate to be zero currently
-  
+  #R0 <- 2.5 ## make a range?   ## R0 = beta * sigma / ((sigma + v) * (v + gamma)) for SEAIR model with split proportion into A-I and only A and I contributing to infection
+  beta0 <- R0 * (gamma + v) * (sigma + v) / sigma ## set beta based on that value
+  beta1 <- 0.0 ## seasonal forcing should be modest here
+ 
   ## now check to make sure the R0 we get is the R0 we put in
   ## using the same formula as above
   R0.mat <- matrix(0,Ncomp,Ncomp)
   
   for (i in 1:Ncomp){
     for (j in 1:Ncomp){
-      R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]*beta0 / gamma
+      R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]* beta0 * (sigma + gamma) / (sigma * gamma)
     }
   }
   print(eigen(R0.mat)$values[1]) ## just a check
-  return(list(C = C, W = W, beta0 = beta0, beta1 = beta1, phase = phase, mu = mu, v = v, ICs = ICs, Ncomp = Ncomp, N=N, gamma=gamma,prop_symptomatic=prop_symptomatic))
+  return(list(C = C, W = W, beta0 = beta0, beta1 = beta1, phase = phase, mu = mu, v = v, ICs = ICs, Ncomp = Ncomp, N=N, gamma=gamma,sigma = sigma,prop_symptomatic=prop_symptomatic))
 }
 
 
 ## how long to run the model for?
 ## currently set to be 100 days integrated at the day
 all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.2, c_scale_vec = 1.0)
+
 delta.t <- 1/1
 time <- seq(1,100,by = delta.t)
 Ncomp = all_prelim_info$Ncomp
 ICs = all_prelim_info$ICs
 
-params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, gamma=all_prelim_info$gamma,prop_symptomatic=all_prelim_info$prop_symptomatic)
+params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, gamma=all_prelim_info$gamma, sigma = all_prelim_info$sigma, prop_symptomatic=all_prelim_info$prop_symptomatic)
 ## running some different simulations and making some basic plots
 
 
@@ -235,14 +263,15 @@ single.sim %>% dplyr::select(paste0('incid_A',1:Ncomp)) %>% rowSums() -> totalin
 single.sim <- cbind(single.sim, totalincid_A)
 single.sim <- cbind(single.sim, totalincid_I)
 par(mfrow=c(1,2))
-plot(single.sim$totalincid_A)
-plot(single.sim$totalincid_I)
+plot(single.sim$totalincid_A,type='l')
+plot(single.sim$totalincid_I,type='l')
 
 test_sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
 
 run_index = rep(0, nrow(test_sim))
 test_sim <- cbind(run_index, test_sim)
-                    
+       
+
 nsim <- 500
 start_index <- seq(1, nsim*length(time)+1, by = length(time))
 all_sim <- matrix(,1,(Ncomp*5)+2)
