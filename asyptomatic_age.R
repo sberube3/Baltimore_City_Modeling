@@ -244,6 +244,7 @@ write.csv(all_sim, file = 'TestRun/SEIR_results__n500__r02_2__c1.csv')
 Sys.time()
 
 ### loop over r0 and c values
+write_output_files = FALSE
 r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
 c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
 
@@ -272,25 +273,37 @@ for(ii in 1:length(r0_values)){
       all_sim <- rbind(all_sim, single.sim)
       all_sim[start_index[n]:(start_index[n+1]-1),] = single.sim
     }
-    write.csv(all_sim, file = paste(paste(paste('TestRun/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
-  }
-}
-
-library(tidyverse)
-for(ii in 1:length(r0_values)){
-  for(jj in 1:length(c_values)){
-    R0_test = r0_values[ii]
-    c_test = c_values[jj]
-    file_name = paste(paste(paste('TestRun/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
-    data_file <- read.csv(file_name)
-    for(bb in 1:length(cat_list)){
-      values <- file_name[,c(2,3,bb)]
-      sub_data <- values %>% group_by(time) %>% summarise(mean_value = mean(), median_value = median(), iqr_value = IQR(), bottom_quantile_value = quantile(, c(0.025)), upper_quantile_value = quantile(,c(0.975)))
+    if(write_output_files == TRUE){
+      write.csv(all_sim, file = paste(paste(paste('TestRun/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
     }
-    sub_data <- file_name %>% group_by(run_index) %>% group_by(time) %>% 
   }
 }
 
+write_summary_files = TRUE
+if(write_summary_files == TRUE){
+  library(tidyverse)
+  ### loop over r0 and c values to write summary incidence files will produce new files that have the mean, median, IQR and 95% quantile per time step across each incidence class. 
+  r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
+  c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
+  first_incid_name = 'incid1'
+  last_incid_name = 'incid14'
+  n_incid = 14
+  ## mean, median, IQR, 2.5%, 97.5%
+  for(ii in 1:length(r0_values)){
+    for(jj in 1:length(c_values)){
+      R0_test = r0_values[ii]
+      c_test = c_values[jj]
+      print(c(R0_test, c_test))
+      file_name = paste(paste(paste('TestRun/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
+      data_file <- read.csv(file_name)
+      inc_data <- data_file[,c(grep('time', colnames(data_file)), min(grep(first_incid_name, colnames(data_file))):max(grep(last_incid_name, colnames(data_file))))]
+      inc_data[is.na(inc_data)] <- 0
+      summary_inc_data <- inc_data %>% group_by(time) %>% summarise_all(.funs = list(mean = mean, median = median, IQR = IQR, Q1 =~quantile(x=.,probs = 0.025), Q4 = ~quantile(x=., probs = 0.975)))
+      output_file_name <- paste(paste(paste('TestRun/SUMMARY_INCIDENCE_SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
+      write.csv(summary_inc_data, output_file_name, row.names = FALSE)
+    }
+  }
+}
 
 
 
