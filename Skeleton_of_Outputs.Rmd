@@ -21,16 +21,34 @@ require(dplyr)
 require(ggplot2) 
 require(tidyr)
 #load in data, subset incident cases/day (eventually should be symptomatic incident cases)
-data_infected<- read.csv("SEIR_results_test.csv")
+data_infected<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r017__100.csv")
 
-data_incident<- data_infected%>%
-  select(incid1,incid2,incid3,incid4,incid5,incid6,incid7,incid8,incid9,incid10,incid11,
-         incid12,incid13,incid14)
+
+
+data_incident_median<- data_infected%>%
+  select(incid_I1_median,incid_I2_median,incid_I3_median,incid_I4_median,incid_I5_median,
+         incid_I6_median,incid_I7_median,incid_I8_median,incid_I9_median,
+         incid_I10_median,incid_I11_median,incid_I12_median,incid_I13_median,incid_I14_median)
+
+data_incident_mean<- data_infected%>%
+  select(incid_I1_mean,incid_I2_mean,incid_I3_mean,incid_I4_mean,incid_I5_mean,
+         incid_I6_mean,incid_I7_mean,incid_I8_mean,incid_I9_mean,incid_I10_mean,
+         incid_I11_mean,incid_I12_mean,incid_I13_mean,incid_I14_mean)
+
+data_incident_upper<- data_infected%>%
+  select(incid_I1_Q4,incid_I2_Q4,incid_I3_Q4,incid_I4_Q4,incid_I5_Q4,incid_I6_Q4,incid_I7_Q4,
+         incid_I8_Q4,incid_I9_Q4,incid_I10_Q4,incid_I11_Q4,incid_I12_Q4,incid_I13_Q4,incid_I14_Q4)
+
+data_incident_lower<- data_infected%>%
+  select(incid_I1_Q1,incid_I2_Q1,incid_I3_Q1,incid_I4_Q1,incid_I5_Q1,incid_I6_Q1,incid_I7_Q1,
+         incid_I8_Q1,incid_I9_Q1,incid_I10_Q1,incid_I11_Q1,incid_I12_Q1,incid_I13_Q1,incid_I14_Q1)
+
+
 
 #consolidate age categories, 1-4 is now cat1, 5-6 is now cat2, 7-9 is now cat3, 10 is cat 4, 11 is cat5, 12 is cat 6, HCW is cat 7, homeless is cat 8 
 
 
-data_incident<- data_incident%>%
+data_incident_median<- data_incident_median%>%
   mutate(cat1=rowSums(.[1:4]))%>%
   mutate(cat2=rowSums(.[5:6]))%>%
   mutate(cat3=rowSums(.[7:9]))%>%
@@ -40,7 +58,47 @@ data_incident<- data_incident%>%
   mutate(cat7=rowSums(.[13]))%>%
   mutate(cat8=rowSums(.[14]))
 
-data_combined_cats<- data_incident%>%
+data_incident_mean<- data_incident_mean%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10]))%>%
+  mutate(cat5=rowSums(.[11]))%>%
+  mutate(cat6=rowSums(.[12]))%>%
+  mutate(cat7=rowSums(.[13]))%>%
+  mutate(cat8=rowSums(.[14]))
+
+
+data_incident_lower<- data_incident_lower%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10]))%>%
+  mutate(cat5=rowSums(.[11]))%>%
+  mutate(cat6=rowSums(.[12]))%>%
+  mutate(cat7=rowSums(.[13]))%>%
+  mutate(cat8=rowSums(.[14]))
+
+data_incident_upper<- data_incident_upper%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10]))%>%
+  mutate(cat5=rowSums(.[11]))%>%
+  mutate(cat6=rowSums(.[12]))%>%
+  mutate(cat7=rowSums(.[13]))%>%
+  mutate(cat8=rowSums(.[14]))
+
+data_combined_cats_median<- data_incident_median%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7,cat8)
+
+data_combined_cats_mean<- data_incident_mean%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7,cat8)
+
+data_combined_cats_upper<- data_incident_upper%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7,cat8)
+
+data_combined_cats_lower<- data_incident_lower%>%
   select(cat1,cat2,cat3,cat4,cat5,cat6,cat7,cat8)
 
 #working probabilities for severe cases, hospitalization, ICU, vent and death. 
@@ -55,7 +113,7 @@ data_combined_cats<- data_incident%>%
 
 prob_severe<- c(0.0318, 0.043, 0.197, 0.336,0.378,0.409,0.336,0.336)
 
-prob_hospitalized<- rep(1,ncol(data_combined_cats))
+prob_hospitalized<- rep(1,ncol(data_combined_cats_median))
 
 prob_ICU<- c(0.15,0.15,0.2,0.223,0.27,0.3,0.223,0.223)
 
@@ -81,26 +139,87 @@ Now calculate the number in of severe, hospitalized, ICU and vented infections a
 #note this categorization is NOT a disease progression, a person gets assigned based on the worst state they could possibly reach. 
 
 
-counts_array<- array(NA, dim=c(nrow(data_combined_cats),ncol(data_combined_cats),ncol(prob_matrix)))
+counts_array_median<- array(NA, dim=c(nrow(data_combined_cats_median),ncol(data_combined_cats_median),ncol(prob_matrix)))
 
 
-for(j in 1:ncol(data_combined_cats)){
-  for(i in 1:nrow(data_combined_cats)){
-      counts_array[i,j,1]<- data_combined_cats[i,j]*prob_matrix[j,1]
-      counts_array[i,j,2]<- counts_array[i,j,1]*prob_matrix[j,2]
-      counts_array[i,j,3]<- counts_array[i,j,2]*prob_matrix[j,3]
-      counts_array[i,j,4]<- counts_array[i,j,3]*prob_matrix[j,4]
+for(j in 1:ncol(data_combined_cats_median)){
+  for(i in 1:nrow(data_combined_cats_median)){
+      counts_array_median[i,j,1]<- data_combined_cats_median[i,j]*prob_matrix[j,1]
+      counts_array_median[i,j,2]<- counts_array_median[i,j,1]*prob_matrix[j,2]
+      counts_array_median[i,j,3]<- counts_array_median[i,j,2]*prob_matrix[j,3]
+      counts_array_median[i,j,4]<- counts_array_median[i,j,3]*prob_matrix[j,4]
   }
-  for(k in 1:nrow(data_combined_cats)){
+  for(k in 1:nrow(data_combined_cats_median)){
     if(k<=11){
-      counts_array[k,j,5]<- 0
+      counts_array_median[k,j,5]<- 0
     }
     else{
-      counts_array[k,j,5]<- counts_array[k-11,j,4]*prob_matrix[j,5]
+      counts_array_median[k,j,5]<- counts_array_median[k-11,j,4]*prob_matrix[j,5]
     }
   }
 }
 
+
+counts_array_mean<- array(NA, dim=c(nrow(data_combined_cats_mean),ncol(data_combined_cats_mean),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_mean)){
+  for(i in 1:nrow(data_combined_cats_mean)){
+      counts_array_mean[i,j,1]<- data_combined_cats_mean[i,j]*prob_matrix[j,1]
+      counts_array_mean[i,j,2]<- counts_array_mean[i,j,1]*prob_matrix[j,2]
+      counts_array_mean[i,j,3]<- counts_array_mean[i,j,2]*prob_matrix[j,3]
+      counts_array_mean[i,j,4]<- counts_array_mean[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_mean)){
+    if(k<=11){
+      counts_array_mean[k,j,5]<- 0
+    }
+    else{
+      counts_array_mean[k,j,5]<- counts_array_mean[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+counts_array_upper<- array(NA, dim=c(nrow(data_combined_cats_upper),ncol(data_combined_cats_upper),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_upper)){
+  for(i in 1:nrow(data_combined_cats_upper)){
+      counts_array_upper[i,j,1]<- data_combined_cats_upper[i,j]*prob_matrix[j,1]
+      counts_array_upper[i,j,2]<- counts_array_upper[i,j,1]*prob_matrix[j,2]
+      counts_array_upper[i,j,3]<- counts_array_upper[i,j,2]*prob_matrix[j,3]
+      counts_array_upper[i,j,4]<- counts_array_upper[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_upper)){
+    if(k<=11){
+      counts_array_upper[k,j,5]<- 0
+    }
+    else{
+      counts_array_upper[k,j,5]<- counts_array_upper[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_lower<- array(NA, dim=c(nrow(data_combined_cats_lower),ncol(data_combined_cats_lower),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_lower)){
+  for(i in 1:nrow(data_combined_cats_lower)){
+      counts_array_lower[i,j,1]<- data_combined_cats_lower[i,j]*prob_matrix[j,1]
+      counts_array_lower[i,j,2]<- counts_array_lower[i,j,1]*prob_matrix[j,2]
+      counts_array_lower[i,j,3]<- counts_array_lower[i,j,2]*prob_matrix[j,3]
+      counts_array_lower[i,j,4]<- counts_array_lower[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_lower)){
+    if(k<=11){
+      counts_array_lower[k,j,5]<- 0
+    }
+    else{
+      counts_array_lower[k,j,5]<- counts_array_lower[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
 
 
 ```
@@ -112,49 +231,172 @@ Compute a running total of each category.
 
 length_of_stay<- c(NA,11,11,11,NA)
 
-cumulative_array<- array(NA, dim=c(nrow(data_combined_cats),ncol(data_combined_cats),ncol(prob_matrix)))
+cumulative_array_median<- array(NA, dim=c(nrow(data_combined_cats_median),ncol(data_combined_cats_median),ncol(prob_matrix)))
 
 
-  for(j in 1:ncol(data_combined_cats)){
-    cumulative_array[1,j,]<- counts_array[1,j,]
+  for(j in 1:ncol(data_combined_cats_median)){
+    cumulative_array_median[1,j,]<- counts_array_median[1,j,]
     
-    for(i in 2:nrow(data_combined_cats)){
-      cumulative_array[i,j,1]<-cumulative_array[i-1,j,1]+counts_array[i,j,1]
-      cumulative_array[i,j,5]<-cumulative_array[i-1,j,5]+counts_array[i,j,5]
+    for(i in 2:nrow(data_combined_cats_median)){
+      cumulative_array_median[i,j,1]<-cumulative_array_median[i-1,j,1]+counts_array_median[i,j,1]
+      cumulative_array_median[i,j,5]<-cumulative_array_median[i-1,j,5]+counts_array_median[i,j,5]
     }
 
-    for(k in 2:nrow(data_combined_cats)){
+    for(k in 2:nrow(data_combined_cats_median)){
       if(k<=length_of_stay[2]){
-      cumulative_array[k,j,2]<- cumulative_array[k-1,j,2]+counts_array[k,j,2]
+      cumulative_array_median[k,j,2]<- cumulative_array_median[k-1,j,2]+counts_array_median[k,j,2]
       }
       else {
-        cumulative_array[k,j,2]<-cumulative_array[k-1,j,2]+
-          counts_array[k,j,2]-counts_array[k-length_of_stay[2],j,2]
+        cumulative_array_median[k,j,2]<-cumulative_array_median[k-1,j,2]+
+          counts_array_median[k,j,2]-counts_array_median[k-length_of_stay[2],j,2]
       }
     }
-  for(l in 2:nrow(data_combined_cats)){
+  for(l in 2:nrow(data_combined_cats_median)){
       if(l <= length_of_stay[3]){
-        cumulative_array[l,j,3]<- cumulative_array[l-1,j,3]+counts_array[l,j,3]
+        cumulative_array_median[l,j,3]<- cumulative_array_median[l-1,j,3]+counts_array_median[l,j,3]
       }
     else{
-      cumulative_array[l,j,3]<-cumulative_array[l-1,j,3]+
-          counts_array[l,j,3]-counts_array[l-length_of_stay[3],j,3]
+      cumulative_array_median[l,j,3]<-cumulative_array_median[l-1,j,3]+
+          counts_array_median[l,j,3]-counts_array_median[l-length_of_stay[3],j,3]
     }
   }
-    for(m in 2:nrow(data_combined_cats)){
+    for(m in 2:nrow(data_combined_cats_median)){
     if(m<=length_of_stay[4]){
-      cumulative_array[m,j,4]<- cumulative_array[m-1,j,4]+counts_array[m,j,4]
+      cumulative_array_median[m,j,4]<- cumulative_array_median[m-1,j,4]+counts_array_median[m,j,4]
     }
     else{
-      cumulative_array[m,j,4]<-cumulative_array[m-1,j,4]+
-          counts_array[m,j,4]-counts_array[m-length_of_stay[4],j,4]
+      cumulative_array_median[m,j,4]<-cumulative_array_median[m-1,j,4]+
+          counts_array_median[m,j,4]-counts_array_median[m-length_of_stay[4],j,4]
       }
     }
    
 }
 
-cumulative_array[,2,3]
 
+cumulative_array_mean<- array(NA, dim=c(nrow(data_combined_cats_mean),ncol(data_combined_cats_mean),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_mean)){
+    cumulative_array_mean[1,j,]<- counts_array_mean[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_mean)){
+      cumulative_array_mean[i,j,1]<-cumulative_array_mean[i-1,j,1]+counts_array_mean[i,j,1]
+      cumulative_array_mean[i,j,5]<-cumulative_array_mean[i-1,j,5]+counts_array_mean[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_mean)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_mean[k,j,2]<- cumulative_array_mean[k-1,j,2]+counts_array_mean[k,j,2]
+      }
+      else {
+        cumulative_array_mean[k,j,2]<-cumulative_array_mean[k-1,j,2]+
+          counts_array_mean[k,j,2]-counts_array_mean[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_mean)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_mean[l,j,3]<- cumulative_array_mean[l-1,j,3]+counts_array_mean[l,j,3]
+      }
+    else{
+      cumulative_array_mean[l,j,3]<-cumulative_array_mean[l-1,j,3]+
+          counts_array_mean[l,j,3]-counts_array_mean[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_mean)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_mean[m,j,4]<- cumulative_array_mean[m-1,j,4]+counts_array_mean[m,j,4]
+    }
+    else{
+      cumulative_array_mean[m,j,4]<-cumulative_array_mean[m-1,j,4]+
+          counts_array_mean[m,j,4]-counts_array_mean[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_lower<- array(NA, dim=c(nrow(data_combined_cats_lower),ncol(data_combined_cats_lower),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_lower)){
+    cumulative_array_lower[1,j,]<- counts_array_lower[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_lower)){
+      cumulative_array_lower[i,j,1]<-cumulative_array_lower[i-1,j,1]+counts_array_lower[i,j,1]
+      cumulative_array_lower[i,j,5]<-cumulative_array_lower[i-1,j,5]+counts_array_lower[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_lower)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_lower[k,j,2]<- cumulative_array_lower[k-1,j,2]+counts_array_lower[k,j,2]
+      }
+      else {
+        cumulative_array_lower[k,j,2]<-cumulative_array_lower[k-1,j,2]+
+          counts_array_lower[k,j,2]-counts_array_lower[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_lower)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_lower[l,j,3]<- cumulative_array_lower[l-1,j,3]+counts_array_lower[l,j,3]
+      }
+    else{
+      cumulative_array_lower[l,j,3]<-cumulative_array_lower[l-1,j,3]+
+          counts_array_lower[l,j,3]-counts_array_lower[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_lower)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_lower[m,j,4]<- cumulative_array_lower[m-1,j,4]+counts_array_lower[m,j,4]
+    }
+    else{
+      cumulative_array_lower[m,j,4]<-cumulative_array_lower[m-1,j,4]+
+          counts_array_lower[m,j,4]-counts_array_lower[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_upper<- array(NA, dim=c(nrow(data_combined_cats_upper),ncol(data_combined_cats_upper),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_upper)){
+    cumulative_array_upper[1,j,]<- counts_array_upper[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_upper)){
+      cumulative_array_upper[i,j,1]<-cumulative_array_upper[i-1,j,1]+counts_array_upper[i,j,1]
+      cumulative_array_upper[i,j,5]<-cumulative_array_upper[i-1,j,5]+counts_array_upper[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_upper)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_upper[k,j,2]<- cumulative_array_upper[k-1,j,2]+counts_array_upper[k,j,2]
+      }
+      else {
+        cumulative_array_upper[k,j,2]<-cumulative_array_upper[k-1,j,2]+
+          counts_array_upper[k,j,2]-counts_array_upper[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_upper)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_upper[l,j,3]<- cumulative_array_upper[l-1,j,3]+counts_array_upper[l,j,3]
+      }
+    else{
+      cumulative_array_upper[l,j,3]<-cumulative_array_upper[l-1,j,3]+
+          counts_array_upper[l,j,3]-counts_array_upper[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_upper)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_upper[m,j,4]<- cumulative_array_upper[m-1,j,4]+counts_array_upper[m,j,4]
+    }
+    else{
+      cumulative_array_upper[m,j,4]<-cumulative_array_upper[m-1,j,4]+
+          counts_array_upper[m,j,4]-counts_array_upper[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
 ```
 
 Plot cumulative values over 99 days. 
@@ -164,101 +406,397 @@ Plot cumulative values over 99 days.
 #return to long format for each state
 #severe
 
-severe_wide<-as.data.frame(cbind(rep(1:100),cumulative_array[,,1])) 
-colnames(severe_wide)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+severe_wide_median<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_median)),
+                                        cumulative_array_median[,,1])) 
+colnames(severe_wide_median)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
 
-severe_long<- gather(severe_wide,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+severe_long_median<- gather(severe_wide_median,age_group, 
+                            cumulative_total, '0-19':Homeless,factor_key=TRUE)
 
 
 
-plt_severe<- ggplot(severe_long)+ 
+plt_severe_median<- ggplot(severe_long_median)+ 
   geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
   stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
-  labs(title="Trajectory of Severe Cases",y="Cumulative Total")
+  labs(title="Median Trajectory of Severe Cases",y="Median Cumulative Total")
 
-plt_severe
+plt_severe_median
+
+severe_wide_mean<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_mean)),
+                                        cumulative_array_mean[,,1])) 
+colnames(severe_wide_mean)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+severe_long_mean<- gather(severe_wide_mean,age_group, 
+                            cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+plt_severe_mean<- ggplot(severe_long_mean)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="Mean Trajectory of Severe Cases",y="Mean Cumulative Total")
+
+plt_severe_mean
+
+severe_wide_upper<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_upper)),
+                                        cumulative_array_upper[,,1])) 
+colnames(severe_wide_upper)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+severe_long_upper<- gather(severe_wide_upper,age_group, 
+                            cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+plt_severe_upper<- ggplot(severe_long_upper)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="95th Quantile Trajectory of Severe Cases",y="95th Quantile Cumulative Total")
+
+plt_severe_upper
+
+
+severe_wide_lower<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_lower)),
+                                        cumulative_array_lower[,,1])) 
+colnames(severe_wide_lower)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+severe_long_lower<- gather(severe_wide_lower,age_group, 
+                            cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+plt_severe_lower<- ggplot(severe_long_lower)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="5th Quantile Trajectory of Severe Cases",y="5th Quantile Cumulative Total")
+
+plt_severe_lower
 ###############################
-deaths_wide<-as.data.frame(cbind(rep(1:100),cumulative_array[,,5])) 
-colnames(deaths_wide)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+deaths_wide_median<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_median)),
+                                        cumulative_array_median[,,5])) 
+colnames(deaths_wide_median)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
 
-deaths_long<- gather(deaths_wide,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+deaths_long_median<- gather(deaths_wide_median,age_group,
+                            cumulative_total, '0-19':Homeless,factor_key=TRUE)
 
 
 
-plt_deaths<- ggplot(deaths_long)+ 
+plt_deaths_median<- ggplot(deaths_long_median)+ 
   geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
   stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
-  labs(title="Trajectory of Deaths",y="Cumulative Total")
+  labs(title="Median Trajectory of Deaths",y="Median Cumulative Total")
 
-plt_deaths
+plt_deaths_median
+
+deaths_wide_mean<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_mean)),
+                                        cumulative_array_mean[,,5])) 
+colnames(deaths_wide_mean)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+deaths_long_mean<- gather(deaths_wide_mean,age_group,
+                            cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+plt_deaths_mean<- ggplot(deaths_long_mean)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="Mean Trajectory of Deaths",y="Mean Cumulative Total")
+
+plt_deaths_mean
+
+deaths_wide_upper<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_upper)),
+                                        cumulative_array_upper[,,5])) 
+colnames(deaths_wide_upper)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+deaths_long_upper<- gather(deaths_wide_upper,age_group,
+                            cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+plt_deaths_upper<- ggplot(deaths_long_upper)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="95th Quantile Trajectory of Deaths",y="95th Quantile Cumulative Total")
+
+plt_deaths_upper
+
+deaths_wide_lower<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_lower)),
+                                        cumulative_array_lower[,,5])) 
+colnames(deaths_wide_lower)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+deaths_long_lower<- gather(deaths_wide_lower,age_group,
+                            cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+plt_deaths_lower<- ggplot(deaths_long_lower)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="5th Quantile Trajectory of Deaths",y="5th Quantile Cumulative Total")
+
+plt_deaths_lower
 #################################
 
 
-hosp_wide<-as.data.frame(cbind(rep(1:100),cumulative_array[,,2])) 
-colnames(hosp_wide)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+hosp_wide_median<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_median)),
+                                      cumulative_array_median[,,2])) 
+colnames(hosp_wide_median)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
 
-hosp_long<- gather(hosp_wide,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+hosp_long_median<- gather(hosp_wide_median,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
 
 
 
-plt_hosp<- ggplot(hosp_long)+ 
+plt_hosp_median<- ggplot(hosp_long_median)+ 
   geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
   stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
-  labs(title="Trajectory of Hospitalizations",y="Cumulative Total")
+  labs(title="Median Trajectory of Hospitalizations",y="Median Cumulative Total")
 
-plt_hosp
+plt_hosp_median
+
+
+hosp_wide_mean<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_mean)),
+                                      cumulative_array_mean[,,2])) 
+colnames(hosp_wide_mean)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+hosp_long_mean<- gather(hosp_wide_mean,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+plt_hosp_mean<- ggplot(hosp_long_mean)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="mean Trajectory of Hospitalizations",y="mean Cumulative Total")
+
+plt_hosp_mean
+
+
+hosp_wide_upper<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_upper)),
+                                      cumulative_array_upper[,,2])) 
+colnames(hosp_wide_upper)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+hosp_long_upper<- gather(hosp_wide_upper,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+plt_hosp_upper<- ggplot(hosp_long_upper)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="95th Quantile Trajectory of Hospitalizations",y="95th Quantile Cumulative Total")
+
+plt_hosp_upper
+
+
+hosp_wide_lower<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_lower)),
+                                      cumulative_array_lower[,,2])) 
+colnames(hosp_wide_lower)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+hosp_long_lower<- gather(hosp_wide_lower,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+plt_hosp_lower<- ggplot(hosp_long_lower)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="5th Quantile Trajectory of Hospitalizations",y="5th Quantile Cumulative Total")
+
+plt_hosp_lower
 
 ####################################
 
 
 
-ICU_wide<-as.data.frame(cbind(rep(1:100),cumulative_array[,,3])) 
-colnames(ICU_wide)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+ICU_wide_median<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_median)),
+                                     cumulative_array_median[,,3])) 
+colnames(ICU_wide_median)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
 
-ICU_long<- gather(ICU_wide,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+ICU_long_median<- gather(ICU_wide_median,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
 
 
 
 
-plt_ICU<- ggplot(ICU_long)+ 
+plt_ICU_median<- ggplot(ICU_long_median)+ 
   geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
   stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
-  labs(title="Trajectory of ICU Utilization",y="Cumulative Total")
+  labs(title="Median Trajectory of ICU Utilization",y="Median Cumulative Total")
 
-plt_ICU
+plt_ICU_median
+
+ICU_wide_mean<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_mean)),
+                                     cumulative_array_mean[,,3])) 
+colnames(ICU_wide_mean)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+ICU_long_mean<- gather(ICU_wide_mean,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+
+plt_ICU_mean<- ggplot(ICU_long_mean)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="Mean Trajectory of ICU Utilization",y="Mean Cumulative Total")
+
+plt_ICU_mean
+
+ICU_wide_upper<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_upper)),
+                                     cumulative_array_upper[,,3])) 
+colnames(ICU_wide_upper)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+ICU_long_upper<- gather(ICU_wide_upper,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+
+plt_ICU_upper<- ggplot(ICU_long_upper)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="95th Quantile Trajectory of ICU Utilization",y="95th Quantile Cumulative Total")
+
+plt_ICU_upper
+
+
+ICU_wide_lower<-as.data.frame(cbind(rep(1:nrow(data_combined_cats_lower)),
+                                     cumulative_array_lower[,,3])) 
+colnames(ICU_wide_lower)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+ICU_long_lower<- gather(ICU_wide_lower,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+
+
+plt_ICU_lower<- ggplot(ICU_long_lower)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="5th Quantile Trajectory of ICU Utilization",y="5th Quantile Cumulative Total")
+
+plt_ICU_lower
 
 #################################################
 
 
-vent_wide<-as.data.frame(cbind(rep(1:100),cumulative_array[,,4])) 
-colnames(vent_wide)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+vent_wide_median <-as.data.frame(cbind(rep(1:nrow(data_combined_cats_median)),
+                                       cumulative_array_median[,,4])) 
+colnames(vent_wide_median)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
 
-vent_long<- gather(vent_wide,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+vent_long_median<- gather(vent_wide_median,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
 
 
-plt_vent<- ggplot(vent_long)+ 
+plt_vent_median<- ggplot(vent_long_median)+ 
   geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
   stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
-  labs(title="Trajectory of Vent Utilization",y="Cumulative Total")
+  labs(title="Median Trajectory of Vent Utilization",y="Median Cumulative Total")
 
-plt_vent
+plt_vent_median
+
+
+
+vent_wide_mean <-as.data.frame(cbind(rep(1:nrow(data_combined_cats_mean)),
+                                       cumulative_array_mean[,,4])) 
+colnames(vent_wide_mean)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+vent_long_mean<- gather(vent_wide_mean,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+plt_vent_mean<- ggplot(vent_long_mean)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="Mean Trajectory of Vent Utilization",y="Mean Cumulative Total")
+
+plt_vent_mean
+
+
+
+vent_wide_upper <-as.data.frame(cbind(rep(1:nrow(data_combined_cats_upper)),
+                                       cumulative_array_upper[,,4])) 
+colnames(vent_wide_upper)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+vent_long_upper<- gather(vent_wide_upper,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+plt_vent_upper<- ggplot(vent_long_upper)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="95th Quantile Trajectory of Vent Utilization",y="95th Quantile Cumulative Total")
+
+plt_vent_upper
+
+
+
+vent_wide_lower <-as.data.frame(cbind(rep(1:nrow(data_combined_cats_lower)),
+                                       cumulative_array_lower[,,4])) 
+colnames(vent_wide_lower)<- c("Day","0-19","20-34","35-59","60-64","65-74","75+","HCW","Homeless")
+
+vent_long_lower<- gather(vent_wide_lower,age_group, cumulative_total, '0-19':Homeless,factor_key=TRUE)
+
+
+plt_vent_lower<- ggplot(vent_long_lower)+ 
+  geom_line(aes(y= cumulative_total, x=Day,color=age_group))+
+  stat_smooth(aes(y= cumulative_total,x=Day), method=lm, formula=y~poly(x,10), se=FALSE)+
+  labs(title="5th Quantile Trajectory of Vent Utilization",y="5th Quantile Cumulative Total")
+
+plt_vent_lower
+
+
 ```
 
 ```{r, message=FALSE, warning=FALSE, echo=TRUE}
-cumulative_totals<- matrix(NA, nrow=nrow(data_combined_cats),ncol=ncol(prob_matrix))
+cumulative_totals_median<- matrix(NA, nrow=nrow(data_combined_cats_median),ncol=ncol(prob_matrix))
 
 for(j in 1:ncol(prob_matrix)){
-  for(i in 1:nrow(data_combined_cats)){
-  cumulative_totals[i,j]<- sum(cumulative_array[i,,j])
+  for(i in 1:nrow(data_combined_cats_median)){
+  cumulative_totals_median[i,j]<- sum(cumulative_array_median[i,,j])
   }
 }
 
-cumulative_totals<- cbind(rep(1:100), cumulative_totals)
+cumulative_totals_mean<- matrix(NA, nrow=nrow(data_combined_cats_mean),ncol=ncol(prob_matrix))
 
+for(j in 1:ncol(prob_matrix)){
+  for(i in 1:nrow(data_combined_cats_mean)){
+  cumulative_totals_mean[i,j]<- sum(cumulative_array_mean[i,,j])
+  }
+}
+
+cumulative_totals_upper<- matrix(NA, nrow=nrow(data_combined_cats_upper),ncol=ncol(prob_matrix))
+
+for(j in 1:ncol(prob_matrix)){
+  for(i in 1:nrow(data_combined_cats_upper)){
+  cumulative_totals_upper[i,j]<- sum(cumulative_array_upper[i,,j])
+  }
+}
+
+cumulative_totals_lower<- matrix(NA, nrow=nrow(data_combined_cats_lower),ncol=ncol(prob_matrix))
+
+for(j in 1:ncol(prob_matrix)){
+  for(i in 1:nrow(data_combined_cats_lower)){
+  cumulative_totals_lower[i,j]<- sum(cumulative_array_lower[i,,j])
+  }
+}
+
+
+
+##########################################
+
+Day<- c(rep(1:nrow(data_combined_cats_median)),rep(1:nrow(data_combined_cats_median)),
+         rep(1:nrow(data_combined_cats_median)),rep(1:nrow(data_combined_cats_median)))
+
+Summary_Statistic<- c(rep("Median",nrow(data_combined_cats_median)),
+                      rep("Mean",nrow(data_combined_cats_median)),
+                      rep("Upper",nrow(data_combined_cats_median)),
+                      rep("Lower",nrow(data_combined_cats_median)))
+
+Cumulative_Total<- c(cumulative_totals_median[,1],cumulative_totals_mean[,1],
+                     cumulative_totals_upper[,1],cumulative_totals_lower[,1])
+
+severe_cumulative_totals<- cbind(Day,Summary_Statistic,Cumulative_Total)
+
+
+as.numeric(severe_cumulative_totals[,1])
+as.numeric(severe_cumulative_totals[,3])
 
 plt_totals_severe<- ggplot() +
-  geom_line(aes(y=cumulative_totals[,2],x=cumulative_totals[,1]))+
-  stat_smooth(aes(y=cumulative_totals[,2],x=cumulative_totals[,1]),
+  geom_line(aes(y=severe_cumulative_totals[,3],
+                x=severe_cumulative_totals[,1],
+                color=severe_cumulative_totals[,2]))+
+  stat_smooth(aes(y=severe_cumulative_totals[,3],
+                  x=severe_cumulative_totals[,1]),
               method=lm, formula=y~poly(x,10),se=FALSE)+
   labs(title="Total Severe Cases", x="Day", y="Cumulative Total")
 plt_totals_severe
