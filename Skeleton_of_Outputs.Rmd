@@ -10,7 +10,7 @@ This is a document for a code skeleton for the outputs section of the project.
 Loading in relevant data sources for this: 
 ```{r, message=FALSE, echo=TRUE, warning=FALSE}
 
-#setwd('~/Dropbox/COVID-BaltimoreCity//')
+setwd('~/Dropbox/COVID-BaltimoreCity/Output_20200322_v2')
 
 require(socialmixr)
 require(xlsx)
@@ -21,85 +21,659 @@ require(dplyr)
 require(ggplot2) 
 require(tidyr)
 #load in data, subset incident cases/day (eventually should be symptomatic incident cases)
-data_infected<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r017__100.csv")
+data_infected_R017_100<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r017__100.csv")
+data_infected_R017_75<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r017__75.csv")
+data_infected_R017_50<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r017__50.csv")
+data_infected_R021_100<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r021__100.csv")
+data_infected_R021_75<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r021__75.csv")
+data_infected_R021_50<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r021__50.csv")
+data_infected_R025_100<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r025__100.csv")
+data_infected_R025_75<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r025__75.csv")
+data_infected_R025_50<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r025__50.csv")
 
 
-
-data_incident_median<- data_infected%>%
+data_incident_median_R017_100<- data_infected_R017_100%>%
   select(incid_I1_median,incid_I2_median,incid_I3_median,incid_I4_median,incid_I5_median,
          incid_I6_median,incid_I7_median,incid_I8_median,incid_I9_median,
          incid_I10_median,incid_I11_median,incid_I12_median,incid_I13_median,incid_I14_median)
 
-data_incident_mean<- data_infected%>%
+data_incident_mean_R017_100<- data_infected_R017_100%>%
   select(incid_I1_mean,incid_I2_mean,incid_I3_mean,incid_I4_mean,incid_I5_mean,
          incid_I6_mean,incid_I7_mean,incid_I8_mean,incid_I9_mean,incid_I10_mean,
          incid_I11_mean,incid_I12_mean,incid_I13_mean,incid_I14_mean)
 
-data_incident_upper<- data_infected%>%
+data_incident_upper_R017_100<- data_infected_R017_100%>%
   select(incid_I1_Q4,incid_I2_Q4,incid_I3_Q4,incid_I4_Q4,incid_I5_Q4,incid_I6_Q4,incid_I7_Q4,
          incid_I8_Q4,incid_I9_Q4,incid_I10_Q4,incid_I11_Q4,incid_I12_Q4,incid_I13_Q4,incid_I14_Q4)
 
-data_incident_lower<- data_infected%>%
+data_incident_lower_R017_100<- data_infected_R017_100%>%
   select(incid_I1_Q1,incid_I2_Q1,incid_I3_Q1,incid_I4_Q1,incid_I5_Q1,incid_I6_Q1,incid_I7_Q1,
          incid_I8_Q1,incid_I9_Q1,incid_I10_Q1,incid_I11_Q1,incid_I12_Q1,incid_I13_Q1,incid_I14_Q1)
 
+##########################
+data_incident_median_R017_75<- data_infected_R017_75%>%
+  select(incid_I1_median,incid_I2_median,incid_I3_median,incid_I4_median,incid_I5_median,
+         incid_I6_median,incid_I7_median,incid_I8_median,incid_I9_median,
+         incid_I10_median,incid_I11_median,incid_I12_median,incid_I13_median,incid_I14_median)
 
+data_incident_mean_R017_75<- data_infected_R017_75%>%
+  select(incid_I1_mean,incid_I2_mean,incid_I3_mean,incid_I4_mean,incid_I5_mean,
+         incid_I6_mean,incid_I7_mean,incid_I8_mean,incid_I9_mean,incid_I10_mean,
+         incid_I11_mean,incid_I12_mean,incid_I13_mean,incid_I14_mean)
+
+data_incident_upper_R017_75<- data_infected_R017_75%>%
+  select(incid_I1_Q4,incid_I2_Q4,incid_I3_Q4,incid_I4_Q4,incid_I5_Q4,incid_I6_Q4,incid_I7_Q4,
+         incid_I8_Q4,incid_I9_Q4,incid_I10_Q4,incid_I11_Q4,incid_I12_Q4,incid_I13_Q4,incid_I14_Q4)
+
+data_incident_lower_R017_75<- data_infected_R017_75%>%
+  select(incid_I1_Q1,incid_I2_Q1,incid_I3_Q1,incid_I4_Q1,incid_I5_Q1,incid_I6_Q1,incid_I7_Q1,
+         incid_I8_Q1,incid_I9_Q1,incid_I10_Q1,incid_I11_Q1,incid_I12_Q1,incid_I13_Q1,incid_I14_Q1)
+###########################
+data_incident_median_R017_50<- data_infected_R017_50%>%
+  select(incid_I1_median,incid_I2_median,incid_I3_median,incid_I4_median,incid_I5_median,
+         incid_I6_median,incid_I7_median,incid_I8_median,incid_I9_median,
+         incid_I10_median,incid_I11_median,incid_I12_median,incid_I13_median,incid_I14_median)
+
+data_incident_mean_R017_50<- data_infected_R017_50%>%
+  select(incid_I1_mean,incid_I2_mean,incid_I3_mean,incid_I4_mean,incid_I5_mean,
+         incid_I6_mean,incid_I7_mean,incid_I8_mean,incid_I9_mean,incid_I10_mean,
+         incid_I11_mean,incid_I12_mean,incid_I13_mean,incid_I14_mean)
+
+data_incident_upper_R017_50<- data_infected_R017_50%>%
+  select(incid_I1_Q4,incid_I2_Q4,incid_I3_Q4,incid_I4_Q4,incid_I5_Q4,incid_I6_Q4,incid_I7_Q4,
+         incid_I8_Q4,incid_I9_Q4,incid_I10_Q4,incid_I11_Q4,incid_I12_Q4,incid_I13_Q4,incid_I14_Q4)
+
+data_incident_lower_R017_50<- data_infected_R017_50%>%
+  select(incid_I1_Q1,incid_I2_Q1,incid_I3_Q1,incid_I4_Q1,incid_I5_Q1,incid_I6_Q1,incid_I7_Q1,
+         incid_I8_Q1,incid_I9_Q1,incid_I10_Q1,incid_I11_Q1,incid_I12_Q1,incid_I13_Q1,incid_I14_Q1)
+############################
+data_incident_median_R021_100<- data_infected_R021_100%>%
+  select(incid_I1_median,incid_I2_median,incid_I3_median,incid_I4_median,incid_I5_median,
+         incid_I6_median,incid_I7_median,incid_I8_median,incid_I9_median,
+         incid_I10_median,incid_I11_median,incid_I12_median,incid_I13_median,incid_I14_median)
+
+data_incident_mean_R021_100<- data_infected_R021_100%>%
+  select(incid_I1_mean,incid_I2_mean,incid_I3_mean,incid_I4_mean,incid_I5_mean,
+         incid_I6_mean,incid_I7_mean,incid_I8_mean,incid_I9_mean,incid_I10_mean,
+         incid_I11_mean,incid_I12_mean,incid_I13_mean,incid_I14_mean)
+
+data_incident_upper_R021_100<- data_infected_R021_100%>%
+  select(incid_I1_Q4,incid_I2_Q4,incid_I3_Q4,incid_I4_Q4,incid_I5_Q4,incid_I6_Q4,incid_I7_Q4,
+         incid_I8_Q4,incid_I9_Q4,incid_I10_Q4,incid_I11_Q4,incid_I12_Q4,incid_I13_Q4,incid_I14_Q4)
+
+data_incident_lower_R021_100<- data_infected_R021_100%>%
+  select(incid_I1_Q1,incid_I2_Q1,incid_I3_Q1,incid_I4_Q1,incid_I5_Q1,incid_I6_Q1,incid_I7_Q1,
+         incid_I8_Q1,incid_I9_Q1,incid_I10_Q1,incid_I11_Q1,incid_I12_Q1,incid_I13_Q1,incid_I14_Q1)
+############################
+data_incident_median_R021_75<- data_infected_R021_75%>%
+  select(incid_I1_median,incid_I2_median,incid_I3_median,incid_I4_median,incid_I5_median,
+         incid_I6_median,incid_I7_median,incid_I8_median,incid_I9_median,
+         incid_I10_median,incid_I11_median,incid_I12_median,incid_I13_median,incid_I14_median)
+
+data_incident_mean_R021_75<- data_infected_R021_75%>%
+  select(incid_I1_mean,incid_I2_mean,incid_I3_mean,incid_I4_mean,incid_I5_mean,
+         incid_I6_mean,incid_I7_mean,incid_I8_mean,incid_I9_mean,incid_I10_mean,
+         incid_I11_mean,incid_I12_mean,incid_I13_mean,incid_I14_mean)
+
+data_incident_upper_R021_75<- data_infected_R021_75%>%
+  select(incid_I1_Q4,incid_I2_Q4,incid_I3_Q4,incid_I4_Q4,incid_I5_Q4,incid_I6_Q4,incid_I7_Q4,
+         incid_I8_Q4,incid_I9_Q4,incid_I10_Q4,incid_I11_Q4,incid_I12_Q4,incid_I13_Q4,incid_I14_Q4)
+
+data_incident_lower_R021_75<- data_infected_R021_75%>%
+  select(incid_I1_Q1,incid_I2_Q1,incid_I3_Q1,incid_I4_Q1,incid_I5_Q1,incid_I6_Q1,incid_I7_Q1,
+         incid_I8_Q1,incid_I9_Q1,incid_I10_Q1,incid_I11_Q1,incid_I12_Q1,incid_I13_Q1,incid_I14_Q1)
+##############################
+data_incident_median_R021_50<- data_infected_R021_50%>%
+  select(incid_I1_median,incid_I2_median,incid_I3_median,incid_I4_median,incid_I5_median,
+         incid_I6_median,incid_I7_median,incid_I8_median,incid_I9_median,
+         incid_I10_median,incid_I11_median,incid_I12_median,incid_I13_median,incid_I14_median)
+
+data_incident_mean_R021_50<- data_infected_R021_50%>%
+  select(incid_I1_mean,incid_I2_mean,incid_I3_mean,incid_I4_mean,incid_I5_mean,
+         incid_I6_mean,incid_I7_mean,incid_I8_mean,incid_I9_mean,incid_I10_mean,
+         incid_I11_mean,incid_I12_mean,incid_I13_mean,incid_I14_mean)
+
+data_incident_upper_R021_50<- data_infected_R021_50%>%
+  select(incid_I1_Q4,incid_I2_Q4,incid_I3_Q4,incid_I4_Q4,incid_I5_Q4,incid_I6_Q4,incid_I7_Q4,
+         incid_I8_Q4,incid_I9_Q4,incid_I10_Q4,incid_I11_Q4,incid_I12_Q4,incid_I13_Q4,incid_I14_Q4)
+
+data_incident_lower_R021_50<- data_infected_R021_50%>%
+  select(incid_I1_Q1,incid_I2_Q1,incid_I3_Q1,incid_I4_Q1,incid_I5_Q1,incid_I6_Q1,incid_I7_Q1,
+         incid_I8_Q1,incid_I9_Q1,incid_I10_Q1,incid_I11_Q1,incid_I12_Q1,incid_I13_Q1,incid_I14_Q1)
+
+#############################
+data_incident_median_R025_100<- data_infected_R025_100%>%
+  select(incid_I1_median,incid_I2_median,incid_I3_median,incid_I4_median,incid_I5_median,
+         incid_I6_median,incid_I7_median,incid_I8_median,incid_I9_median,
+         incid_I10_median,incid_I11_median,incid_I12_median,incid_I13_median,incid_I14_median)
+
+data_incident_mean_R025_100<- data_infected_R025_100%>%
+  select(incid_I1_mean,incid_I2_mean,incid_I3_mean,incid_I4_mean,incid_I5_mean,
+         incid_I6_mean,incid_I7_mean,incid_I8_mean,incid_I9_mean,incid_I10_mean,
+         incid_I11_mean,incid_I12_mean,incid_I13_mean,incid_I14_mean)
+
+data_incident_upper_R025_100<- data_infected_R025_100%>%
+  select(incid_I1_Q4,incid_I2_Q4,incid_I3_Q4,incid_I4_Q4,incid_I5_Q4,incid_I6_Q4,incid_I7_Q4,
+         incid_I8_Q4,incid_I9_Q4,incid_I10_Q4,incid_I11_Q4,incid_I12_Q4,incid_I13_Q4,incid_I14_Q4)
+
+data_incident_lower_R025_100<- data_infected_R025_100%>%
+  select(incid_I1_Q1,incid_I2_Q1,incid_I3_Q1,incid_I4_Q1,incid_I5_Q1,incid_I6_Q1,incid_I7_Q1,
+         incid_I8_Q1,incid_I9_Q1,incid_I10_Q1,incid_I11_Q1,incid_I12_Q1,incid_I13_Q1,incid_I14_Q1)
+#############################
+data_incident_median_R025_75<- data_infected_R025_75%>%
+  select(incid_I1_median,incid_I2_median,incid_I3_median,incid_I4_median,incid_I5_median,
+         incid_I6_median,incid_I7_median,incid_I8_median,incid_I9_median,
+         incid_I10_median,incid_I11_median,incid_I12_median,incid_I13_median,incid_I14_median)
+
+data_incident_mean_R025_75<- data_infected_R025_75%>%
+  select(incid_I1_mean,incid_I2_mean,incid_I3_mean,incid_I4_mean,incid_I5_mean,
+         incid_I6_mean,incid_I7_mean,incid_I8_mean,incid_I9_mean,incid_I10_mean,
+         incid_I11_mean,incid_I12_mean,incid_I13_mean,incid_I14_mean)
+
+data_incident_upper_R025_75<- data_infected_R025_75%>%
+  select(incid_I1_Q4,incid_I2_Q4,incid_I3_Q4,incid_I4_Q4,incid_I5_Q4,incid_I6_Q4,incid_I7_Q4,
+         incid_I8_Q4,incid_I9_Q4,incid_I10_Q4,incid_I11_Q4,incid_I12_Q4,incid_I13_Q4,incid_I14_Q4)
+
+data_incident_lower_R025_75<- data_infected_R025_75%>%
+  select(incid_I1_Q1,incid_I2_Q1,incid_I3_Q1,incid_I4_Q1,incid_I5_Q1,incid_I6_Q1,incid_I7_Q1,
+         incid_I8_Q1,incid_I9_Q1,incid_I10_Q1,incid_I11_Q1,incid_I12_Q1,incid_I13_Q1,incid_I14_Q1)
+###############################
+data_incident_median_R025_50<- data_infected_R025_50%>%
+  select(incid_I1_median,incid_I2_median,incid_I3_median,incid_I4_median,incid_I5_median,
+         incid_I6_median,incid_I7_median,incid_I8_median,incid_I9_median,
+         incid_I10_median,incid_I11_median,incid_I12_median,incid_I13_median,incid_I14_median)
+
+data_incident_mean_R025_50<- data_infected_R025_50%>%
+  select(incid_I1_mean,incid_I2_mean,incid_I3_mean,incid_I4_mean,incid_I5_mean,
+         incid_I6_mean,incid_I7_mean,incid_I8_mean,incid_I9_mean,incid_I10_mean,
+         incid_I11_mean,incid_I12_mean,incid_I13_mean,incid_I14_mean)
+
+data_incident_upper_R025_50<- data_infected_R025_50%>%
+  select(incid_I1_Q4,incid_I2_Q4,incid_I3_Q4,incid_I4_Q4,incid_I5_Q4,incid_I6_Q4,incid_I7_Q4,
+         incid_I8_Q4,incid_I9_Q4,incid_I10_Q4,incid_I11_Q4,incid_I12_Q4,incid_I13_Q4,incid_I14_Q4)
+
+data_incident_lower_R025_50<- data_infected_R025_50%>%
+  select(incid_I1_Q1,incid_I2_Q1,incid_I3_Q1,incid_I4_Q1,incid_I5_Q1,incid_I6_Q1,incid_I7_Q1,
+         incid_I8_Q1,incid_I9_Q1,incid_I10_Q1,incid_I11_Q1,incid_I12_Q1,incid_I13_Q1,incid_I14_Q1)
 
 #consolidate age categories, 1-4 is now cat1, 5-6 is now cat2, 7-9 is now cat3, 10 is cat 4, 11 is cat5, 12 is cat 6, HCW is cat 7, homeless is cat 8 
 
 
-data_incident_median<- data_incident_median%>%
+data_incident_median_R017_100<- data_incident_median_R017_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
   mutate(cat2=rowSums(.[5:6]))%>%
   mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10]))%>%
-  mutate(cat5=rowSums(.[11]))%>%
-  mutate(cat6=rowSums(.[12]))%>%
-  mutate(cat7=rowSums(.[13]))%>%
-  mutate(cat8=rowSums(.[14]))
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
 
-data_incident_mean<- data_incident_mean%>%
+
+data_incident_mean_R017_100<- data_incident_mean_R017_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
   mutate(cat2=rowSums(.[5:6]))%>%
   mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10]))%>%
-  mutate(cat5=rowSums(.[11]))%>%
-  mutate(cat6=rowSums(.[12]))%>%
-  mutate(cat7=rowSums(.[13]))%>%
-  mutate(cat8=rowSums(.[14]))
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
 
 
-data_incident_lower<- data_incident_lower%>%
+data_incident_upper_R017_100<- data_incident_upper_R017_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
   mutate(cat2=rowSums(.[5:6]))%>%
   mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10]))%>%
-  mutate(cat5=rowSums(.[11]))%>%
-  mutate(cat6=rowSums(.[12]))%>%
-  mutate(cat7=rowSums(.[13]))%>%
-  mutate(cat8=rowSums(.[14]))
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
 
-data_incident_upper<- data_incident_upper%>%
+
+data_incident_lower_R017_100<- data_incident_lower_R017_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
   mutate(cat2=rowSums(.[5:6]))%>%
   mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10]))%>%
-  mutate(cat5=rowSums(.[11]))%>%
-  mutate(cat6=rowSums(.[12]))%>%
-  mutate(cat7=rowSums(.[13]))%>%
-  mutate(cat8=rowSums(.[14]))
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
 
-data_combined_cats_median<- data_incident_median%>%
-  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7,cat8)
+####################################
 
-data_combined_cats_mean<- data_incident_mean%>%
-  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7,cat8)
+data_incident_median_R017_75<- data_incident_median_R017_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
 
-data_combined_cats_upper<- data_incident_upper%>%
-  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7,cat8)
 
-data_combined_cats_lower<- data_incident_lower%>%
-  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7,cat8)
+data_incident_mean_R017_75<- data_incident_mean_R017_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_upper_R017_75<- data_incident_upper_R017_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_lower_R017_75<- data_incident_lower_R017_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+#######################################
+
+data_incident_median_R017_50<- data_incident_median_R017_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_mean_R017_50<- data_incident_mean_R017_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_upper_R017_50<- data_incident_upper_R017_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_lower_R017_50<- data_incident_lower_R017_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+########################################
+
+data_incident_median_R021_100<- data_incident_median_R021_100%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_mean_R021_100<- data_incident_mean_R021_100%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_upper_R021_100<- data_incident_upper_R021_100%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_lower_R021_100<- data_incident_lower_R021_100%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+########################################
+
+data_incident_median_R021_75<- data_incident_median_R021_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_mean_R021_75<- data_incident_mean_R021_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_upper_R021_75<- data_incident_upper_R021_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_lower_R021_75<- data_incident_lower_R021_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+########################################
+
+data_incident_median_R021_50<- data_incident_median_R021_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_mean_R021_50<- data_incident_mean_R021_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_upper_R021_50<- data_incident_upper_R021_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_lower_R021_50<- data_incident_lower_R021_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+#########################################
+
+data_incident_median_R025_100<- data_incident_median_R025_100%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_mean_R025_100<- data_incident_mean_R025_100%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_upper_R025_100<- data_incident_upper_R025_100%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_lower_R025_100<- data_incident_lower_R025_100%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+###########################################
+
+data_incident_median_R025_75<- data_incident_median_R025_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_mean_R025_75<- data_incident_mean_R025_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_upper_R025_75<- data_incident_upper_R025_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_lower_R025_75<- data_incident_lower_R025_75%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+#####################################
+
+data_incident_median_R025_50<- data_incident_median_R025_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_mean_R025_50<- data_incident_mean_R025_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_upper_R025_50<- data_incident_upper_R025_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+
+
+data_incident_lower_R025_50<- data_incident_lower_R025_50%>%
+  mutate(cat1=rowSums(.[1:4]))%>%
+  mutate(cat2=rowSums(.[5:6]))%>%
+  mutate(cat3=rowSums(.[7:9]))%>%
+  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat5=rowSums(.[12]))%>%
+  mutate(cat6=rowSums(.[13]))%>%
+  mutate(cat7=rowSums(.[14]))
+########################################
+data_combined_cats_median_R017_100<- data_incident_median_R017_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_mean_R017_100<- data_incident_mean_R017_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_upper_R017_100<- data_incident_upper_R017_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_lower_R017_100<- data_incident_lower_R017_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+#########################################
+data_combined_cats_median_R017_75<- data_incident_median_R017_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_mean_R017_75<- data_incident_mean_R017_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_upper_R017_75<- data_incident_upper_R017_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_lower_R017_75<- data_incident_lower_R017_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+####################################
+data_combined_cats_median_R017_50<- data_incident_median_R017_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_mean_R017_50<- data_incident_mean_R017_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_upper_R017_50<- data_incident_upper_R017_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_lower_R017_50<- data_incident_lower_R017_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+#####################################
+data_combined_cats_median_R021_100<- data_incident_median_R021_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_mean_R021_100<- data_incident_mean_R021_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_upper_R021_100<- data_incident_upper_R021_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_lower_R021_100<- data_incident_lower_R021_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+#####################################
+data_combined_cats_median_R021_75<- data_incident_median_R021_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_mean_R021_75<- data_incident_mean_R021_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_upper_R021_75<- data_incident_upper_R021_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_lower_R021_75<- data_incident_lower_R021_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+#######################################
+data_combined_cats_median_R021_50<- data_incident_median_R021_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_mean_R021_50<- data_incident_mean_R021_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_upper_R021_50<- data_incident_upper_R021_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_lower_R021_50<- data_incident_lower_R021_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+#######################################
+data_combined_cats_median_R025_100<- data_incident_median_R025_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_mean_R025_100<- data_incident_mean_R025_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_upper_R025_100<- data_incident_upper_R025_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_lower_R025_100<- data_incident_lower_R025_100%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+########################################
+data_combined_cats_median_R025_75<- data_incident_median_R025_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_mean_R025_75<- data_incident_mean_R025_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_upper_R025_75<- data_incident_upper_R025_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_lower_R025_75<- data_incident_lower_R025_75%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+##########################################
+data_combined_cats_median_R025_50<- data_incident_median_R025_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_mean_R025_50<- data_incident_mean_R025_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_upper_R025_50<- data_incident_upper_R025_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+data_combined_cats_lower_R025_50<- data_incident_lower_R025_50%>%
+  select(cat1,cat2,cat3,cat4,cat5,cat6,cat7)
+
+
+
+```
+
+
+```{r, message=FALSE, warning=FALSE, echo=TRUE}
 
 #working probabilities for severe cases, hospitalization, ICU, vent and death. 
 #these are nested conditional probabilities, and they rely on the following  assumptions: 
@@ -111,15 +685,22 @@ data_combined_cats_lower<- data_incident_lower%>%
 # we assume that 50% of ventilated cases die, again this is projected down to age groups. 
 #HCW and homeless people have the same probabilities as people in category 4
 
-prob_severe<- c(0.0318, 0.043, 0.197, 0.336,0.378,0.409,0.336,0.336)
+#for now we are assuming the same number of incident infections in each category to simplify the calculations. 
 
-prob_hospitalized<- rep(1,ncol(data_combined_cats_median))
+#suppose all 8 categories have 100 people (100 incident infections on a given day)
 
-prob_ICU<- c(0.15,0.15,0.2,0.223,0.27,0.3,0.223,0.223)
+#we are starting with the following assumptions about the proportion in each group that develop severe infections- groups are in ascending order of age with the last two groups being HCWs and homeless people we apply the assumptions we make for the 60-64 y.o. to them : 
 
-prob_vent<-c(0.1,0.1,0.125,0.2,0.318,0.337,0.2,0.2)
+#these are loosely based on an average of the proportion of poeple 
+prob_severe<- c(0.0318, 0.043, 0.197, 0.357,0.409,0.357,0.357)
 
-prob_death<-c(0.2,0.2,0.2,0.46,0.49,0.59,0.46,0.46)
+prob_hospitalized<- rep(1,ncol(data_combined_cats_median_R017_100))
+
+prob_ICU<- c(0.15,0.15,0.2,0.247,0.3,0.247,0.247)
+
+prob_vent<-c(0.1,0.1,0.125,0.259,0.337,0.259,0.259)
+
+prob_death<-c(0.2,0.2,0.2,0.475,0.59,0.475,0.475)
 
 prob_matrix<- cbind(prob_severe,prob_hospitalized,prob_ICU,
                     prob_vent,prob_death)
@@ -139,89 +720,768 @@ Now calculate the number in of severe, hospitalized, ICU and vented infections a
 #note this categorization is NOT a disease progression, a person gets assigned based on the worst state they could possibly reach. 
 
 
-counts_array_median<- array(NA, dim=c(nrow(data_combined_cats_median),ncol(data_combined_cats_median),ncol(prob_matrix)))
+counts_array_median_R017_100<- array(NA, dim=c(nrow(data_combined_cats_median_R017_100),ncol(data_combined_cats_median_R017_100),ncol(prob_matrix)))
 
 
-for(j in 1:ncol(data_combined_cats_median)){
-  for(i in 1:nrow(data_combined_cats_median)){
-      counts_array_median[i,j,1]<- data_combined_cats_median[i,j]*prob_matrix[j,1]
-      counts_array_median[i,j,2]<- counts_array_median[i,j,1]*prob_matrix[j,2]
-      counts_array_median[i,j,3]<- counts_array_median[i,j,2]*prob_matrix[j,3]
-      counts_array_median[i,j,4]<- counts_array_median[i,j,3]*prob_matrix[j,4]
+for(j in 1:ncol(data_combined_cats_median_R017_100)){
+  for(i in 1:nrow(data_combined_cats_median_R017_100)){
+      counts_array_median_R017_100[i,j,1]<- data_combined_cats_median_R017_100[i,j]*prob_matrix[j,1]
+      counts_array_median_R017_100[i,j,2]<- counts_array_median_R017_100[i,j,1]*prob_matrix[j,2]
+      counts_array_median_R017_100[i,j,3]<- counts_array_median_R017_100[i,j,2]*prob_matrix[j,3]
+      counts_array_median_R017_100[i,j,4]<- counts_array_median_R017_100[i,j,3]*prob_matrix[j,4]
   }
-  for(k in 1:nrow(data_combined_cats_median)){
+  for(k in 1:nrow(data_combined_cats_median_R017_100)){
     if(k<=11){
-      counts_array_median[k,j,5]<- 0
+      counts_array_median_R017_100[k,j,5]<- 0
     }
     else{
-      counts_array_median[k,j,5]<- counts_array_median[k-11,j,4]*prob_matrix[j,5]
+      counts_array_median_R017_100[k,j,5]<- counts_array_median_R017_100[k-11,j,4]*prob_matrix[j,5]
     }
   }
 }
 
 
-counts_array_mean<- array(NA, dim=c(nrow(data_combined_cats_mean),ncol(data_combined_cats_mean),ncol(prob_matrix)))
+counts_array_mean_R017_100<- array(NA, dim=c(nrow(data_combined_cats_mean_R017_100),ncol(data_combined_cats_mean_R017_100),ncol(prob_matrix)))
 
 
-for(j in 1:ncol(data_combined_cats_mean)){
-  for(i in 1:nrow(data_combined_cats_mean)){
-      counts_array_mean[i,j,1]<- data_combined_cats_mean[i,j]*prob_matrix[j,1]
-      counts_array_mean[i,j,2]<- counts_array_mean[i,j,1]*prob_matrix[j,2]
-      counts_array_mean[i,j,3]<- counts_array_mean[i,j,2]*prob_matrix[j,3]
-      counts_array_mean[i,j,4]<- counts_array_mean[i,j,3]*prob_matrix[j,4]
+for(j in 1:ncol(data_combined_cats_mean_R017_100)){
+  for(i in 1:nrow(data_combined_cats_mean_R017_100)){
+      counts_array_mean_R017_100[i,j,1]<- data_combined_cats_mean_R017_100[i,j]*prob_matrix[j,1]
+      counts_array_mean_R017_100[i,j,2]<- counts_array_mean_R017_100[i,j,1]*prob_matrix[j,2]
+      counts_array_mean_R017_100[i,j,3]<- counts_array_mean_R017_100[i,j,2]*prob_matrix[j,3]
+      counts_array_mean_R017_100[i,j,4]<- counts_array_mean_R017_100[i,j,3]*prob_matrix[j,4]
   }
-  for(k in 1:nrow(data_combined_cats_mean)){
+  for(k in 1:nrow(data_combined_cats_mean_R017_100)){
     if(k<=11){
-      counts_array_mean[k,j,5]<- 0
+      counts_array_mean_R017_100[k,j,5]<- 0
     }
     else{
-      counts_array_mean[k,j,5]<- counts_array_mean[k-11,j,4]*prob_matrix[j,5]
+      counts_array_mean_R017_100[k,j,5]<- counts_array_mean_R017_100[k-11,j,4]*prob_matrix[j,5]
     }
   }
 }
 
-counts_array_upper<- array(NA, dim=c(nrow(data_combined_cats_upper),ncol(data_combined_cats_upper),ncol(prob_matrix)))
+counts_array_upper_R017_100<- array(NA, dim=c(nrow(data_combined_cats_upper_R017_100),ncol(data_combined_cats_upper_R017_100),ncol(prob_matrix)))
 
 
-for(j in 1:ncol(data_combined_cats_upper)){
-  for(i in 1:nrow(data_combined_cats_upper)){
-      counts_array_upper[i,j,1]<- data_combined_cats_upper[i,j]*prob_matrix[j,1]
-      counts_array_upper[i,j,2]<- counts_array_upper[i,j,1]*prob_matrix[j,2]
-      counts_array_upper[i,j,3]<- counts_array_upper[i,j,2]*prob_matrix[j,3]
-      counts_array_upper[i,j,4]<- counts_array_upper[i,j,3]*prob_matrix[j,4]
+for(j in 1:ncol(data_combined_cats_upper_R017_100)){
+  for(i in 1:nrow(data_combined_cats_upper_R017_100)){
+      counts_array_upper_R017_100[i,j,1]<- data_combined_cats_upper_R017_100[i,j]*prob_matrix[j,1]
+      counts_array_upper_R017_100[i,j,2]<- counts_array_upper_R017_100[i,j,1]*prob_matrix[j,2]
+      counts_array_upper_R017_100[i,j,3]<- counts_array_upper_R017_100[i,j,2]*prob_matrix[j,3]
+      counts_array_upper_R017_100[i,j,4]<- counts_array_upper_R017_100[i,j,3]*prob_matrix[j,4]
   }
-  for(k in 1:nrow(data_combined_cats_upper)){
+  for(k in 1:nrow(data_combined_cats_upper_R017_100)){
     if(k<=11){
-      counts_array_upper[k,j,5]<- 0
+      counts_array_upper_R017_100[k,j,5]<- 0
     }
     else{
-      counts_array_upper[k,j,5]<- counts_array_upper[k-11,j,4]*prob_matrix[j,5]
-    }
-  }
-}
-
-
-counts_array_lower<- array(NA, dim=c(nrow(data_combined_cats_lower),ncol(data_combined_cats_lower),ncol(prob_matrix)))
-
-
-for(j in 1:ncol(data_combined_cats_lower)){
-  for(i in 1:nrow(data_combined_cats_lower)){
-      counts_array_lower[i,j,1]<- data_combined_cats_lower[i,j]*prob_matrix[j,1]
-      counts_array_lower[i,j,2]<- counts_array_lower[i,j,1]*prob_matrix[j,2]
-      counts_array_lower[i,j,3]<- counts_array_lower[i,j,2]*prob_matrix[j,3]
-      counts_array_lower[i,j,4]<- counts_array_lower[i,j,3]*prob_matrix[j,4]
-  }
-  for(k in 1:nrow(data_combined_cats_lower)){
-    if(k<=11){
-      counts_array_lower[k,j,5]<- 0
-    }
-    else{
-      counts_array_lower[k,j,5]<- counts_array_lower[k-11,j,4]*prob_matrix[j,5]
+      counts_array_upper_R017_100[k,j,5]<- counts_array_upper_R017_100[k-11,j,4]*prob_matrix[j,5]
     }
   }
 }
 
 
+counts_array_lower_R017_100<- array(NA, dim=c(nrow(data_combined_cats_lower_R017_100),ncol(data_combined_cats_lower_R017_100),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_lower_R017_100)){
+  for(i in 1:nrow(data_combined_cats_lower_R017_100)){
+      counts_array_lower_R017_100[i,j,1]<- data_combined_cats_lower_R017_100[i,j]*prob_matrix[j,1]
+      counts_array_lower_R017_100[i,j,2]<- counts_array_lower_R017_100[i,j,1]*prob_matrix[j,2]
+      counts_array_lower_R017_100[i,j,3]<- counts_array_lower_R017_100[i,j,2]*prob_matrix[j,3]
+      counts_array_lower_R017_100[i,j,4]<- counts_array_lower_R017_100[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_lower_R017_100)){
+    if(k<=11){
+      counts_array_lower_R017_100[k,j,5]<- 0
+    }
+    else{
+      counts_array_lower_R017_100[k,j,5]<- counts_array_lower_R017_100[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+#################################################
+
+
+
+counts_array_median_R017_75<- array(NA, dim=c(nrow(data_combined_cats_median_R017_75),ncol(data_combined_cats_median_R017_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_median_R017_75)){
+  for(i in 1:nrow(data_combined_cats_median_R017_75)){
+      counts_array_median_R017_75[i,j,1]<- data_combined_cats_median_R017_75[i,j]*prob_matrix[j,1]
+      counts_array_median_R017_75[i,j,2]<- counts_array_median_R017_75[i,j,1]*prob_matrix[j,2]
+      counts_array_median_R017_75[i,j,3]<- counts_array_median_R017_75[i,j,2]*prob_matrix[j,3]
+      counts_array_median_R017_75[i,j,4]<- counts_array_median_R017_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_median_R017_75)){
+    if(k<=11){
+      counts_array_median_R017_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_median_R017_75[k,j,5]<- counts_array_median_R017_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_mean_R017_75<- array(NA, dim=c(nrow(data_combined_cats_mean_R017_75),ncol(data_combined_cats_mean_R017_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_mean_R017_75)){
+  for(i in 1:nrow(data_combined_cats_mean_R017_75)){
+      counts_array_mean_R017_75[i,j,1]<- data_combined_cats_mean_R017_75[i,j]*prob_matrix[j,1]
+      counts_array_mean_R017_75[i,j,2]<- counts_array_mean_R017_75[i,j,1]*prob_matrix[j,2]
+      counts_array_mean_R017_75[i,j,3]<- counts_array_mean_R017_75[i,j,2]*prob_matrix[j,3]
+      counts_array_mean_R017_75[i,j,4]<- counts_array_mean_R017_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_mean_R017_75)){
+    if(k<=11){
+      counts_array_mean_R017_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_mean_R017_75[k,j,5]<- counts_array_mean_R017_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+counts_array_upper_R017_75<- array(NA, dim=c(nrow(data_combined_cats_upper_R017_75),ncol(data_combined_cats_upper_R017_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_upper_R017_75)){
+  for(i in 1:nrow(data_combined_cats_upper_R017_75)){
+      counts_array_upper_R017_75[i,j,1]<- data_combined_cats_upper_R017_75[i,j]*prob_matrix[j,1]
+      counts_array_upper_R017_75[i,j,2]<- counts_array_upper_R017_75[i,j,1]*prob_matrix[j,2]
+      counts_array_upper_R017_75[i,j,3]<- counts_array_upper_R017_75[i,j,2]*prob_matrix[j,3]
+      counts_array_upper_R017_75[i,j,4]<- counts_array_upper_R017_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_upper_R017_75)){
+    if(k<=11){
+      counts_array_upper_R017_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_upper_R017_75[k,j,5]<- counts_array_upper_R017_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_lower_R017_75<- array(NA, dim=c(nrow(data_combined_cats_lower_R017_75),ncol(data_combined_cats_lower_R017_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_lower_R017_75)){
+  for(i in 1:nrow(data_combined_cats_lower_R017_75)){
+      counts_array_lower_R017_75[i,j,1]<- data_combined_cats_lower_R017_75[i,j]*prob_matrix[j,1]
+      counts_array_lower_R017_75[i,j,2]<- counts_array_lower_R017_75[i,j,1]*prob_matrix[j,2]
+      counts_array_lower_R017_75[i,j,3]<- counts_array_lower_R017_75[i,j,2]*prob_matrix[j,3]
+      counts_array_lower_R017_75[i,j,4]<- counts_array_lower_R017_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_lower_R017_75)){
+    if(k<=11){
+      counts_array_lower_R017_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_lower_R017_75[k,j,5]<- counts_array_lower_R017_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+################################################################
+
+
+counts_array_median_R017_50<- array(NA, dim=c(nrow(data_combined_cats_median_R017_50),ncol(data_combined_cats_median_R017_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_median_R017_50)){
+  for(i in 1:nrow(data_combined_cats_median_R017_50)){
+      counts_array_median_R017_50[i,j,1]<- data_combined_cats_median_R017_50[i,j]*prob_matrix[j,1]
+      counts_array_median_R017_50[i,j,2]<- counts_array_median_R017_50[i,j,1]*prob_matrix[j,2]
+      counts_array_median_R017_50[i,j,3]<- counts_array_median_R017_50[i,j,2]*prob_matrix[j,3]
+      counts_array_median_R017_50[i,j,4]<- counts_array_median_R017_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_median_R017_50)){
+    if(k<=11){
+      counts_array_median_R017_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_median_R017_50[k,j,5]<- counts_array_median_R017_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_mean_R017_50<- array(NA, dim=c(nrow(data_combined_cats_mean_R017_50),ncol(data_combined_cats_mean_R017_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_mean_R017_50)){
+  for(i in 1:nrow(data_combined_cats_mean_R017_50)){
+      counts_array_mean_R017_50[i,j,1]<- data_combined_cats_mean_R017_50[i,j]*prob_matrix[j,1]
+      counts_array_mean_R017_50[i,j,2]<- counts_array_mean_R017_50[i,j,1]*prob_matrix[j,2]
+      counts_array_mean_R017_50[i,j,3]<- counts_array_mean_R017_50[i,j,2]*prob_matrix[j,3]
+      counts_array_mean_R017_50[i,j,4]<- counts_array_mean_R017_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_mean_R017_50)){
+    if(k<=11){
+      counts_array_mean_R017_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_mean_R017_50[k,j,5]<- counts_array_mean_R017_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+counts_array_upper_R017_50<- array(NA, dim=c(nrow(data_combined_cats_upper_R017_50),ncol(data_combined_cats_upper_R017_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_upper_R017_50)){
+  for(i in 1:nrow(data_combined_cats_upper_R017_50)){
+      counts_array_upper_R017_50[i,j,1]<- data_combined_cats_upper_R017_50[i,j]*prob_matrix[j,1]
+      counts_array_upper_R017_50[i,j,2]<- counts_array_upper_R017_50[i,j,1]*prob_matrix[j,2]
+      counts_array_upper_R017_50[i,j,3]<- counts_array_upper_R017_50[i,j,2]*prob_matrix[j,3]
+      counts_array_upper_R017_50[i,j,4]<- counts_array_upper_R017_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_upper_R017_50)){
+    if(k<=11){
+      counts_array_upper_R017_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_upper_R017_50[k,j,5]<- counts_array_upper_R017_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_lower_R017_50<- array(NA, dim=c(nrow(data_combined_cats_lower_R017_50),ncol(data_combined_cats_lower_R017_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_lower_R017_50)){
+  for(i in 1:nrow(data_combined_cats_lower_R017_50)){
+      counts_array_lower_R017_50[i,j,1]<- data_combined_cats_lower_R017_50[i,j]*prob_matrix[j,1]
+      counts_array_lower_R017_50[i,j,2]<- counts_array_lower_R017_50[i,j,1]*prob_matrix[j,2]
+      counts_array_lower_R017_50[i,j,3]<- counts_array_lower_R017_50[i,j,2]*prob_matrix[j,3]
+      counts_array_lower_R017_50[i,j,4]<- counts_array_lower_R017_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_lower_R017_50)){
+    if(k<=11){
+      counts_array_lower_R017_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_lower_R017_50[k,j,5]<- counts_array_lower_R017_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+####################################
+
+
+counts_array_median_R021_100<- array(NA, dim=c(nrow(data_combined_cats_median_R021_100),ncol(data_combined_cats_median_R021_100),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_median_R021_100)){
+  for(i in 1:nrow(data_combined_cats_median_R021_100)){
+      counts_array_median_R021_100[i,j,1]<- data_combined_cats_median_R021_100[i,j]*prob_matrix[j,1]
+      counts_array_median_R021_100[i,j,2]<- counts_array_median_R021_100[i,j,1]*prob_matrix[j,2]
+      counts_array_median_R021_100[i,j,3]<- counts_array_median_R021_100[i,j,2]*prob_matrix[j,3]
+      counts_array_median_R021_100[i,j,4]<- counts_array_median_R021_100[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_median_R021_100)){
+    if(k<=11){
+      counts_array_median_R021_100[k,j,5]<- 0
+    }
+    else{
+      counts_array_median_R021_100[k,j,5]<- counts_array_median_R021_100[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_mean_R021_100<- array(NA, dim=c(nrow(data_combined_cats_mean_R021_100),ncol(data_combined_cats_mean_R021_100),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_mean_R021_100)){
+  for(i in 1:nrow(data_combined_cats_mean_R021_100)){
+      counts_array_mean_R021_100[i,j,1]<- data_combined_cats_mean_R021_100[i,j]*prob_matrix[j,1]
+      counts_array_mean_R021_100[i,j,2]<- counts_array_mean_R021_100[i,j,1]*prob_matrix[j,2]
+      counts_array_mean_R021_100[i,j,3]<- counts_array_mean_R021_100[i,j,2]*prob_matrix[j,3]
+      counts_array_mean_R021_100[i,j,4]<- counts_array_mean_R021_100[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_mean_R021_100)){
+    if(k<=11){
+      counts_array_mean_R021_100[k,j,5]<- 0
+    }
+    else{
+      counts_array_mean_R021_100[k,j,5]<- counts_array_mean_R021_100[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+counts_array_upper_R021_100<- array(NA, dim=c(nrow(data_combined_cats_upper_R021_100),ncol(data_combined_cats_upper_R021_100),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_upper_R021_100)){
+  for(i in 1:nrow(data_combined_cats_upper_R021_100)){
+      counts_array_upper_R021_100[i,j,1]<- data_combined_cats_upper_R021_100[i,j]*prob_matrix[j,1]
+      counts_array_upper_R021_100[i,j,2]<- counts_array_upper_R021_100[i,j,1]*prob_matrix[j,2]
+      counts_array_upper_R021_100[i,j,3]<- counts_array_upper_R021_100[i,j,2]*prob_matrix[j,3]
+      counts_array_upper_R021_100[i,j,4]<- counts_array_upper_R021_100[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_upper_R021_100)){
+    if(k<=11){
+      counts_array_upper_R021_100[k,j,5]<- 0
+    }
+    else{
+      counts_array_upper_R021_100[k,j,5]<- counts_array_upper_R021_100[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_lower_R021_100<- array(NA, dim=c(nrow(data_combined_cats_lower_R021_100),ncol(data_combined_cats_lower_R021_100),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_lower_R021_100)){
+  for(i in 1:nrow(data_combined_cats_lower_R021_100)){
+      counts_array_lower_R021_100[i,j,1]<- data_combined_cats_lower_R021_100[i,j]*prob_matrix[j,1]
+      counts_array_lower_R021_100[i,j,2]<- counts_array_lower_R021_100[i,j,1]*prob_matrix[j,2]
+      counts_array_lower_R021_100[i,j,3]<- counts_array_lower_R021_100[i,j,2]*prob_matrix[j,3]
+      counts_array_lower_R021_100[i,j,4]<- counts_array_lower_R021_100[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_lower_R021_100)){
+    if(k<=11){
+      counts_array_lower_R021_100[k,j,5]<- 0
+    }
+    else{
+      counts_array_lower_R021_100[k,j,5]<- counts_array_lower_R021_100[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+#######################################
+
+
+counts_array_median_R021_75<- array(NA, dim=c(nrow(data_combined_cats_median_R021_75),ncol(data_combined_cats_median_R021_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_median_R021_75)){
+  for(i in 1:nrow(data_combined_cats_median_R021_75)){
+      counts_array_median_R021_75[i,j,1]<- data_combined_cats_median_R021_75[i,j]*prob_matrix[j,1]
+      counts_array_median_R021_75[i,j,2]<- counts_array_median_R021_75[i,j,1]*prob_matrix[j,2]
+      counts_array_median_R021_75[i,j,3]<- counts_array_median_R021_75[i,j,2]*prob_matrix[j,3]
+      counts_array_median_R021_75[i,j,4]<- counts_array_median_R021_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_median_R021_75)){
+    if(k<=11){
+      counts_array_median_R021_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_median_R021_75[k,j,5]<- counts_array_median_R021_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_mean_R021_75<- array(NA, dim=c(nrow(data_combined_cats_mean_R021_75),ncol(data_combined_cats_mean_R021_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_mean_R021_75)){
+  for(i in 1:nrow(data_combined_cats_mean_R021_75)){
+      counts_array_mean_R021_75[i,j,1]<- data_combined_cats_mean_R021_75[i,j]*prob_matrix[j,1]
+      counts_array_mean_R021_75[i,j,2]<- counts_array_mean_R021_75[i,j,1]*prob_matrix[j,2]
+      counts_array_mean_R021_75[i,j,3]<- counts_array_mean_R021_75[i,j,2]*prob_matrix[j,3]
+      counts_array_mean_R021_75[i,j,4]<- counts_array_mean_R021_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_mean_R021_75)){
+    if(k<=11){
+      counts_array_mean_R021_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_mean_R021_75[k,j,5]<- counts_array_mean_R021_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+counts_array_upper_R021_75<- array(NA, dim=c(nrow(data_combined_cats_upper_R021_75),ncol(data_combined_cats_upper_R021_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_upper_R021_75)){
+  for(i in 1:nrow(data_combined_cats_upper_R021_75)){
+      counts_array_upper_R021_75[i,j,1]<- data_combined_cats_upper_R021_75[i,j]*prob_matrix[j,1]
+      counts_array_upper_R021_75[i,j,2]<- counts_array_upper_R021_75[i,j,1]*prob_matrix[j,2]
+      counts_array_upper_R021_75[i,j,3]<- counts_array_upper_R021_75[i,j,2]*prob_matrix[j,3]
+      counts_array_upper_R021_75[i,j,4]<- counts_array_upper_R021_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_upper_R021_75)){
+    if(k<=11){
+      counts_array_upper_R021_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_upper_R021_75[k,j,5]<- counts_array_upper_R021_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_lower_R021_75<- array(NA, dim=c(nrow(data_combined_cats_lower_R021_75),ncol(data_combined_cats_lower_R021_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_lower_R021_75)){
+  for(i in 1:nrow(data_combined_cats_lower_R021_75)){
+      counts_array_lower_R021_75[i,j,1]<- data_combined_cats_lower_R021_75[i,j]*prob_matrix[j,1]
+      counts_array_lower_R021_75[i,j,2]<- counts_array_lower_R021_75[i,j,1]*prob_matrix[j,2]
+      counts_array_lower_R021_75[i,j,3]<- counts_array_lower_R021_75[i,j,2]*prob_matrix[j,3]
+      counts_array_lower_R021_75[i,j,4]<- counts_array_lower_R021_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_lower_R021_75)){
+    if(k<=11){
+      counts_array_lower_R021_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_lower_R021_75[k,j,5]<- counts_array_lower_R021_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+#########################################
+
+
+counts_array_median_R021_50<- array(NA, dim=c(nrow(data_combined_cats_median_R021_50),ncol(data_combined_cats_median_R021_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_median_R021_50)){
+  for(i in 1:nrow(data_combined_cats_median_R021_50)){
+      counts_array_median_R021_50[i,j,1]<- data_combined_cats_median_R021_50[i,j]*prob_matrix[j,1]
+      counts_array_median_R021_50[i,j,2]<- counts_array_median_R021_50[i,j,1]*prob_matrix[j,2]
+      counts_array_median_R021_50[i,j,3]<- counts_array_median_R021_50[i,j,2]*prob_matrix[j,3]
+      counts_array_median_R021_50[i,j,4]<- counts_array_median_R021_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_median_R021_50)){
+    if(k<=11){
+      counts_array_median_R021_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_median_R021_50[k,j,5]<- counts_array_median_R021_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_mean_R021_50<- array(NA, dim=c(nrow(data_combined_cats_mean_R021_50),ncol(data_combined_cats_mean_R021_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_mean_R021_50)){
+  for(i in 1:nrow(data_combined_cats_mean_R021_50)){
+      counts_array_mean_R021_50[i,j,1]<- data_combined_cats_mean_R021_50[i,j]*prob_matrix[j,1]
+      counts_array_mean_R021_50[i,j,2]<- counts_array_mean_R021_50[i,j,1]*prob_matrix[j,2]
+      counts_array_mean_R021_50[i,j,3]<- counts_array_mean_R021_50[i,j,2]*prob_matrix[j,3]
+      counts_array_mean_R021_50[i,j,4]<- counts_array_mean_R021_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_mean_R021_50)){
+    if(k<=11){
+      counts_array_mean_R021_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_mean_R021_50[k,j,5]<- counts_array_mean_R021_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+counts_array_upper_R021_50<- array(NA, dim=c(nrow(data_combined_cats_upper_R021_50),ncol(data_combined_cats_upper_R021_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_upper_R021_50)){
+  for(i in 1:nrow(data_combined_cats_upper_R021_50)){
+      counts_array_upper_R021_50[i,j,1]<- data_combined_cats_upper_R021_50[i,j]*prob_matrix[j,1]
+      counts_array_upper_R021_50[i,j,2]<- counts_array_upper_R021_50[i,j,1]*prob_matrix[j,2]
+      counts_array_upper_R021_50[i,j,3]<- counts_array_upper_R021_50[i,j,2]*prob_matrix[j,3]
+      counts_array_upper_R021_50[i,j,4]<- counts_array_upper_R021_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_upper_R021_50)){
+    if(k<=11){
+      counts_array_upper_R021_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_upper_R021_50[k,j,5]<- counts_array_upper_R021_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_lower_R021_50<- array(NA, dim=c(nrow(data_combined_cats_lower_R021_50),ncol(data_combined_cats_lower_R021_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_lower_R021_50)){
+  for(i in 1:nrow(data_combined_cats_lower_R021_50)){
+      counts_array_lower_R021_50[i,j,1]<- data_combined_cats_lower_R021_50[i,j]*prob_matrix[j,1]
+      counts_array_lower_R021_50[i,j,2]<- counts_array_lower_R021_50[i,j,1]*prob_matrix[j,2]
+      counts_array_lower_R021_50[i,j,3]<- counts_array_lower_R021_50[i,j,2]*prob_matrix[j,3]
+      counts_array_lower_R021_50[i,j,4]<- counts_array_lower_R021_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_lower_R021_50)){
+    if(k<=11){
+      counts_array_lower_R021_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_lower_R021_50[k,j,5]<- counts_array_lower_R021_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+###############################
+
+
+counts_array_median_R025_100<- array(NA, dim=c(nrow(data_combined_cats_median_R025_100),ncol(data_combined_cats_median_R025_100),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_median_R025_100)){
+  for(i in 1:nrow(data_combined_cats_median_R025_100)){
+      counts_array_median_R025_100[i,j,1]<- data_combined_cats_median_R025_100[i,j]*prob_matrix[j,1]
+      counts_array_median_R025_100[i,j,2]<- counts_array_median_R025_100[i,j,1]*prob_matrix[j,2]
+      counts_array_median_R025_100[i,j,3]<- counts_array_median_R025_100[i,j,2]*prob_matrix[j,3]
+      counts_array_median_R025_100[i,j,4]<- counts_array_median_R025_100[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_median_R025_100)){
+    if(k<=11){
+      counts_array_median_R025_100[k,j,5]<- 0
+    }
+    else{
+      counts_array_median_R025_100[k,j,5]<- counts_array_median_R025_100[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_mean_R025_100<- array(NA, dim=c(nrow(data_combined_cats_mean_R025_100),ncol(data_combined_cats_mean_R025_100),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_mean_R025_100)){
+  for(i in 1:nrow(data_combined_cats_mean_R025_100)){
+      counts_array_mean_R025_100[i,j,1]<- data_combined_cats_mean_R025_100[i,j]*prob_matrix[j,1]
+      counts_array_mean_R025_100[i,j,2]<- counts_array_mean_R025_100[i,j,1]*prob_matrix[j,2]
+      counts_array_mean_R025_100[i,j,3]<- counts_array_mean_R025_100[i,j,2]*prob_matrix[j,3]
+      counts_array_mean_R025_100[i,j,4]<- counts_array_mean_R025_100[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_mean_R025_100)){
+    if(k<=11){
+      counts_array_mean_R025_100[k,j,5]<- 0
+    }
+    else{
+      counts_array_mean_R025_100[k,j,5]<- counts_array_mean_R025_100[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+counts_array_upper_R025_100<- array(NA, dim=c(nrow(data_combined_cats_upper_R025_100),ncol(data_combined_cats_upper_R025_100),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_upper_R025_100)){
+  for(i in 1:nrow(data_combined_cats_upper_R025_100)){
+      counts_array_upper_R025_100[i,j,1]<- data_combined_cats_upper_R025_100[i,j]*prob_matrix[j,1]
+      counts_array_upper_R025_100[i,j,2]<- counts_array_upper_R025_100[i,j,1]*prob_matrix[j,2]
+      counts_array_upper_R025_100[i,j,3]<- counts_array_upper_R025_100[i,j,2]*prob_matrix[j,3]
+      counts_array_upper_R025_100[i,j,4]<- counts_array_upper_R025_100[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_upper_R025_100)){
+    if(k<=11){
+      counts_array_upper_R025_100[k,j,5]<- 0
+    }
+    else{
+      counts_array_upper_R025_100[k,j,5]<- counts_array_upper_R025_100[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_lower_R025_100<- array(NA, dim=c(nrow(data_combined_cats_lower_R025_100),ncol(data_combined_cats_lower_R025_100),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_lower_R025_100)){
+  for(i in 1:nrow(data_combined_cats_lower_R025_100)){
+      counts_array_lower_R025_100[i,j,1]<- data_combined_cats_lower_R025_100[i,j]*prob_matrix[j,1]
+      counts_array_lower_R025_100[i,j,2]<- counts_array_lower_R025_100[i,j,1]*prob_matrix[j,2]
+      counts_array_lower_R025_100[i,j,3]<- counts_array_lower_R025_100[i,j,2]*prob_matrix[j,3]
+      counts_array_lower_R025_100[i,j,4]<- counts_array_lower_R025_100[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_lower_R025_100)){
+    if(k<=11){
+      counts_array_lower_R025_100[k,j,5]<- 0
+    }
+    else{
+      counts_array_lower_R025_100[k,j,5]<- counts_array_lower_R025_100[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+####################################
+
+
+counts_array_median_R025_75<- array(NA, dim=c(nrow(data_combined_cats_median_R025_75),ncol(data_combined_cats_median_R025_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_median_R025_75)){
+  for(i in 1:nrow(data_combined_cats_median_R025_75)){
+      counts_array_median_R025_75[i,j,1]<- data_combined_cats_median_R025_75[i,j]*prob_matrix[j,1]
+      counts_array_median_R025_75[i,j,2]<- counts_array_median_R025_75[i,j,1]*prob_matrix[j,2]
+      counts_array_median_R025_75[i,j,3]<- counts_array_median_R025_75[i,j,2]*prob_matrix[j,3]
+      counts_array_median_R025_75[i,j,4]<- counts_array_median_R025_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_median_R025_75)){
+    if(k<=11){
+      counts_array_median_R025_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_median_R025_75[k,j,5]<- counts_array_median_R025_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_mean_R025_75<- array(NA, dim=c(nrow(data_combined_cats_mean_R025_75),ncol(data_combined_cats_mean_R025_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_mean_R025_75)){
+  for(i in 1:nrow(data_combined_cats_mean_R025_75)){
+      counts_array_mean_R025_75[i,j,1]<- data_combined_cats_mean_R025_75[i,j]*prob_matrix[j,1]
+      counts_array_mean_R025_75[i,j,2]<- counts_array_mean_R025_75[i,j,1]*prob_matrix[j,2]
+      counts_array_mean_R025_75[i,j,3]<- counts_array_mean_R025_75[i,j,2]*prob_matrix[j,3]
+      counts_array_mean_R025_75[i,j,4]<- counts_array_mean_R025_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_mean_R025_75)){
+    if(k<=11){
+      counts_array_mean_R025_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_mean_R025_75[k,j,5]<- counts_array_mean_R025_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+counts_array_upper_R025_75<- array(NA, dim=c(nrow(data_combined_cats_upper_R025_75),ncol(data_combined_cats_upper_R025_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_upper_R025_75)){
+  for(i in 1:nrow(data_combined_cats_upper_R025_75)){
+      counts_array_upper_R025_75[i,j,1]<- data_combined_cats_upper_R025_75[i,j]*prob_matrix[j,1]
+      counts_array_upper_R025_75[i,j,2]<- counts_array_upper_R025_75[i,j,1]*prob_matrix[j,2]
+      counts_array_upper_R025_75[i,j,3]<- counts_array_upper_R025_75[i,j,2]*prob_matrix[j,3]
+      counts_array_upper_R025_75[i,j,4]<- counts_array_upper_R025_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_upper_R025_75)){
+    if(k<=11){
+      counts_array_upper_R025_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_upper_R025_75[k,j,5]<- counts_array_upper_R025_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_lower_R025_75<- array(NA, dim=c(nrow(data_combined_cats_lower_R025_75),ncol(data_combined_cats_lower_R025_75),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_lower_R025_75)){
+  for(i in 1:nrow(data_combined_cats_lower_R025_75)){
+      counts_array_lower_R025_75[i,j,1]<- data_combined_cats_lower_R025_75[i,j]*prob_matrix[j,1]
+      counts_array_lower_R025_75[i,j,2]<- counts_array_lower_R025_75[i,j,1]*prob_matrix[j,2]
+      counts_array_lower_R025_75[i,j,3]<- counts_array_lower_R025_75[i,j,2]*prob_matrix[j,3]
+      counts_array_lower_R025_75[i,j,4]<- counts_array_lower_R025_75[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_lower_R025_75)){
+    if(k<=11){
+      counts_array_lower_R025_75[k,j,5]<- 0
+    }
+    else{
+      counts_array_lower_R025_75[k,j,5]<- counts_array_lower_R025_75[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+###########################################
+
+
+counts_array_median_R025_50<- array(NA, dim=c(nrow(data_combined_cats_median_R025_50),ncol(data_combined_cats_median_R025_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_median_R025_50)){
+  for(i in 1:nrow(data_combined_cats_median_R025_50)){
+      counts_array_median_R025_50[i,j,1]<- data_combined_cats_median_R025_50[i,j]*prob_matrix[j,1]
+      counts_array_median_R025_50[i,j,2]<- counts_array_median_R025_50[i,j,1]*prob_matrix[j,2]
+      counts_array_median_R025_50[i,j,3]<- counts_array_median_R025_50[i,j,2]*prob_matrix[j,3]
+      counts_array_median_R025_50[i,j,4]<- counts_array_median_R025_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_median_R025_50)){
+    if(k<=11){
+      counts_array_median_R025_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_median_R025_50[k,j,5]<- counts_array_median_R025_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_mean_R025_50<- array(NA, dim=c(nrow(data_combined_cats_mean_R025_50),ncol(data_combined_cats_mean_R025_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_mean_R025_50)){
+  for(i in 1:nrow(data_combined_cats_mean_R025_50)){
+      counts_array_mean_R025_50[i,j,1]<- data_combined_cats_mean_R025_50[i,j]*prob_matrix[j,1]
+      counts_array_mean_R025_50[i,j,2]<- counts_array_mean_R025_50[i,j,1]*prob_matrix[j,2]
+      counts_array_mean_R025_50[i,j,3]<- counts_array_mean_R025_50[i,j,2]*prob_matrix[j,3]
+      counts_array_mean_R025_50[i,j,4]<- counts_array_mean_R025_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_mean_R025_50)){
+    if(k<=11){
+      counts_array_mean_R025_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_mean_R025_50[k,j,5]<- counts_array_mean_R025_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+counts_array_upper_R025_50<- array(NA, dim=c(nrow(data_combined_cats_upper_R025_50),ncol(data_combined_cats_upper_R025_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_upper_R025_50)){
+  for(i in 1:nrow(data_combined_cats_upper_R025_50)){
+      counts_array_upper_R025_50[i,j,1]<- data_combined_cats_upper_R025_50[i,j]*prob_matrix[j,1]
+      counts_array_upper_R025_50[i,j,2]<- counts_array_upper_R025_50[i,j,1]*prob_matrix[j,2]
+      counts_array_upper_R025_50[i,j,3]<- counts_array_upper_R025_50[i,j,2]*prob_matrix[j,3]
+      counts_array_upper_R025_50[i,j,4]<- counts_array_upper_R025_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_upper_R025_50)){
+    if(k<=11){
+      counts_array_upper_R025_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_upper_R025_50[k,j,5]<- counts_array_upper_R025_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
+
+
+counts_array_lower_R025_50<- array(NA, dim=c(nrow(data_combined_cats_lower_R025_50),ncol(data_combined_cats_lower_R025_50),ncol(prob_matrix)))
+
+
+for(j in 1:ncol(data_combined_cats_lower_R025_50)){
+  for(i in 1:nrow(data_combined_cats_lower_R025_50)){
+      counts_array_lower_R025_50[i,j,1]<- data_combined_cats_lower_R025_50[i,j]*prob_matrix[j,1]
+      counts_array_lower_R025_50[i,j,2]<- counts_array_lower_R025_50[i,j,1]*prob_matrix[j,2]
+      counts_array_lower_R025_50[i,j,3]<- counts_array_lower_R025_50[i,j,2]*prob_matrix[j,3]
+      counts_array_lower_R025_50[i,j,4]<- counts_array_lower_R025_50[i,j,3]*prob_matrix[j,4]
+  }
+  for(k in 1:nrow(data_combined_cats_lower_R025_50)){
+    if(k<=11){
+      counts_array_lower_R025_50[k,j,5]<- 0
+    }
+    else{
+      counts_array_lower_R025_50[k,j,5]<- counts_array_lower_R025_50[k-11,j,4]*prob_matrix[j,5]
+    }
+  }
+}
 ```
 
 Now  load in a dataset that gives estimates of how long people stay hospitalized, in ICU or on vents
@@ -231,173 +1491,1518 @@ Compute a running total of each category.
 
 length_of_stay<- c(NA,11,11,11,NA)
 
-cumulative_array_median<- array(NA, dim=c(nrow(data_combined_cats_median),ncol(data_combined_cats_median),ncol(prob_matrix)))
+cumulative_array_median_R017_100<- array(NA, dim=c(nrow(data_combined_cats_median_R017_100),ncol(data_combined_cats_median_R017_100),ncol(prob_matrix)))
 
 
-  for(j in 1:ncol(data_combined_cats_median)){
-    cumulative_array_median[1,j,]<- counts_array_median[1,j,]
+  for(j in 1:ncol(data_combined_cats_median_R017_100)){
+    cumulative_array_median_R017_100[1,j,]<- counts_array_median_R017_100[1,j,]
     
-    for(i in 2:nrow(data_combined_cats_median)){
-      cumulative_array_median[i,j,1]<-cumulative_array_median[i-1,j,1]+counts_array_median[i,j,1]
-      cumulative_array_median[i,j,5]<-cumulative_array_median[i-1,j,5]+counts_array_median[i,j,5]
+    for(i in 2:nrow(data_combined_cats_median_R017_100)){
+      cumulative_array_median_R017_100[i,j,1]<-cumulative_array_median_R017_100[i-1,j,1]+counts_array_median_R017_100[i,j,1]
+      cumulative_array_median_R017_100[i,j,5]<-cumulative_array_median_R017_100[i-1,j,5]+counts_array_median_R017_100[i,j,5]
     }
 
-    for(k in 2:nrow(data_combined_cats_median)){
+    for(k in 2:nrow(data_combined_cats_median_R017_100)){
       if(k<=length_of_stay[2]){
-      cumulative_array_median[k,j,2]<- cumulative_array_median[k-1,j,2]+counts_array_median[k,j,2]
+      cumulative_array_median_R017_100[k,j,2]<- cumulative_array_median_R017_100[k-1,j,2]+counts_array_median_R017_100[k,j,2]
       }
       else {
-        cumulative_array_median[k,j,2]<-cumulative_array_median[k-1,j,2]+
-          counts_array_median[k,j,2]-counts_array_median[k-length_of_stay[2],j,2]
+        cumulative_array_median_R017_100[k,j,2]<-cumulative_array_median_R017_100[k-1,j,2]+
+          counts_array_median_R017_100[k,j,2]-counts_array_median_R017_100[k-length_of_stay[2],j,2]
       }
     }
-  for(l in 2:nrow(data_combined_cats_median)){
+  for(l in 2:nrow(data_combined_cats_median_R017_100)){
       if(l <= length_of_stay[3]){
-        cumulative_array_median[l,j,3]<- cumulative_array_median[l-1,j,3]+counts_array_median[l,j,3]
+        cumulative_array_median_R017_100[l,j,3]<- cumulative_array_median_R017_100[l-1,j,3]+counts_array_median_R017_100[l,j,3]
       }
     else{
-      cumulative_array_median[l,j,3]<-cumulative_array_median[l-1,j,3]+
-          counts_array_median[l,j,3]-counts_array_median[l-length_of_stay[3],j,3]
+      cumulative_array_median_R017_100[l,j,3]<-cumulative_array_median_R017_100[l-1,j,3]+
+          counts_array_median_R017_100[l,j,3]-counts_array_median_R017_100[l-length_of_stay[3],j,3]
     }
   }
-    for(m in 2:nrow(data_combined_cats_median)){
+    for(m in 2:nrow(data_combined_cats_median_R017_100)){
     if(m<=length_of_stay[4]){
-      cumulative_array_median[m,j,4]<- cumulative_array_median[m-1,j,4]+counts_array_median[m,j,4]
+      cumulative_array_median_R017_100[m,j,4]<- cumulative_array_median_R017_100[m-1,j,4]+counts_array_median_R017_100[m,j,4]
     }
     else{
-      cumulative_array_median[m,j,4]<-cumulative_array_median[m-1,j,4]+
-          counts_array_median[m,j,4]-counts_array_median[m-length_of_stay[4],j,4]
+      cumulative_array_median_R017_100[m,j,4]<-cumulative_array_median_R017_100[m-1,j,4]+
+          counts_array_median_R017_100[m,j,4]-counts_array_median_R017_100[m-length_of_stay[4],j,4]
       }
     }
    
 }
 
 
-cumulative_array_mean<- array(NA, dim=c(nrow(data_combined_cats_mean),ncol(data_combined_cats_mean),ncol(prob_matrix)))
+cumulative_array_mean_R017_100<- array(NA, dim=c(nrow(data_combined_cats_mean_R017_100),ncol(data_combined_cats_mean_R017_100),ncol(prob_matrix)))
 
 
-  for(j in 1:ncol(data_combined_cats_mean)){
-    cumulative_array_mean[1,j,]<- counts_array_mean[1,j,]
+  for(j in 1:ncol(data_combined_cats_mean_R017_100)){
+    cumulative_array_mean_R017_100[1,j,]<- counts_array_mean_R017_100[1,j,]
     
-    for(i in 2:nrow(data_combined_cats_mean)){
-      cumulative_array_mean[i,j,1]<-cumulative_array_mean[i-1,j,1]+counts_array_mean[i,j,1]
-      cumulative_array_mean[i,j,5]<-cumulative_array_mean[i-1,j,5]+counts_array_mean[i,j,5]
+    for(i in 2:nrow(data_combined_cats_mean_R017_100)){
+      cumulative_array_mean_R017_100[i,j,1]<-cumulative_array_mean_R017_100[i-1,j,1]+counts_array_mean_R017_100[i,j,1]
+      cumulative_array_mean_R017_100[i,j,5]<-cumulative_array_mean_R017_100[i-1,j,5]+counts_array_mean_R017_100[i,j,5]
     }
 
-    for(k in 2:nrow(data_combined_cats_mean)){
+    for(k in 2:nrow(data_combined_cats_mean_R017_100)){
       if(k<=length_of_stay[2]){
-      cumulative_array_mean[k,j,2]<- cumulative_array_mean[k-1,j,2]+counts_array_mean[k,j,2]
+      cumulative_array_mean_R017_100[k,j,2]<- cumulative_array_mean_R017_100[k-1,j,2]+counts_array_mean_R017_100[k,j,2]
       }
       else {
-        cumulative_array_mean[k,j,2]<-cumulative_array_mean[k-1,j,2]+
-          counts_array_mean[k,j,2]-counts_array_mean[k-length_of_stay[2],j,2]
+        cumulative_array_mean_R017_100[k,j,2]<-cumulative_array_mean_R017_100[k-1,j,2]+
+          counts_array_mean_R017_100[k,j,2]-counts_array_mean_R017_100[k-length_of_stay[2],j,2]
       }
     }
-  for(l in 2:nrow(data_combined_cats_mean)){
+  for(l in 2:nrow(data_combined_cats_mean_R017_100)){
       if(l <= length_of_stay[3]){
-        cumulative_array_mean[l,j,3]<- cumulative_array_mean[l-1,j,3]+counts_array_mean[l,j,3]
+        cumulative_array_mean_R017_100[l,j,3]<- cumulative_array_mean_R017_100[l-1,j,3]+counts_array_mean_R017_100[l,j,3]
       }
     else{
-      cumulative_array_mean[l,j,3]<-cumulative_array_mean[l-1,j,3]+
-          counts_array_mean[l,j,3]-counts_array_mean[l-length_of_stay[3],j,3]
+      cumulative_array_mean_R017_100[l,j,3]<-cumulative_array_mean_R017_100[l-1,j,3]+
+          counts_array_mean_R017_100[l,j,3]-counts_array_mean_R017_100[l-length_of_stay[3],j,3]
     }
   }
-    for(m in 2:nrow(data_combined_cats_mean)){
+    for(m in 2:nrow(data_combined_cats_mean_R017_100)){
     if(m<=length_of_stay[4]){
-      cumulative_array_mean[m,j,4]<- cumulative_array_mean[m-1,j,4]+counts_array_mean[m,j,4]
+      cumulative_array_mean_R017_100[m,j,4]<- cumulative_array_mean_R017_100[m-1,j,4]+counts_array_mean_R017_100[m,j,4]
     }
     else{
-      cumulative_array_mean[m,j,4]<-cumulative_array_mean[m-1,j,4]+
-          counts_array_mean[m,j,4]-counts_array_mean[m-length_of_stay[4],j,4]
+      cumulative_array_mean_R017_100[m,j,4]<-cumulative_array_mean_R017_100[m-1,j,4]+
+          counts_array_mean_R017_100[m,j,4]-counts_array_mean_R017_100[m-length_of_stay[4],j,4]
       }
     }
    
 }
 
 
-cumulative_array_lower<- array(NA, dim=c(nrow(data_combined_cats_lower),ncol(data_combined_cats_lower),ncol(prob_matrix)))
+cumulative_array_lower_R017_100<- array(NA, dim=c(nrow(data_combined_cats_lower_R017_100),ncol(data_combined_cats_lower_R017_100),ncol(prob_matrix)))
 
 
-  for(j in 1:ncol(data_combined_cats_lower)){
-    cumulative_array_lower[1,j,]<- counts_array_lower[1,j,]
+  for(j in 1:ncol(data_combined_cats_lower_R017_100)){
+    cumulative_array_lower_R017_100[1,j,]<- counts_array_lower_R017_100[1,j,]
     
-    for(i in 2:nrow(data_combined_cats_lower)){
-      cumulative_array_lower[i,j,1]<-cumulative_array_lower[i-1,j,1]+counts_array_lower[i,j,1]
-      cumulative_array_lower[i,j,5]<-cumulative_array_lower[i-1,j,5]+counts_array_lower[i,j,5]
+    for(i in 2:nrow(data_combined_cats_lower_R017_100)){
+      cumulative_array_lower_R017_100[i,j,1]<-cumulative_array_lower_R017_100[i-1,j,1]+counts_array_lower_R017_100[i,j,1]
+      cumulative_array_lower_R017_100[i,j,5]<-cumulative_array_lower_R017_100[i-1,j,5]+counts_array_lower_R017_100[i,j,5]
     }
 
-    for(k in 2:nrow(data_combined_cats_lower)){
+    for(k in 2:nrow(data_combined_cats_lower_R017_100)){
       if(k<=length_of_stay[2]){
-      cumulative_array_lower[k,j,2]<- cumulative_array_lower[k-1,j,2]+counts_array_lower[k,j,2]
+      cumulative_array_lower_R017_100[k,j,2]<- cumulative_array_lower_R017_100[k-1,j,2]+counts_array_lower_R017_100[k,j,2]
       }
       else {
-        cumulative_array_lower[k,j,2]<-cumulative_array_lower[k-1,j,2]+
-          counts_array_lower[k,j,2]-counts_array_lower[k-length_of_stay[2],j,2]
+        cumulative_array_lower_R017_100[k,j,2]<-cumulative_array_lower_R017_100[k-1,j,2]+
+          counts_array_lower_R017_100[k,j,2]-counts_array_lower_R017_100[k-length_of_stay[2],j,2]
       }
     }
-  for(l in 2:nrow(data_combined_cats_lower)){
+  for(l in 2:nrow(data_combined_cats_lower_R017_100)){
       if(l <= length_of_stay[3]){
-        cumulative_array_lower[l,j,3]<- cumulative_array_lower[l-1,j,3]+counts_array_lower[l,j,3]
+        cumulative_array_lower_R017_100[l,j,3]<- cumulative_array_lower_R017_100[l-1,j,3]+counts_array_lower_R017_100[l,j,3]
       }
     else{
-      cumulative_array_lower[l,j,3]<-cumulative_array_lower[l-1,j,3]+
-          counts_array_lower[l,j,3]-counts_array_lower[l-length_of_stay[3],j,3]
+      cumulative_array_lower_R017_100[l,j,3]<-cumulative_array_lower_R017_100[l-1,j,3]+
+          counts_array_lower_R017_100[l,j,3]-counts_array_lower_R017_100[l-length_of_stay[3],j,3]
     }
   }
-    for(m in 2:nrow(data_combined_cats_lower)){
+    for(m in 2:nrow(data_combined_cats_lower_R017_100)){
     if(m<=length_of_stay[4]){
-      cumulative_array_lower[m,j,4]<- cumulative_array_lower[m-1,j,4]+counts_array_lower[m,j,4]
+      cumulative_array_lower_R017_100[m,j,4]<- cumulative_array_lower_R017_100[m-1,j,4]+counts_array_lower_R017_100[m,j,4]
     }
     else{
-      cumulative_array_lower[m,j,4]<-cumulative_array_lower[m-1,j,4]+
-          counts_array_lower[m,j,4]-counts_array_lower[m-length_of_stay[4],j,4]
+      cumulative_array_lower_R017_100[m,j,4]<-cumulative_array_lower_R017_100[m-1,j,4]+
+          counts_array_lower_R017_100[m,j,4]-counts_array_lower_R017_100[m-length_of_stay[4],j,4]
       }
     }
    
 }
 
 
-cumulative_array_upper<- array(NA, dim=c(nrow(data_combined_cats_upper),ncol(data_combined_cats_upper),ncol(prob_matrix)))
+cumulative_array_upper_R017_100<- array(NA, dim=c(nrow(data_combined_cats_upper_R017_100),ncol(data_combined_cats_upper_R017_100),ncol(prob_matrix)))
 
 
-  for(j in 1:ncol(data_combined_cats_upper)){
-    cumulative_array_upper[1,j,]<- counts_array_upper[1,j,]
+  for(j in 1:ncol(data_combined_cats_upper_R017_100)){
+    cumulative_array_upper_R017_100[1,j,]<- counts_array_upper_R017_100[1,j,]
     
-    for(i in 2:nrow(data_combined_cats_upper)){
-      cumulative_array_upper[i,j,1]<-cumulative_array_upper[i-1,j,1]+counts_array_upper[i,j,1]
-      cumulative_array_upper[i,j,5]<-cumulative_array_upper[i-1,j,5]+counts_array_upper[i,j,5]
+    for(i in 2:nrow(data_combined_cats_upper_R017_100)){
+      cumulative_array_upper_R017_100[i,j,1]<-cumulative_array_upper_R017_100[i-1,j,1]+counts_array_upper_R017_100[i,j,1]
+      cumulative_array_upper_R017_100[i,j,5]<-cumulative_array_upper_R017_100[i-1,j,5]+counts_array_upper_R017_100[i,j,5]
     }
 
-    for(k in 2:nrow(data_combined_cats_upper)){
+    for(k in 2:nrow(data_combined_cats_upper_R017_100)){
       if(k<=length_of_stay[2]){
-      cumulative_array_upper[k,j,2]<- cumulative_array_upper[k-1,j,2]+counts_array_upper[k,j,2]
+      cumulative_array_upper_R017_100[k,j,2]<- cumulative_array_upper_R017_100[k-1,j,2]+counts_array_upper_R017_100[k,j,2]
       }
       else {
-        cumulative_array_upper[k,j,2]<-cumulative_array_upper[k-1,j,2]+
-          counts_array_upper[k,j,2]-counts_array_upper[k-length_of_stay[2],j,2]
+        cumulative_array_upper_R017_100[k,j,2]<-cumulative_array_upper_R017_100[k-1,j,2]+
+          counts_array_upper_R017_100[k,j,2]-counts_array_upper_R017_100[k-length_of_stay[2],j,2]
       }
     }
-  for(l in 2:nrow(data_combined_cats_upper)){
+  for(l in 2:nrow(data_combined_cats_upper_R017_100)){
       if(l <= length_of_stay[3]){
-        cumulative_array_upper[l,j,3]<- cumulative_array_upper[l-1,j,3]+counts_array_upper[l,j,3]
+        cumulative_array_upper_R017_100[l,j,3]<- cumulative_array_upper_R017_100[l-1,j,3]+counts_array_upper_R017_100[l,j,3]
       }
     else{
-      cumulative_array_upper[l,j,3]<-cumulative_array_upper[l-1,j,3]+
-          counts_array_upper[l,j,3]-counts_array_upper[l-length_of_stay[3],j,3]
+      cumulative_array_upper_R017_100[l,j,3]<-cumulative_array_upper_R017_100[l-1,j,3]+
+          counts_array_upper_R017_100[l,j,3]-counts_array_upper_R017_100[l-length_of_stay[3],j,3]
     }
   }
-    for(m in 2:nrow(data_combined_cats_upper)){
+    for(m in 2:nrow(data_combined_cats_upper_R017_100)){
     if(m<=length_of_stay[4]){
-      cumulative_array_upper[m,j,4]<- cumulative_array_upper[m-1,j,4]+counts_array_upper[m,j,4]
+      cumulative_array_upper_R017_100[m,j,4]<- cumulative_array_upper_R017_100[m-1,j,4]+counts_array_upper_R017_100[m,j,4]
     }
     else{
-      cumulative_array_upper[m,j,4]<-cumulative_array_upper[m-1,j,4]+
-          counts_array_upper[m,j,4]-counts_array_upper[m-length_of_stay[4],j,4]
+      cumulative_array_upper_R017_100[m,j,4]<-cumulative_array_upper_R017_100[m-1,j,4]+
+          counts_array_upper_R017_100[m,j,4]-counts_array_upper_R017_100[m-length_of_stay[4],j,4]
+      }
+    }
+   
+  }
+
+##############################################
+
+cumulative_array_median_R017_75<- array(NA, dim=c(nrow(data_combined_cats_median_R017_75),ncol(data_combined_cats_median_R017_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_median_R017_75)){
+    cumulative_array_median_R017_75[1,j,]<- counts_array_median_R017_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_median_R017_75)){
+      cumulative_array_median_R017_75[i,j,1]<-cumulative_array_median_R017_75[i-1,j,1]+counts_array_median_R017_75[i,j,1]
+      cumulative_array_median_R017_75[i,j,5]<-cumulative_array_median_R017_75[i-1,j,5]+counts_array_median_R017_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_median_R017_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_median_R017_75[k,j,2]<- cumulative_array_median_R017_75[k-1,j,2]+counts_array_median_R017_75[k,j,2]
+      }
+      else {
+        cumulative_array_median_R017_75[k,j,2]<-cumulative_array_median_R017_75[k-1,j,2]+
+          counts_array_median_R017_75[k,j,2]-counts_array_median_R017_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_median_R017_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_median_R017_75[l,j,3]<- cumulative_array_median_R017_75[l-1,j,3]+counts_array_median_R017_75[l,j,3]
+      }
+    else{
+      cumulative_array_median_R017_75[l,j,3]<-cumulative_array_median_R017_75[l-1,j,3]+
+          counts_array_median_R017_75[l,j,3]-counts_array_median_R017_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_median_R017_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_median_R017_75[m,j,4]<- cumulative_array_median_R017_75[m-1,j,4]+counts_array_median_R017_75[m,j,4]
+    }
+    else{
+      cumulative_array_median_R017_75[m,j,4]<-cumulative_array_median_R017_75[m-1,j,4]+
+          counts_array_median_R017_75[m,j,4]-counts_array_median_R017_75[m-length_of_stay[4],j,4]
       }
     }
    
 }
+
+
+cumulative_array_mean_R017_75<- array(NA, dim=c(nrow(data_combined_cats_mean_R017_75),ncol(data_combined_cats_mean_R017_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_mean_R017_75)){
+    cumulative_array_mean_R017_75[1,j,]<- counts_array_mean_R017_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_mean_R017_75)){
+      cumulative_array_mean_R017_75[i,j,1]<-cumulative_array_mean_R017_75[i-1,j,1]+counts_array_mean_R017_75[i,j,1]
+      cumulative_array_mean_R017_75[i,j,5]<-cumulative_array_mean_R017_75[i-1,j,5]+counts_array_mean_R017_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_mean_R017_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_mean_R017_75[k,j,2]<- cumulative_array_mean_R017_75[k-1,j,2]+counts_array_mean_R017_75[k,j,2]
+      }
+      else {
+        cumulative_array_mean_R017_75[k,j,2]<-cumulative_array_mean_R017_75[k-1,j,2]+
+          counts_array_mean_R017_75[k,j,2]-counts_array_mean_R017_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_mean_R017_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_mean_R017_75[l,j,3]<- cumulative_array_mean_R017_75[l-1,j,3]+counts_array_mean_R017_75[l,j,3]
+      }
+    else{
+      cumulative_array_mean_R017_75[l,j,3]<-cumulative_array_mean_R017_75[l-1,j,3]+
+          counts_array_mean_R017_75[l,j,3]-counts_array_mean_R017_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_mean_R017_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_mean_R017_75[m,j,4]<- cumulative_array_mean_R017_75[m-1,j,4]+counts_array_mean_R017_75[m,j,4]
+    }
+    else{
+      cumulative_array_mean_R017_75[m,j,4]<-cumulative_array_mean_R017_75[m-1,j,4]+
+          counts_array_mean_R017_75[m,j,4]-counts_array_mean_R017_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_lower_R017_75<- array(NA, dim=c(nrow(data_combined_cats_lower_R017_75),ncol(data_combined_cats_lower_R017_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_lower_R017_75)){
+    cumulative_array_lower_R017_75[1,j,]<- counts_array_lower_R017_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_lower_R017_75)){
+      cumulative_array_lower_R017_75[i,j,1]<-cumulative_array_lower_R017_75[i-1,j,1]+counts_array_lower_R017_75[i,j,1]
+      cumulative_array_lower_R017_75[i,j,5]<-cumulative_array_lower_R017_75[i-1,j,5]+counts_array_lower_R017_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_lower_R017_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_lower_R017_75[k,j,2]<- cumulative_array_lower_R017_75[k-1,j,2]+counts_array_lower_R017_75[k,j,2]
+      }
+      else {
+        cumulative_array_lower_R017_75[k,j,2]<-cumulative_array_lower_R017_75[k-1,j,2]+
+          counts_array_lower_R017_75[k,j,2]-counts_array_lower_R017_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_lower_R017_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_lower_R017_75[l,j,3]<- cumulative_array_lower_R017_75[l-1,j,3]+counts_array_lower_R017_75[l,j,3]
+      }
+    else{
+      cumulative_array_lower_R017_75[l,j,3]<-cumulative_array_lower_R017_75[l-1,j,3]+
+          counts_array_lower_R017_75[l,j,3]-counts_array_lower_R017_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_lower_R017_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_lower_R017_75[m,j,4]<- cumulative_array_lower_R017_75[m-1,j,4]+counts_array_lower_R017_75[m,j,4]
+    }
+    else{
+      cumulative_array_lower_R017_75[m,j,4]<-cumulative_array_lower_R017_75[m-1,j,4]+
+          counts_array_lower_R017_75[m,j,4]-counts_array_lower_R017_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_upper_R017_75<- array(NA, dim=c(nrow(data_combined_cats_upper_R017_75),ncol(data_combined_cats_upper_R017_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_upper_R017_75)){
+    cumulative_array_upper_R017_75[1,j,]<- counts_array_upper_R017_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_upper_R017_75)){
+      cumulative_array_upper_R017_75[i,j,1]<-cumulative_array_upper_R017_75[i-1,j,1]+counts_array_upper_R017_75[i,j,1]
+      cumulative_array_upper_R017_75[i,j,5]<-cumulative_array_upper_R017_75[i-1,j,5]+counts_array_upper_R017_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_upper_R017_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_upper_R017_75[k,j,2]<- cumulative_array_upper_R017_75[k-1,j,2]+counts_array_upper_R017_75[k,j,2]
+      }
+      else {
+        cumulative_array_upper_R017_75[k,j,2]<-cumulative_array_upper_R017_75[k-1,j,2]+
+          counts_array_upper_R017_75[k,j,2]-counts_array_upper_R017_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_upper_R017_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_upper_R017_75[l,j,3]<- cumulative_array_upper_R017_75[l-1,j,3]+counts_array_upper_R017_75[l,j,3]
+      }
+    else{
+      cumulative_array_upper_R017_75[l,j,3]<-cumulative_array_upper_R017_75[l-1,j,3]+
+          counts_array_upper_R017_75[l,j,3]-counts_array_upper_R017_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_upper_R017_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_upper_R017_75[m,j,4]<- cumulative_array_upper_R017_75[m-1,j,4]+counts_array_upper_R017_75[m,j,4]
+    }
+    else{
+      cumulative_array_upper_R017_75[m,j,4]<-cumulative_array_upper_R017_75[m-1,j,4]+
+          counts_array_upper_R017_75[m,j,4]-counts_array_upper_R017_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+  }
+#################################
+cumulative_array_median_R017_50<- array(NA, dim=c(nrow(data_combined_cats_median_R017_50),ncol(data_combined_cats_median_R017_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_median_R017_50)){
+    cumulative_array_median_R017_50[1,j,]<- counts_array_median_R017_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_median_R017_50)){
+      cumulative_array_median_R017_50[i,j,1]<-cumulative_array_median_R017_50[i-1,j,1]+counts_array_median_R017_50[i,j,1]
+      cumulative_array_median_R017_50[i,j,5]<-cumulative_array_median_R017_50[i-1,j,5]+counts_array_median_R017_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_median_R017_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_median_R017_50[k,j,2]<- cumulative_array_median_R017_50[k-1,j,2]+counts_array_median_R017_50[k,j,2]
+      }
+      else {
+        cumulative_array_median_R017_50[k,j,2]<-cumulative_array_median_R017_50[k-1,j,2]+
+          counts_array_median_R017_50[k,j,2]-counts_array_median_R017_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_median_R017_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_median_R017_50[l,j,3]<- cumulative_array_median_R017_50[l-1,j,3]+counts_array_median_R017_50[l,j,3]
+      }
+    else{
+      cumulative_array_median_R017_50[l,j,3]<-cumulative_array_median_R017_50[l-1,j,3]+
+          counts_array_median_R017_50[l,j,3]-counts_array_median_R017_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_median_R017_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_median_R017_50[m,j,4]<- cumulative_array_median_R017_50[m-1,j,4]+counts_array_median_R017_50[m,j,4]
+    }
+    else{
+      cumulative_array_median_R017_50[m,j,4]<-cumulative_array_median_R017_50[m-1,j,4]+
+          counts_array_median_R017_50[m,j,4]-counts_array_median_R017_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_mean_R017_50<- array(NA, dim=c(nrow(data_combined_cats_mean_R017_50),ncol(data_combined_cats_mean_R017_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_mean_R017_50)){
+    cumulative_array_mean_R017_50[1,j,]<- counts_array_mean_R017_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_mean_R017_50)){
+      cumulative_array_mean_R017_50[i,j,1]<-cumulative_array_mean_R017_50[i-1,j,1]+counts_array_mean_R017_50[i,j,1]
+      cumulative_array_mean_R017_50[i,j,5]<-cumulative_array_mean_R017_50[i-1,j,5]+counts_array_mean_R017_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_mean_R017_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_mean_R017_50[k,j,2]<- cumulative_array_mean_R017_50[k-1,j,2]+counts_array_mean_R017_50[k,j,2]
+      }
+      else {
+        cumulative_array_mean_R017_50[k,j,2]<-cumulative_array_mean_R017_50[k-1,j,2]+
+          counts_array_mean_R017_50[k,j,2]-counts_array_mean_R017_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_mean_R017_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_mean_R017_50[l,j,3]<- cumulative_array_mean_R017_50[l-1,j,3]+counts_array_mean_R017_50[l,j,3]
+      }
+    else{
+      cumulative_array_mean_R017_50[l,j,3]<-cumulative_array_mean_R017_50[l-1,j,3]+
+          counts_array_mean_R017_50[l,j,3]-counts_array_mean_R017_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_mean_R017_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_mean_R017_50[m,j,4]<- cumulative_array_mean_R017_50[m-1,j,4]+counts_array_mean_R017_50[m,j,4]
+    }
+    else{
+      cumulative_array_mean_R017_50[m,j,4]<-cumulative_array_mean_R017_50[m-1,j,4]+
+          counts_array_mean_R017_50[m,j,4]-counts_array_mean_R017_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_lower_R017_50<- array(NA, dim=c(nrow(data_combined_cats_lower_R017_50),ncol(data_combined_cats_lower_R017_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_lower_R017_50)){
+    cumulative_array_lower_R017_50[1,j,]<- counts_array_lower_R017_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_lower_R017_50)){
+      cumulative_array_lower_R017_50[i,j,1]<-cumulative_array_lower_R017_50[i-1,j,1]+counts_array_lower_R017_50[i,j,1]
+      cumulative_array_lower_R017_50[i,j,5]<-cumulative_array_lower_R017_50[i-1,j,5]+counts_array_lower_R017_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_lower_R017_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_lower_R017_50[k,j,2]<- cumulative_array_lower_R017_50[k-1,j,2]+counts_array_lower_R017_50[k,j,2]
+      }
+      else {
+        cumulative_array_lower_R017_50[k,j,2]<-cumulative_array_lower_R017_50[k-1,j,2]+
+          counts_array_lower_R017_50[k,j,2]-counts_array_lower_R017_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_lower_R017_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_lower_R017_50[l,j,3]<- cumulative_array_lower_R017_50[l-1,j,3]+counts_array_lower_R017_50[l,j,3]
+      }
+    else{
+      cumulative_array_lower_R017_50[l,j,3]<-cumulative_array_lower_R017_50[l-1,j,3]+
+          counts_array_lower_R017_50[l,j,3]-counts_array_lower_R017_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_lower_R017_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_lower_R017_50[m,j,4]<- cumulative_array_lower_R017_50[m-1,j,4]+counts_array_lower_R017_50[m,j,4]
+    }
+    else{
+      cumulative_array_lower_R017_50[m,j,4]<-cumulative_array_lower_R017_50[m-1,j,4]+
+          counts_array_lower_R017_50[m,j,4]-counts_array_lower_R017_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_upper_R017_50<- array(NA, dim=c(nrow(data_combined_cats_upper_R017_50),ncol(data_combined_cats_upper_R017_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_upper_R017_50)){
+    cumulative_array_upper_R017_50[1,j,]<- counts_array_upper_R017_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_upper_R017_50)){
+      cumulative_array_upper_R017_50[i,j,1]<-cumulative_array_upper_R017_50[i-1,j,1]+counts_array_upper_R017_50[i,j,1]
+      cumulative_array_upper_R017_50[i,j,5]<-cumulative_array_upper_R017_50[i-1,j,5]+counts_array_upper_R017_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_upper_R017_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_upper_R017_50[k,j,2]<- cumulative_array_upper_R017_50[k-1,j,2]+counts_array_upper_R017_50[k,j,2]
+      }
+      else {
+        cumulative_array_upper_R017_50[k,j,2]<-cumulative_array_upper_R017_50[k-1,j,2]+
+          counts_array_upper_R017_50[k,j,2]-counts_array_upper_R017_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_upper_R017_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_upper_R017_50[l,j,3]<- cumulative_array_upper_R017_50[l-1,j,3]+counts_array_upper_R017_50[l,j,3]
+      }
+    else{
+      cumulative_array_upper_R017_50[l,j,3]<-cumulative_array_upper_R017_50[l-1,j,3]+
+          counts_array_upper_R017_50[l,j,3]-counts_array_upper_R017_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_upper_R017_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_upper_R017_50[m,j,4]<- cumulative_array_upper_R017_50[m-1,j,4]+counts_array_upper_R017_50[m,j,4]
+    }
+    else{
+      cumulative_array_upper_R017_50[m,j,4]<-cumulative_array_upper_R017_50[m-1,j,4]+
+          counts_array_upper_R017_50[m,j,4]-counts_array_upper_R017_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+  }
+####################################
+cumulative_array_median_R021_100<- array(NA, dim=c(nrow(data_combined_cats_median_R021_100),ncol(data_combined_cats_median_R021_100),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_median_R021_100)){
+    cumulative_array_median_R021_100[1,j,]<- counts_array_median_R021_100[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_median_R021_100)){
+      cumulative_array_median_R021_100[i,j,1]<-cumulative_array_median_R021_100[i-1,j,1]+counts_array_median_R021_100[i,j,1]
+      cumulative_array_median_R021_100[i,j,5]<-cumulative_array_median_R021_100[i-1,j,5]+counts_array_median_R021_100[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_median_R021_100)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_median_R021_100[k,j,2]<- cumulative_array_median_R021_100[k-1,j,2]+counts_array_median_R021_100[k,j,2]
+      }
+      else {
+        cumulative_array_median_R021_100[k,j,2]<-cumulative_array_median_R021_100[k-1,j,2]+
+          counts_array_median_R021_100[k,j,2]-counts_array_median_R021_100[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_median_R021_100)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_median_R021_100[l,j,3]<- cumulative_array_median_R021_100[l-1,j,3]+counts_array_median_R021_100[l,j,3]
+      }
+    else{
+      cumulative_array_median_R021_100[l,j,3]<-cumulative_array_median_R021_100[l-1,j,3]+
+          counts_array_median_R021_100[l,j,3]-counts_array_median_R021_100[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_median_R021_100)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_median_R021_100[m,j,4]<- cumulative_array_median_R021_100[m-1,j,4]+counts_array_median_R021_100[m,j,4]
+    }
+    else{
+      cumulative_array_median_R021_100[m,j,4]<-cumulative_array_median_R021_100[m-1,j,4]+
+          counts_array_median_R021_100[m,j,4]-counts_array_median_R021_100[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_mean_R021_100<- array(NA, dim=c(nrow(data_combined_cats_mean_R021_100),ncol(data_combined_cats_mean_R021_100),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_mean_R021_100)){
+    cumulative_array_mean_R021_100[1,j,]<- counts_array_mean_R021_100[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_mean_R021_100)){
+      cumulative_array_mean_R021_100[i,j,1]<-cumulative_array_mean_R021_100[i-1,j,1]+counts_array_mean_R021_100[i,j,1]
+      cumulative_array_mean_R021_100[i,j,5]<-cumulative_array_mean_R021_100[i-1,j,5]+counts_array_mean_R021_100[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_mean_R021_100)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_mean_R021_100[k,j,2]<- cumulative_array_mean_R021_100[k-1,j,2]+counts_array_mean_R021_100[k,j,2]
+      }
+      else {
+        cumulative_array_mean_R021_100[k,j,2]<-cumulative_array_mean_R021_100[k-1,j,2]+
+          counts_array_mean_R021_100[k,j,2]-counts_array_mean_R021_100[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_mean_R021_100)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_mean_R021_100[l,j,3]<- cumulative_array_mean_R021_100[l-1,j,3]+counts_array_mean_R021_100[l,j,3]
+      }
+    else{
+      cumulative_array_mean_R021_100[l,j,3]<-cumulative_array_mean_R021_100[l-1,j,3]+
+          counts_array_mean_R021_100[l,j,3]-counts_array_mean_R021_100[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_mean_R021_100)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_mean_R021_100[m,j,4]<- cumulative_array_mean_R021_100[m-1,j,4]+counts_array_mean_R021_100[m,j,4]
+    }
+    else{
+      cumulative_array_mean_R021_100[m,j,4]<-cumulative_array_mean_R021_100[m-1,j,4]+
+          counts_array_mean_R021_100[m,j,4]-counts_array_mean_R021_100[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_lower_R021_100<- array(NA, dim=c(nrow(data_combined_cats_lower_R021_100),ncol(data_combined_cats_lower_R021_100),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_lower_R021_100)){
+    cumulative_array_lower_R021_100[1,j,]<- counts_array_lower_R021_100[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_lower_R021_100)){
+      cumulative_array_lower_R021_100[i,j,1]<-cumulative_array_lower_R021_100[i-1,j,1]+counts_array_lower_R021_100[i,j,1]
+      cumulative_array_lower_R021_100[i,j,5]<-cumulative_array_lower_R021_100[i-1,j,5]+counts_array_lower_R021_100[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_lower_R021_100)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_lower_R021_100[k,j,2]<- cumulative_array_lower_R021_100[k-1,j,2]+counts_array_lower_R021_100[k,j,2]
+      }
+      else {
+        cumulative_array_lower_R021_100[k,j,2]<-cumulative_array_lower_R021_100[k-1,j,2]+
+          counts_array_lower_R021_100[k,j,2]-counts_array_lower_R021_100[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_lower_R021_100)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_lower_R021_100[l,j,3]<- cumulative_array_lower_R021_100[l-1,j,3]+counts_array_lower_R021_100[l,j,3]
+      }
+    else{
+      cumulative_array_lower_R021_100[l,j,3]<-cumulative_array_lower_R021_100[l-1,j,3]+
+          counts_array_lower_R021_100[l,j,3]-counts_array_lower_R021_100[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_lower_R021_100)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_lower_R021_100[m,j,4]<- cumulative_array_lower_R021_100[m-1,j,4]+counts_array_lower_R021_100[m,j,4]
+    }
+    else{
+      cumulative_array_lower_R021_100[m,j,4]<-cumulative_array_lower_R021_100[m-1,j,4]+
+          counts_array_lower_R021_100[m,j,4]-counts_array_lower_R021_100[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_upper_R021_100<- array(NA, dim=c(nrow(data_combined_cats_upper_R021_100),ncol(data_combined_cats_upper_R021_100),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_upper_R021_100)){
+    cumulative_array_upper_R021_100[1,j,]<- counts_array_upper_R021_100[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_upper_R021_100)){
+      cumulative_array_upper_R021_100[i,j,1]<-cumulative_array_upper_R021_100[i-1,j,1]+counts_array_upper_R021_100[i,j,1]
+      cumulative_array_upper_R021_100[i,j,5]<-cumulative_array_upper_R021_100[i-1,j,5]+counts_array_upper_R021_100[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_upper_R021_100)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_upper_R021_100[k,j,2]<- cumulative_array_upper_R021_100[k-1,j,2]+counts_array_upper_R021_100[k,j,2]
+      }
+      else {
+        cumulative_array_upper_R021_100[k,j,2]<-cumulative_array_upper_R021_100[k-1,j,2]+
+          counts_array_upper_R021_100[k,j,2]-counts_array_upper_R021_100[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_upper_R021_100)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_upper_R021_100[l,j,3]<- cumulative_array_upper_R021_100[l-1,j,3]+counts_array_upper_R021_100[l,j,3]
+      }
+    else{
+      cumulative_array_upper_R021_100[l,j,3]<-cumulative_array_upper_R021_100[l-1,j,3]+
+          counts_array_upper_R021_100[l,j,3]-counts_array_upper_R021_100[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_upper_R021_100)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_upper_R021_100[m,j,4]<- cumulative_array_upper_R021_100[m-1,j,4]+counts_array_upper_R021_100[m,j,4]
+    }
+    else{
+      cumulative_array_upper_R021_100[m,j,4]<-cumulative_array_upper_R021_100[m-1,j,4]+
+          counts_array_upper_R021_100[m,j,4]-counts_array_upper_R021_100[m-length_of_stay[4],j,4]
+      }
+    }
+   
+  }
+###########################################
+cumulative_array_median_R021_75<- array(NA, dim=c(nrow(data_combined_cats_median_R021_75),ncol(data_combined_cats_median_R021_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_median_R021_75)){
+    cumulative_array_median_R021_75[1,j,]<- counts_array_median_R021_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_median_R021_75)){
+      cumulative_array_median_R021_75[i,j,1]<-cumulative_array_median_R021_75[i-1,j,1]+counts_array_median_R021_75[i,j,1]
+      cumulative_array_median_R021_75[i,j,5]<-cumulative_array_median_R021_75[i-1,j,5]+counts_array_median_R021_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_median_R021_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_median_R021_75[k,j,2]<- cumulative_array_median_R021_75[k-1,j,2]+counts_array_median_R021_75[k,j,2]
+      }
+      else {
+        cumulative_array_median_R021_75[k,j,2]<-cumulative_array_median_R021_75[k-1,j,2]+
+          counts_array_median_R021_75[k,j,2]-counts_array_median_R021_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_median_R021_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_median_R021_75[l,j,3]<- cumulative_array_median_R021_75[l-1,j,3]+counts_array_median_R021_75[l,j,3]
+      }
+    else{
+      cumulative_array_median_R021_75[l,j,3]<-cumulative_array_median_R021_75[l-1,j,3]+
+          counts_array_median_R021_75[l,j,3]-counts_array_median_R021_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_median_R021_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_median_R021_75[m,j,4]<- cumulative_array_median_R021_75[m-1,j,4]+counts_array_median_R021_75[m,j,4]
+    }
+    else{
+      cumulative_array_median_R021_75[m,j,4]<-cumulative_array_median_R021_75[m-1,j,4]+
+          counts_array_median_R021_75[m,j,4]-counts_array_median_R021_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_mean_R021_75<- array(NA, dim=c(nrow(data_combined_cats_mean_R021_75),ncol(data_combined_cats_mean_R021_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_mean_R021_75)){
+    cumulative_array_mean_R021_75[1,j,]<- counts_array_mean_R021_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_mean_R021_75)){
+      cumulative_array_mean_R021_75[i,j,1]<-cumulative_array_mean_R021_75[i-1,j,1]+counts_array_mean_R021_75[i,j,1]
+      cumulative_array_mean_R021_75[i,j,5]<-cumulative_array_mean_R021_75[i-1,j,5]+counts_array_mean_R021_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_mean_R021_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_mean_R021_75[k,j,2]<- cumulative_array_mean_R021_75[k-1,j,2]+counts_array_mean_R021_75[k,j,2]
+      }
+      else {
+        cumulative_array_mean_R021_75[k,j,2]<-cumulative_array_mean_R021_75[k-1,j,2]+
+          counts_array_mean_R021_75[k,j,2]-counts_array_mean_R021_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_mean_R021_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_mean_R021_75[l,j,3]<- cumulative_array_mean_R021_75[l-1,j,3]+counts_array_mean_R021_75[l,j,3]
+      }
+    else{
+      cumulative_array_mean_R021_75[l,j,3]<-cumulative_array_mean_R021_75[l-1,j,3]+
+          counts_array_mean_R021_75[l,j,3]-counts_array_mean_R021_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_mean_R021_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_mean_R021_75[m,j,4]<- cumulative_array_mean_R021_75[m-1,j,4]+counts_array_mean_R021_75[m,j,4]
+    }
+    else{
+      cumulative_array_mean_R021_75[m,j,4]<-cumulative_array_mean_R021_75[m-1,j,4]+
+          counts_array_mean_R021_75[m,j,4]-counts_array_mean_R021_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_lower_R021_75<- array(NA, dim=c(nrow(data_combined_cats_lower_R021_75),ncol(data_combined_cats_lower_R021_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_lower_R021_75)){
+    cumulative_array_lower_R021_75[1,j,]<- counts_array_lower_R021_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_lower_R021_75)){
+      cumulative_array_lower_R021_75[i,j,1]<-cumulative_array_lower_R021_75[i-1,j,1]+counts_array_lower_R021_75[i,j,1]
+      cumulative_array_lower_R021_75[i,j,5]<-cumulative_array_lower_R021_75[i-1,j,5]+counts_array_lower_R021_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_lower_R021_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_lower_R021_75[k,j,2]<- cumulative_array_lower_R021_75[k-1,j,2]+counts_array_lower_R021_75[k,j,2]
+      }
+      else {
+        cumulative_array_lower_R021_75[k,j,2]<-cumulative_array_lower_R021_75[k-1,j,2]+
+          counts_array_lower_R021_75[k,j,2]-counts_array_lower_R021_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_lower_R021_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_lower_R021_75[l,j,3]<- cumulative_array_lower_R021_75[l-1,j,3]+counts_array_lower_R021_75[l,j,3]
+      }
+    else{
+      cumulative_array_lower_R021_75[l,j,3]<-cumulative_array_lower_R021_75[l-1,j,3]+
+          counts_array_lower_R021_75[l,j,3]-counts_array_lower_R021_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_lower_R021_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_lower_R021_75[m,j,4]<- cumulative_array_lower_R021_75[m-1,j,4]+counts_array_lower_R021_75[m,j,4]
+    }
+    else{
+      cumulative_array_lower_R021_75[m,j,4]<-cumulative_array_lower_R021_75[m-1,j,4]+
+          counts_array_lower_R021_75[m,j,4]-counts_array_lower_R021_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_upper_R021_75<- array(NA, dim=c(nrow(data_combined_cats_upper_R021_75),ncol(data_combined_cats_upper_R021_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_upper_R021_75)){
+    cumulative_array_upper_R021_75[1,j,]<- counts_array_upper_R021_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_upper_R021_75)){
+      cumulative_array_upper_R021_75[i,j,1]<-cumulative_array_upper_R021_75[i-1,j,1]+counts_array_upper_R021_75[i,j,1]
+      cumulative_array_upper_R021_75[i,j,5]<-cumulative_array_upper_R021_75[i-1,j,5]+counts_array_upper_R021_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_upper_R021_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_upper_R021_75[k,j,2]<- cumulative_array_upper_R021_75[k-1,j,2]+counts_array_upper_R021_75[k,j,2]
+      }
+      else {
+        cumulative_array_upper_R021_75[k,j,2]<-cumulative_array_upper_R021_75[k-1,j,2]+
+          counts_array_upper_R021_75[k,j,2]-counts_array_upper_R021_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_upper_R021_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_upper_R021_75[l,j,3]<- cumulative_array_upper_R021_75[l-1,j,3]+counts_array_upper_R021_75[l,j,3]
+      }
+    else{
+      cumulative_array_upper_R021_75[l,j,3]<-cumulative_array_upper_R021_75[l-1,j,3]+
+          counts_array_upper_R021_75[l,j,3]-counts_array_upper_R021_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_upper_R021_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_upper_R021_75[m,j,4]<- cumulative_array_upper_R021_75[m-1,j,4]+counts_array_upper_R021_75[m,j,4]
+    }
+    else{
+      cumulative_array_upper_R021_75[m,j,4]<-cumulative_array_upper_R021_75[m-1,j,4]+
+          counts_array_upper_R021_75[m,j,4]-counts_array_upper_R021_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+  }
+####################################
+cumulative_array_median_R021_50<- array(NA, dim=c(nrow(data_combined_cats_median_R021_50),ncol(data_combined_cats_median_R021_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_median_R021_50)){
+    cumulative_array_median_R021_50[1,j,]<- counts_array_median_R021_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_median_R021_50)){
+      cumulative_array_median_R021_50[i,j,1]<-cumulative_array_median_R021_50[i-1,j,1]+counts_array_median_R021_50[i,j,1]
+      cumulative_array_median_R021_50[i,j,5]<-cumulative_array_median_R021_50[i-1,j,5]+counts_array_median_R021_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_median_R021_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_median_R021_50[k,j,2]<- cumulative_array_median_R021_50[k-1,j,2]+counts_array_median_R021_50[k,j,2]
+      }
+      else {
+        cumulative_array_median_R021_50[k,j,2]<-cumulative_array_median_R021_50[k-1,j,2]+
+          counts_array_median_R021_50[k,j,2]-counts_array_median_R021_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_median_R021_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_median_R021_50[l,j,3]<- cumulative_array_median_R021_50[l-1,j,3]+counts_array_median_R021_50[l,j,3]
+      }
+    else{
+      cumulative_array_median_R021_50[l,j,3]<-cumulative_array_median_R021_50[l-1,j,3]+
+          counts_array_median_R021_50[l,j,3]-counts_array_median_R021_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_median_R021_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_median_R021_50[m,j,4]<- cumulative_array_median_R021_50[m-1,j,4]+counts_array_median_R021_50[m,j,4]
+    }
+    else{
+      cumulative_array_median_R021_50[m,j,4]<-cumulative_array_median_R021_50[m-1,j,4]+
+          counts_array_median_R021_50[m,j,4]-counts_array_median_R021_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_mean_R021_50<- array(NA, dim=c(nrow(data_combined_cats_mean_R021_50),ncol(data_combined_cats_mean_R021_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_mean_R021_50)){
+    cumulative_array_mean_R021_50[1,j,]<- counts_array_mean_R021_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_mean_R021_50)){
+      cumulative_array_mean_R021_50[i,j,1]<-cumulative_array_mean_R021_50[i-1,j,1]+counts_array_mean_R021_50[i,j,1]
+      cumulative_array_mean_R021_50[i,j,5]<-cumulative_array_mean_R021_50[i-1,j,5]+counts_array_mean_R021_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_mean_R021_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_mean_R021_50[k,j,2]<- cumulative_array_mean_R021_50[k-1,j,2]+counts_array_mean_R021_50[k,j,2]
+      }
+      else {
+        cumulative_array_mean_R021_50[k,j,2]<-cumulative_array_mean_R021_50[k-1,j,2]+
+          counts_array_mean_R021_50[k,j,2]-counts_array_mean_R021_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_mean_R021_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_mean_R021_50[l,j,3]<- cumulative_array_mean_R021_50[l-1,j,3]+counts_array_mean_R021_50[l,j,3]
+      }
+    else{
+      cumulative_array_mean_R021_50[l,j,3]<-cumulative_array_mean_R021_50[l-1,j,3]+
+          counts_array_mean_R021_50[l,j,3]-counts_array_mean_R021_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_mean_R021_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_mean_R021_50[m,j,4]<- cumulative_array_mean_R021_50[m-1,j,4]+counts_array_mean_R021_50[m,j,4]
+    }
+    else{
+      cumulative_array_mean_R021_50[m,j,4]<-cumulative_array_mean_R021_50[m-1,j,4]+
+          counts_array_mean_R021_50[m,j,4]-counts_array_mean_R021_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_lower_R021_50<- array(NA, dim=c(nrow(data_combined_cats_lower_R021_50),ncol(data_combined_cats_lower_R021_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_lower_R021_50)){
+    cumulative_array_lower_R021_50[1,j,]<- counts_array_lower_R021_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_lower_R021_50)){
+      cumulative_array_lower_R021_50[i,j,1]<-cumulative_array_lower_R021_50[i-1,j,1]+counts_array_lower_R021_50[i,j,1]
+      cumulative_array_lower_R021_50[i,j,5]<-cumulative_array_lower_R021_50[i-1,j,5]+counts_array_lower_R021_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_lower_R021_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_lower_R021_50[k,j,2]<- cumulative_array_lower_R021_50[k-1,j,2]+counts_array_lower_R021_50[k,j,2]
+      }
+      else {
+        cumulative_array_lower_R021_50[k,j,2]<-cumulative_array_lower_R021_50[k-1,j,2]+
+          counts_array_lower_R021_50[k,j,2]-counts_array_lower_R021_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_lower_R021_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_lower_R021_50[l,j,3]<- cumulative_array_lower_R021_50[l-1,j,3]+counts_array_lower_R021_50[l,j,3]
+      }
+    else{
+      cumulative_array_lower_R021_50[l,j,3]<-cumulative_array_lower_R021_50[l-1,j,3]+
+          counts_array_lower_R021_50[l,j,3]-counts_array_lower_R021_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_lower_R021_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_lower_R021_50[m,j,4]<- cumulative_array_lower_R021_50[m-1,j,4]+counts_array_lower_R021_50[m,j,4]
+    }
+    else{
+      cumulative_array_lower_R021_50[m,j,4]<-cumulative_array_lower_R021_50[m-1,j,4]+
+          counts_array_lower_R021_50[m,j,4]-counts_array_lower_R021_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_upper_R021_50<- array(NA, dim=c(nrow(data_combined_cats_upper_R021_50),ncol(data_combined_cats_upper_R021_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_upper_R021_50)){
+    cumulative_array_upper_R021_50[1,j,]<- counts_array_upper_R021_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_upper_R021_50)){
+      cumulative_array_upper_R021_50[i,j,1]<-cumulative_array_upper_R021_50[i-1,j,1]+counts_array_upper_R021_50[i,j,1]
+      cumulative_array_upper_R021_50[i,j,5]<-cumulative_array_upper_R021_50[i-1,j,5]+counts_array_upper_R021_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_upper_R021_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_upper_R021_50[k,j,2]<- cumulative_array_upper_R021_50[k-1,j,2]+counts_array_upper_R021_50[k,j,2]
+      }
+      else {
+        cumulative_array_upper_R021_50[k,j,2]<-cumulative_array_upper_R021_50[k-1,j,2]+
+          counts_array_upper_R021_50[k,j,2]-counts_array_upper_R021_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_upper_R021_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_upper_R021_50[l,j,3]<- cumulative_array_upper_R021_50[l-1,j,3]+counts_array_upper_R021_50[l,j,3]
+      }
+    else{
+      cumulative_array_upper_R021_50[l,j,3]<-cumulative_array_upper_R021_50[l-1,j,3]+
+          counts_array_upper_R021_50[l,j,3]-counts_array_upper_R021_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_upper_R021_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_upper_R021_50[m,j,4]<- cumulative_array_upper_R021_50[m-1,j,4]+counts_array_upper_R021_50[m,j,4]
+    }
+    else{
+      cumulative_array_upper_R021_50[m,j,4]<-cumulative_array_upper_R021_50[m-1,j,4]+
+          counts_array_upper_R021_50[m,j,4]-counts_array_upper_R021_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+  }
+#######################################
+cumulative_array_median_R025_100<- array(NA, dim=c(nrow(data_combined_cats_median_R025_100),ncol(data_combined_cats_median_R025_100),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_median_R025_100)){
+    cumulative_array_median_R025_100[1,j,]<- counts_array_median_R025_100[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_median_R025_100)){
+      cumulative_array_median_R025_100[i,j,1]<-cumulative_array_median_R025_100[i-1,j,1]+counts_array_median_R025_100[i,j,1]
+      cumulative_array_median_R025_100[i,j,5]<-cumulative_array_median_R025_100[i-1,j,5]+counts_array_median_R025_100[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_median_R025_100)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_median_R025_100[k,j,2]<- cumulative_array_median_R025_100[k-1,j,2]+counts_array_median_R025_100[k,j,2]
+      }
+      else {
+        cumulative_array_median_R025_100[k,j,2]<-cumulative_array_median_R025_100[k-1,j,2]+
+          counts_array_median_R025_100[k,j,2]-counts_array_median_R025_100[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_median_R025_100)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_median_R025_100[l,j,3]<- cumulative_array_median_R025_100[l-1,j,3]+counts_array_median_R025_100[l,j,3]
+      }
+    else{
+      cumulative_array_median_R025_100[l,j,3]<-cumulative_array_median_R025_100[l-1,j,3]+
+          counts_array_median_R025_100[l,j,3]-counts_array_median_R025_100[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_median_R025_100)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_median_R025_100[m,j,4]<- cumulative_array_median_R025_100[m-1,j,4]+counts_array_median_R025_100[m,j,4]
+    }
+    else{
+      cumulative_array_median_R025_100[m,j,4]<-cumulative_array_median_R025_100[m-1,j,4]+
+          counts_array_median_R025_100[m,j,4]-counts_array_median_R025_100[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_mean_R025_100<- array(NA, dim=c(nrow(data_combined_cats_mean_R025_100),ncol(data_combined_cats_mean_R025_100),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_mean_R025_100)){
+    cumulative_array_mean_R025_100[1,j,]<- counts_array_mean_R025_100[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_mean_R025_100)){
+      cumulative_array_mean_R025_100[i,j,1]<-cumulative_array_mean_R025_100[i-1,j,1]+counts_array_mean_R025_100[i,j,1]
+      cumulative_array_mean_R025_100[i,j,5]<-cumulative_array_mean_R025_100[i-1,j,5]+counts_array_mean_R025_100[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_mean_R025_100)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_mean_R025_100[k,j,2]<- cumulative_array_mean_R025_100[k-1,j,2]+counts_array_mean_R025_100[k,j,2]
+      }
+      else {
+        cumulative_array_mean_R025_100[k,j,2]<-cumulative_array_mean_R025_100[k-1,j,2]+
+          counts_array_mean_R025_100[k,j,2]-counts_array_mean_R025_100[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_mean_R025_100)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_mean_R025_100[l,j,3]<- cumulative_array_mean_R025_100[l-1,j,3]+counts_array_mean_R025_100[l,j,3]
+      }
+    else{
+      cumulative_array_mean_R025_100[l,j,3]<-cumulative_array_mean_R025_100[l-1,j,3]+
+          counts_array_mean_R025_100[l,j,3]-counts_array_mean_R025_100[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_mean_R025_100)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_mean_R025_100[m,j,4]<- cumulative_array_mean_R025_100[m-1,j,4]+counts_array_mean_R025_100[m,j,4]
+    }
+    else{
+      cumulative_array_mean_R025_100[m,j,4]<-cumulative_array_mean_R025_100[m-1,j,4]+
+          counts_array_mean_R025_100[m,j,4]-counts_array_mean_R025_100[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_lower_R025_100<- array(NA, dim=c(nrow(data_combined_cats_lower_R025_100),ncol(data_combined_cats_lower_R025_100),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_lower_R025_100)){
+    cumulative_array_lower_R025_100[1,j,]<- counts_array_lower_R025_100[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_lower_R025_100)){
+      cumulative_array_lower_R025_100[i,j,1]<-cumulative_array_lower_R025_100[i-1,j,1]+counts_array_lower_R025_100[i,j,1]
+      cumulative_array_lower_R025_100[i,j,5]<-cumulative_array_lower_R025_100[i-1,j,5]+counts_array_lower_R025_100[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_lower_R025_100)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_lower_R025_100[k,j,2]<- cumulative_array_lower_R025_100[k-1,j,2]+counts_array_lower_R025_100[k,j,2]
+      }
+      else {
+        cumulative_array_lower_R025_100[k,j,2]<-cumulative_array_lower_R025_100[k-1,j,2]+
+          counts_array_lower_R025_100[k,j,2]-counts_array_lower_R025_100[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_lower_R025_100)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_lower_R025_100[l,j,3]<- cumulative_array_lower_R025_100[l-1,j,3]+counts_array_lower_R025_100[l,j,3]
+      }
+    else{
+      cumulative_array_lower_R025_100[l,j,3]<-cumulative_array_lower_R025_100[l-1,j,3]+
+          counts_array_lower_R025_100[l,j,3]-counts_array_lower_R025_100[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_lower_R025_100)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_lower_R025_100[m,j,4]<- cumulative_array_lower_R025_100[m-1,j,4]+counts_array_lower_R025_100[m,j,4]
+    }
+    else{
+      cumulative_array_lower_R025_100[m,j,4]<-cumulative_array_lower_R025_100[m-1,j,4]+
+          counts_array_lower_R025_100[m,j,4]-counts_array_lower_R025_100[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_upper_R025_100<- array(NA, dim=c(nrow(data_combined_cats_upper_R025_100),ncol(data_combined_cats_upper_R025_100),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_upper_R025_100)){
+    cumulative_array_upper_R025_100[1,j,]<- counts_array_upper_R025_100[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_upper_R025_100)){
+      cumulative_array_upper_R025_100[i,j,1]<-cumulative_array_upper_R025_100[i-1,j,1]+counts_array_upper_R025_100[i,j,1]
+      cumulative_array_upper_R025_100[i,j,5]<-cumulative_array_upper_R025_100[i-1,j,5]+counts_array_upper_R025_100[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_upper_R025_100)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_upper_R025_100[k,j,2]<- cumulative_array_upper_R025_100[k-1,j,2]+counts_array_upper_R025_100[k,j,2]
+      }
+      else {
+        cumulative_array_upper_R025_100[k,j,2]<-cumulative_array_upper_R025_100[k-1,j,2]+
+          counts_array_upper_R025_100[k,j,2]-counts_array_upper_R025_100[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_upper_R025_100)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_upper_R025_100[l,j,3]<- cumulative_array_upper_R025_100[l-1,j,3]+counts_array_upper_R025_100[l,j,3]
+      }
+    else{
+      cumulative_array_upper_R025_100[l,j,3]<-cumulative_array_upper_R025_100[l-1,j,3]+
+          counts_array_upper_R025_100[l,j,3]-counts_array_upper_R025_100[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_upper_R025_100)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_upper_R025_100[m,j,4]<- cumulative_array_upper_R025_100[m-1,j,4]+counts_array_upper_R025_100[m,j,4]
+    }
+    else{
+      cumulative_array_upper_R025_100[m,j,4]<-cumulative_array_upper_R025_100[m-1,j,4]+
+          counts_array_upper_R025_100[m,j,4]-counts_array_upper_R025_100[m-length_of_stay[4],j,4]
+      }
+    }
+   
+  }
+##########################################
+cumulative_array_median_R025_75<- array(NA, dim=c(nrow(data_combined_cats_median_R025_75),ncol(data_combined_cats_median_R025_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_median_R025_75)){
+    cumulative_array_median_R025_75[1,j,]<- counts_array_median_R025_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_median_R025_75)){
+      cumulative_array_median_R025_75[i,j,1]<-cumulative_array_median_R025_75[i-1,j,1]+counts_array_median_R025_75[i,j,1]
+      cumulative_array_median_R025_75[i,j,5]<-cumulative_array_median_R025_75[i-1,j,5]+counts_array_median_R025_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_median_R025_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_median_R025_75[k,j,2]<- cumulative_array_median_R025_75[k-1,j,2]+counts_array_median_R025_75[k,j,2]
+      }
+      else {
+        cumulative_array_median_R025_75[k,j,2]<-cumulative_array_median_R025_75[k-1,j,2]+
+          counts_array_median_R025_75[k,j,2]-counts_array_median_R025_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_median_R025_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_median_R025_75[l,j,3]<- cumulative_array_median_R025_75[l-1,j,3]+counts_array_median_R025_75[l,j,3]
+      }
+    else{
+      cumulative_array_median_R025_75[l,j,3]<-cumulative_array_median_R025_75[l-1,j,3]+
+          counts_array_median_R025_75[l,j,3]-counts_array_median_R025_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_median_R025_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_median_R025_75[m,j,4]<- cumulative_array_median_R025_75[m-1,j,4]+counts_array_median_R025_75[m,j,4]
+    }
+    else{
+      cumulative_array_median_R025_75[m,j,4]<-cumulative_array_median_R025_75[m-1,j,4]+
+          counts_array_median_R025_75[m,j,4]-counts_array_median_R025_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_mean_R025_75<- array(NA, dim=c(nrow(data_combined_cats_mean_R025_75),ncol(data_combined_cats_mean_R025_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_mean_R025_75)){
+    cumulative_array_mean_R025_75[1,j,]<- counts_array_mean_R025_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_mean_R025_75)){
+      cumulative_array_mean_R025_75[i,j,1]<-cumulative_array_mean_R025_75[i-1,j,1]+counts_array_mean_R025_75[i,j,1]
+      cumulative_array_mean_R025_75[i,j,5]<-cumulative_array_mean_R025_75[i-1,j,5]+counts_array_mean_R025_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_mean_R025_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_mean_R025_75[k,j,2]<- cumulative_array_mean_R025_75[k-1,j,2]+counts_array_mean_R025_75[k,j,2]
+      }
+      else {
+        cumulative_array_mean_R025_75[k,j,2]<-cumulative_array_mean_R025_75[k-1,j,2]+
+          counts_array_mean_R025_75[k,j,2]-counts_array_mean_R025_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_mean_R025_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_mean_R025_75[l,j,3]<- cumulative_array_mean_R025_75[l-1,j,3]+counts_array_mean_R025_75[l,j,3]
+      }
+    else{
+      cumulative_array_mean_R025_75[l,j,3]<-cumulative_array_mean_R025_75[l-1,j,3]+
+          counts_array_mean_R025_75[l,j,3]-counts_array_mean_R025_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_mean_R025_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_mean_R025_75[m,j,4]<- cumulative_array_mean_R025_75[m-1,j,4]+counts_array_mean_R025_75[m,j,4]
+    }
+    else{
+      cumulative_array_mean_R025_75[m,j,4]<-cumulative_array_mean_R025_75[m-1,j,4]+
+          counts_array_mean_R025_75[m,j,4]-counts_array_mean_R025_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_lower_R025_75<- array(NA, dim=c(nrow(data_combined_cats_lower_R025_75),ncol(data_combined_cats_lower_R025_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_lower_R025_75)){
+    cumulative_array_lower_R025_75[1,j,]<- counts_array_lower_R025_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_lower_R025_75)){
+      cumulative_array_lower_R025_75[i,j,1]<-cumulative_array_lower_R025_75[i-1,j,1]+counts_array_lower_R025_75[i,j,1]
+      cumulative_array_lower_R025_75[i,j,5]<-cumulative_array_lower_R025_75[i-1,j,5]+counts_array_lower_R025_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_lower_R025_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_lower_R025_75[k,j,2]<- cumulative_array_lower_R025_75[k-1,j,2]+counts_array_lower_R025_75[k,j,2]
+      }
+      else {
+        cumulative_array_lower_R025_75[k,j,2]<-cumulative_array_lower_R025_75[k-1,j,2]+
+          counts_array_lower_R025_75[k,j,2]-counts_array_lower_R025_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_lower_R025_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_lower_R025_75[l,j,3]<- cumulative_array_lower_R025_75[l-1,j,3]+counts_array_lower_R025_75[l,j,3]
+      }
+    else{
+      cumulative_array_lower_R025_75[l,j,3]<-cumulative_array_lower_R025_75[l-1,j,3]+
+          counts_array_lower_R025_75[l,j,3]-counts_array_lower_R025_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_lower_R025_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_lower_R025_75[m,j,4]<- cumulative_array_lower_R025_75[m-1,j,4]+counts_array_lower_R025_75[m,j,4]
+    }
+    else{
+      cumulative_array_lower_R025_75[m,j,4]<-cumulative_array_lower_R025_75[m-1,j,4]+
+          counts_array_lower_R025_75[m,j,4]-counts_array_lower_R025_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_upper_R025_75<- array(NA, dim=c(nrow(data_combined_cats_upper_R025_75),ncol(data_combined_cats_upper_R025_75),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_upper_R025_75)){
+    cumulative_array_upper_R025_75[1,j,]<- counts_array_upper_R025_75[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_upper_R025_75)){
+      cumulative_array_upper_R025_75[i,j,1]<-cumulative_array_upper_R025_75[i-1,j,1]+counts_array_upper_R025_75[i,j,1]
+      cumulative_array_upper_R025_75[i,j,5]<-cumulative_array_upper_R025_75[i-1,j,5]+counts_array_upper_R025_75[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_upper_R025_75)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_upper_R025_75[k,j,2]<- cumulative_array_upper_R025_75[k-1,j,2]+counts_array_upper_R025_75[k,j,2]
+      }
+      else {
+        cumulative_array_upper_R025_75[k,j,2]<-cumulative_array_upper_R025_75[k-1,j,2]+
+          counts_array_upper_R025_75[k,j,2]-counts_array_upper_R025_75[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_upper_R025_75)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_upper_R025_75[l,j,3]<- cumulative_array_upper_R025_75[l-1,j,3]+counts_array_upper_R025_75[l,j,3]
+      }
+    else{
+      cumulative_array_upper_R025_75[l,j,3]<-cumulative_array_upper_R025_75[l-1,j,3]+
+          counts_array_upper_R025_75[l,j,3]-counts_array_upper_R025_75[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_upper_R025_75)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_upper_R025_75[m,j,4]<- cumulative_array_upper_R025_75[m-1,j,4]+counts_array_upper_R025_75[m,j,4]
+    }
+    else{
+      cumulative_array_upper_R025_75[m,j,4]<-cumulative_array_upper_R025_75[m-1,j,4]+
+          counts_array_upper_R025_75[m,j,4]-counts_array_upper_R025_75[m-length_of_stay[4],j,4]
+      }
+    }
+   
+  }
+#######################################
+cumulative_array_median_R025_50<- array(NA, dim=c(nrow(data_combined_cats_median_R025_50),ncol(data_combined_cats_median_R025_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_median_R025_50)){
+    cumulative_array_median_R025_50[1,j,]<- counts_array_median_R025_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_median_R025_50)){
+      cumulative_array_median_R025_50[i,j,1]<-cumulative_array_median_R025_50[i-1,j,1]+counts_array_median_R025_50[i,j,1]
+      cumulative_array_median_R025_50[i,j,5]<-cumulative_array_median_R025_50[i-1,j,5]+counts_array_median_R025_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_median_R025_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_median_R025_50[k,j,2]<- cumulative_array_median_R025_50[k-1,j,2]+counts_array_median_R025_50[k,j,2]
+      }
+      else {
+        cumulative_array_median_R025_50[k,j,2]<-cumulative_array_median_R025_50[k-1,j,2]+
+          counts_array_median_R025_50[k,j,2]-counts_array_median_R025_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_median_R025_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_median_R025_50[l,j,3]<- cumulative_array_median_R025_50[l-1,j,3]+counts_array_median_R025_50[l,j,3]
+      }
+    else{
+      cumulative_array_median_R025_50[l,j,3]<-cumulative_array_median_R025_50[l-1,j,3]+
+          counts_array_median_R025_50[l,j,3]-counts_array_median_R025_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_median_R025_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_median_R025_50[m,j,4]<- cumulative_array_median_R025_50[m-1,j,4]+counts_array_median_R025_50[m,j,4]
+    }
+    else{
+      cumulative_array_median_R025_50[m,j,4]<-cumulative_array_median_R025_50[m-1,j,4]+
+          counts_array_median_R025_50[m,j,4]-counts_array_median_R025_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_mean_R025_50<- array(NA, dim=c(nrow(data_combined_cats_mean_R025_50),ncol(data_combined_cats_mean_R025_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_mean_R025_50)){
+    cumulative_array_mean_R025_50[1,j,]<- counts_array_mean_R025_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_mean_R025_50)){
+      cumulative_array_mean_R025_50[i,j,1]<-cumulative_array_mean_R025_50[i-1,j,1]+counts_array_mean_R025_50[i,j,1]
+      cumulative_array_mean_R025_50[i,j,5]<-cumulative_array_mean_R025_50[i-1,j,5]+counts_array_mean_R025_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_mean_R025_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_mean_R025_50[k,j,2]<- cumulative_array_mean_R025_50[k-1,j,2]+counts_array_mean_R025_50[k,j,2]
+      }
+      else {
+        cumulative_array_mean_R025_50[k,j,2]<-cumulative_array_mean_R025_50[k-1,j,2]+
+          counts_array_mean_R025_50[k,j,2]-counts_array_mean_R025_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_mean_R025_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_mean_R025_50[l,j,3]<- cumulative_array_mean_R025_50[l-1,j,3]+counts_array_mean_R025_50[l,j,3]
+      }
+    else{
+      cumulative_array_mean_R025_50[l,j,3]<-cumulative_array_mean_R025_50[l-1,j,3]+
+          counts_array_mean_R025_50[l,j,3]-counts_array_mean_R025_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_mean_R025_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_mean_R025_50[m,j,4]<- cumulative_array_mean_R025_50[m-1,j,4]+counts_array_mean_R025_50[m,j,4]
+    }
+    else{
+      cumulative_array_mean_R025_50[m,j,4]<-cumulative_array_mean_R025_50[m-1,j,4]+
+          counts_array_mean_R025_50[m,j,4]-counts_array_mean_R025_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_lower_R025_50<- array(NA, dim=c(nrow(data_combined_cats_lower_R025_50),ncol(data_combined_cats_lower_R025_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_lower_R025_50)){
+    cumulative_array_lower_R025_50[1,j,]<- counts_array_lower_R025_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_lower_R025_50)){
+      cumulative_array_lower_R025_50[i,j,1]<-cumulative_array_lower_R025_50[i-1,j,1]+counts_array_lower_R025_50[i,j,1]
+      cumulative_array_lower_R025_50[i,j,5]<-cumulative_array_lower_R025_50[i-1,j,5]+counts_array_lower_R025_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_lower_R025_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_lower_R025_50[k,j,2]<- cumulative_array_lower_R025_50[k-1,j,2]+counts_array_lower_R025_50[k,j,2]
+      }
+      else {
+        cumulative_array_lower_R025_50[k,j,2]<-cumulative_array_lower_R025_50[k-1,j,2]+
+          counts_array_lower_R025_50[k,j,2]-counts_array_lower_R025_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_lower_R025_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_lower_R025_50[l,j,3]<- cumulative_array_lower_R025_50[l-1,j,3]+counts_array_lower_R025_50[l,j,3]
+      }
+    else{
+      cumulative_array_lower_R025_50[l,j,3]<-cumulative_array_lower_R025_50[l-1,j,3]+
+          counts_array_lower_R025_50[l,j,3]-counts_array_lower_R025_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_lower_R025_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_lower_R025_50[m,j,4]<- cumulative_array_lower_R025_50[m-1,j,4]+counts_array_lower_R025_50[m,j,4]
+    }
+    else{
+      cumulative_array_lower_R025_50[m,j,4]<-cumulative_array_lower_R025_50[m-1,j,4]+
+          counts_array_lower_R025_50[m,j,4]-counts_array_lower_R025_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+}
+
+
+cumulative_array_upper_R025_50<- array(NA, dim=c(nrow(data_combined_cats_upper_R025_50),ncol(data_combined_cats_upper_R025_50),ncol(prob_matrix)))
+
+
+  for(j in 1:ncol(data_combined_cats_upper_R025_50)){
+    cumulative_array_upper_R025_50[1,j,]<- counts_array_upper_R025_50[1,j,]
+    
+    for(i in 2:nrow(data_combined_cats_upper_R025_50)){
+      cumulative_array_upper_R025_50[i,j,1]<-cumulative_array_upper_R025_50[i-1,j,1]+counts_array_upper_R025_50[i,j,1]
+      cumulative_array_upper_R025_50[i,j,5]<-cumulative_array_upper_R025_50[i-1,j,5]+counts_array_upper_R025_50[i,j,5]
+    }
+
+    for(k in 2:nrow(data_combined_cats_upper_R025_50)){
+      if(k<=length_of_stay[2]){
+      cumulative_array_upper_R025_50[k,j,2]<- cumulative_array_upper_R025_50[k-1,j,2]+counts_array_upper_R025_50[k,j,2]
+      }
+      else {
+        cumulative_array_upper_R025_50[k,j,2]<-cumulative_array_upper_R025_50[k-1,j,2]+
+          counts_array_upper_R025_50[k,j,2]-counts_array_upper_R025_50[k-length_of_stay[2],j,2]
+      }
+    }
+  for(l in 2:nrow(data_combined_cats_upper_R025_50)){
+      if(l <= length_of_stay[3]){
+        cumulative_array_upper_R025_50[l,j,3]<- cumulative_array_upper_R025_50[l-1,j,3]+counts_array_upper_R025_50[l,j,3]
+      }
+    else{
+      cumulative_array_upper_R025_50[l,j,3]<-cumulative_array_upper_R025_50[l-1,j,3]+
+          counts_array_upper_R025_50[l,j,3]-counts_array_upper_R025_50[l-length_of_stay[3],j,3]
+    }
+  }
+    for(m in 2:nrow(data_combined_cats_upper_R025_50)){
+    if(m<=length_of_stay[4]){
+      cumulative_array_upper_R025_50[m,j,4]<- cumulative_array_upper_R025_50[m-1,j,4]+counts_array_upper_R025_50[m,j,4]
+    }
+    else{
+      cumulative_array_upper_R025_50[m,j,4]<-cumulative_array_upper_R025_50[m-1,j,4]+
+          counts_array_upper_R025_50[m,j,4]-counts_array_upper_R025_50[m-length_of_stay[4],j,4]
+      }
+    }
+   
+  }
+#########################################
+
+
 ```
+
+Figure 1: 
+Cumulative total incident symptomatic cases across all ages: 
+
 
 Plot cumulative values over 99 days. 
 
@@ -849,5 +3454,117 @@ max(cumulative_totals[,4],na.rm=TRUE)
 
 #max number of vents needed in one day 
 max(cumulative_totals[,5],na.rm=TRUE)
+
+```
+
+```{r,message=FALSE, echo=TRUE, warning=FALSE}
+#figure 1:  Median daily incident cases by transmission scenarios. 
+
+incident_cases_R017_100<- apply(data_combined_cats_median_R017_100,1,sum)
+incident_cases_R017_75<- apply(data_combined_cats_median_R017_75,1,sum)
+incident_cases_R017_50<- apply(data_combined_cats_median_R017_50,1,sum)
+incident_cases_R021_100<- apply(data_combined_cats_median_R021_100,1,sum)
+incident_cases_R021_75<- apply(data_combined_cats_median_R021_75,1,sum)
+incident_cases_R021_50<- apply(data_combined_cats_median_R021_50,1,sum)
+incident_cases_R025_100<- apply(data_combined_cats_median_R025_100,1,sum)
+incident_cases_R025_75<- apply(data_combined_cats_median_R025_75,1,sum)
+incident_cases_R025_50<- apply(data_combined_cats_median_R025_50,1,sum)
+
+
+
+
+wide_incident_cases<- as.data.frame(cbind(rep(1:length(incident_cases_R017_100)),
+                      incident_cases_R017_100,incident_cases_R017_75,
+                      incident_cases_R017_50,incident_cases_R021_100,incident_cases_R021_75,
+                      incident_cases_R021_50,incident_cases_R025_100,
+                      incident_cases_R025_75,incident_cases_R025_50))
+
+
+colnames(wide_incident_cases)<- c("Day","R_0=1.7,100","R_0=1.7,75","R_0=1.7,50","R_0=2.1,100",
+                                  "R_0=2.1,75","R_0=2.1,50","R_0=2.5,100","R_0=2.5,75",
+                                  "R_0=2.5,50")
+long_incident_cases<- gather(wide_incident_cases,scenario, incident_cases,
+                             "R_0=1.7,100":"R_0=2.5,50", factor_key=TRUE)
+
+
+plt_incident_cases<- ggplot(long_incident_cases)+ 
+  geom_line(aes(y= incident_cases, x=Day,color=scenario))+
+  labs(title="Median Incident Symptomatic Cases Per Day",y="Median Number of Incident Cases")
+
+plt_incident_cases
+
+
+```
+
+```{r, message=FALSE, warning=FALSE, echo=TRUE}
+incident_hosp_R017_100<- apply(counts_array_median_R017_100[,,2],1,sum)
+incident_hosp_R017_75<- apply(counts_array_median_R017_75[,,2],1,sum)
+incident_hosp_R017_50<- apply(counts_array_median_R017_50[,,2],1,sum)
+incident_hosp_R021_100<- apply(counts_array_median_R021_100[,,2],1,sum)
+incident_hosp_R021_75<- apply(counts_array_median_R021_75[,,2],1,sum)
+incident_hosp_R021_50<- apply(counts_array_median_R021_50[,,2],1,sum)
+incident_hosp_R025_100<- apply(counts_array_median_R025_100[,,2],1,sum)
+incident_hosp_R025_75<- apply(counts_array_median_R025_75[,,2],1,sum)
+incident_hosp_R025_50<- apply(counts_array_median_R025_50[,,2],1,sum)
+
+
+wide_hosp_cases<- as.data.frame(cbind(rep(1:length(incident_hosp_R017_100)),
+                      incident_hosp_R017_100,incident_hosp_R017_75,
+                      incident_hosp_R017_50,incident_hosp_R021_100,incident_hosp_R021_75,
+                      incident_hosp_R021_50,incident_hosp_R025_100,
+                      incident_hosp_R025_75,incident_hosp_R025_50))
+
+
+colnames(wide_hosp_cases)<- c("Day","R_0=1.7,100","R_0=1.7,75","R_0=1.7,50","R_0=2.1,100",
+                                  "R_0=2.1,75","R_0=2.1,50","R_0=2.5,100","R_0=2.5,75",
+                                  "R_0=2.5,50")
+long_hosp_cases<- gather(wide_hosp_cases,scenario, incident_cases,
+                             "R_0=1.7,100":"R_0=2.5,50", factor_key=TRUE)
+
+
+plt_hosp_cases<- ggplot(long_hosp_cases)+ 
+  geom_line(aes(y= incident_cases, x=Day,color=scenario))+
+  labs(title="Median Incident Hospitalizations Per Day",
+       y="Median Number of Incident Hospitalizations")
+
+plt_hosp_cases
+
+```
+
+
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+
+incident_death_R017_100<- apply(counts_array_median_R017_100[,,5],1,sum)
+incident_death_R017_75<- apply(counts_array_median_R017_75[,,5],1,sum)
+incident_death_R017_50<- apply(counts_array_median_R017_50[,,5],1,sum)
+incident_death_R021_100<- apply(counts_array_median_R021_100[,,5],1,sum)
+incident_death_R021_75<- apply(counts_array_median_R021_75[,,5],1,sum)
+incident_death_R021_50<- apply(counts_array_median_R021_50[,,5],1,sum)
+incident_death_R025_100<- apply(counts_array_median_R025_100[,,5],1,sum)
+incident_death_R025_75<- apply(counts_array_median_R025_75[,,5],1,sum)
+incident_death_R025_50<- apply(counts_array_median_R025_50[,,5],1,sum)
+
+
+wide_death_cases<- as.data.frame(cbind(rep(1:length(incident_death_R017_100)),
+                      incident_death_R017_100,incident_death_R017_75,
+                      incident_death_R017_50,incident_death_R021_100,incident_death_R021_75,
+                      incident_death_R021_50,incident_death_R025_100,
+                      incident_death_R025_75,incident_death_R025_50))
+
+
+colnames(wide_death_cases)<- c("Day","R_0=1.7,100","R_0=1.7,75","R_0=1.7,50","R_0=2.1,100",
+                                  "R_0=2.1,75","R_0=2.1,50","R_0=2.5,100","R_0=2.5,75",
+                                  "R_0=2.5,50")
+long_death_cases<- gather(wide_death_cases,scenario, incident_cases,
+                             "R_0=1.7,100":"R_0=2.5,50", factor_key=TRUE)
+
+
+plt_death_cases<- ggplot(long_death_cases)+ 
+  geom_line(aes(y= incident_cases, x=Day,color=scenario))+
+  labs(title="Median Deaths Per Day",
+       y="Median Number of Deaths")
+
+plt_death_cases
 
 ```
