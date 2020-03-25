@@ -20,6 +20,7 @@ require(reshape2)
 require(dplyr)
 require(ggplot2) 
 require(tidyr)
+require(xtable)
 #load in data, subset incident cases/day (eventually should be symptomatic incident cases)
 data_infected_R017_100<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r017__100.csv")
 data_infected_R017_75<- read.csv("SUMMARY_INCIDENCE_SEIR_results__n500__r017__75.csv")
@@ -40,17 +41,17 @@ complete_infected_R025_75<- read.csv("SEIR_results__n500__r025__75.csv")
 
 complete_incident_R017_75<- complete_infected_R017_75%>%
   select(time,incid_I1,incid_I2,incid_I3,incid_I4,incid_I5,
-         incid_I6,I7,incid_I8,incid_I9,
+         incid_I6,incid_I7,incid_I8,incid_I9,
          incid_I10,incid_I11,incid_I12,incid_I13,incid_I14)
 
 complete_incident_R021_75<- complete_infected_R021_75%>%
   select(time,incid_I1,incid_I2,incid_I3,incid_I4,incid_I5,
-         incid_I6,I7,incid_I8,incid_I9,
+         incid_I6,incid_I7,incid_I8,incid_I9,
          incid_I10,incid_I11,incid_I12,incid_I13,incid_I14)
 
 complete_incident_R025_75<- complete_infected_R025_75%>%
   select(time,incid_I1,incid_I2,incid_I3,incid_I4,incid_I5,
-         incid_I6,I7,incid_I8,incid_I9,
+         incid_I6,incid_I7,incid_I8,incid_I9,
          incid_I10,incid_I11,incid_I12,incid_I13,incid_I14)
 
 #each day calculate the upper and lower bound of the IQR.
@@ -4117,6 +4118,313 @@ plt_cumulative_vent_by_R_025<- ggplot(cumulative_vent_R_025_long)+
   labs(y="Number of Vents Used", title="Number of Vents In Use Per Day for R_0=2.5")
 
 plt_cumulative_vent_by_R_025
+
+
+```
+
+Table 1:
+```{r, message=FALSE, echo=TRUE, warning=FALSE}
+
+wide_incident_cases<- t(as.data.frame(cbind(incident_cases_R017_75,incident_cases_R021_75,
+                                            incident_cases_R025_75)))
+                      
+wide_incident_lowbound<- t(as.data.frame(cbind(incident_cases_lower_R017_75,
+                      incident_cases_lower_R021_75,incident_cases_lower_R025_75)))
+                      
+wide_incident_upbound<- t(as.data.frame(cbind(incident_cases_upper_R017_75,
+                      incident_cases_upper_R021_75,incident_cases_upper_R025_75)))
+                                      
+                                      
+
+
+
+wide_hosp_cases<- t(as.data.frame(cbind(apply(cumulative_array_median_R017_75[,,1],1,sum),
+                    apply(cumulative_array_median_R021_75[,,1],1,sum),
+                    apply(cumulative_array_median_R025_75[,,1],1,sum))))
+                      
+wide_hosp_lowbound<- t(as.data.frame(cbind(apply(cumulative_array_IQR_lower_R017_75[,,1],1,sum),
+                      apply(cumulative_array_IQR_lower_R021_75[,,1],1,sum),
+                      apply(cumulative_array_IQR_lower_R025_75[,,1],1,sum))))
+                      
+wide_hosp_upbound<- t(as.data.frame(cbind(apply(cumulative_array_IQR_upper_R017_75[,,1],1,sum),
+                      apply(cumulative_array_IQR_upper_R021_75[,,1],1,sum),
+                      apply(cumulative_array_IQR_upper_R025_75[,,1],1,sum))))
+
+
+
+wide_ICU_cases<- t(as.data.frame(cbind(apply(cumulative_array_median_R017_75[,,3],1,sum),
+                    apply(cumulative_array_median_R021_75[,,3],1,sum),
+                    apply(cumulative_array_median_R025_75[,,3],1,sum))))
+                      
+wide_ICU_lowbound<- t(as.data.frame(cbind(apply(cumulative_array_IQR_lower_R017_75[,,3],1,sum),
+                      apply(cumulative_array_IQR_lower_R021_75[,,3],1,sum),
+                      apply(cumulative_array_IQR_lower_R025_75[,,3],1,sum))))
+                      
+wide_ICU_upbound<- t(as.data.frame(cbind(apply(cumulative_array_IQR_upper_R017_75[,,3],1,sum),
+                      apply(cumulative_array_IQR_upper_R021_75[,,3],1,sum),
+                      apply(cumulative_array_IQR_upper_R025_75[,,3],1,sum))))
+
+
+
+
+wide_vent_cases<- t(as.data.frame(cbind(apply(cumulative_array_median_R017_75[,,4],1,sum),
+                    apply(cumulative_array_median_R021_75[,,4],1,sum),
+                    apply(cumulative_array_median_R025_75[,,4],1,sum))))
+                      
+wide_vent_lowbound<- t(as.data.frame(cbind(apply(cumulative_array_IQR_lower_R017_75[,,4],1,sum),
+                      apply(cumulative_array_IQR_lower_R021_75[,,4],1,sum),
+                      apply(cumulative_array_IQR_lower_R025_75[,,4],1,sum))))
+                      
+wide_vent_upbound<- t(as.data.frame(cbind(apply(cumulative_array_IQR_upper_R017_75[,,4],1,sum),
+                      apply(cumulative_array_IQR_upper_R021_75[,,4],1,sum),
+                      apply(cumulative_array_IQR_upper_R025_75[,,4],1,sum))))
+
+
+
+wide_death_cases<- t(as.data.frame(cbind(apply(cumulative_array_median_R017_75[,,5],1,sum),
+                    apply(cumulative_array_median_R021_75[,,5],1,sum),
+                    apply(cumulative_array_median_R025_75[,,5],1,sum))))
+                      
+wide_death_lowbound<- t(as.data.frame(cbind(apply(cumulative_array_IQR_lower_R017_75[,,5],1,sum),
+                      apply(cumulative_array_IQR_lower_R021_75[,,5],1,sum),
+                      apply(cumulative_array_IQR_lower_R025_75[,,5],1,sum))))
+                      
+wide_death_upbound<- t(as.data.frame(cbind(apply(cumulative_array_IQR_upper_R017_75[,,5],1,sum),
+                      apply(cumulative_array_IQR_upper_R021_75[,,5],1,sum),
+                      apply(cumulative_array_IQR_upper_R025_75[,,5],1,sum))))
+
+
+
+cumulative_time_groups <- rbind(cbind(wide_incident_cases[,100],
+                        wide_incident_lowbound[,100],wide_incident_upbound[,100],
+                        wide_incident_cases[,130],wide_incident_lowbound[,130],
+                        wide_incident_upbound[,130],wide_incident_cases[,160],
+                        wide_incident_lowbound[,160],wide_incident_upbound[,160],
+                        wide_incident_cases[,190],wide_incident_lowbound[,190],
+                        wide_incident_upbound[,190]),
+                        cbind(wide_hosp_cases[,100],wide_hosp_lowbound[,100],
+                        wide_hosp_upbound[,100],wide_hosp_cases[,130],
+                        wide_hosp_lowbound[,130],wide_hosp_upbound[,130],
+                        wide_hosp_cases[,160],wide_hosp_lowbound[,160],
+                        wide_hosp_upbound[,160],wide_hosp_cases[,190],
+                        wide_hosp_lowbound[,190],wide_hosp_upbound[,190]),
+                        cbind(wide_ICU_cases[,100],wide_ICU_lowbound[,100],
+                        wide_ICU_upbound[,100],wide_ICU_cases[,130],
+                        wide_ICU_lowbound[,130],wide_ICU_upbound[,130],
+                        wide_ICU_cases[,160],wide_ICU_lowbound[,160],
+                        wide_ICU_upbound[,160],wide_ICU_cases[,190],
+                        wide_ICU_lowbound[,190],wide_ICU_upbound[,190]),
+                        cbind(wide_vent_cases[,100],wide_vent_lowbound[,100],
+                        wide_vent_upbound[,100],wide_vent_cases[,130],
+                        wide_vent_lowbound[,130],wide_vent_upbound[,130],
+                        wide_vent_cases[,160],wide_vent_lowbound[,160],
+                        wide_vent_upbound[,160],wide_vent_cases[,190],
+                        wide_vent_lowbound[,190],wide_vent_upbound[,190]),
+                        cbind(wide_death_cases[,100],wide_death_lowbound[,100],
+                        wide_death_upbound[,100],wide_death_cases[,130],
+                        wide_death_lowbound[,130],wide_death_upbound[,130],
+                        wide_death_cases[,160],wide_death_lowbound[,160],
+                        wide_death_upbound[,160],wide_death_cases[,190],
+                        wide_death_lowbound[,190],wide_death_upbound[,190]))
+
+
+dim(cumulative_time_groups)
+
+colnames(cumulative_time_groups)<- c("Median","25th","75th",
+                                     "Median ","25th ", "75th ", 
+                                     "Median  ","25th  ", "75th  ",
+                                     "Median   ", "25th   ", "75th   ")
+
+rownames(cumulative_time_groups)<- c("R_0=1.7","R_0=2.1","R_0=2.5","R_0=1.7 ",
+                                     "R_0=2.1 ","R_0=2.5 ",
+                                     "R_0=1.7  ",
+                                     "R_0=2.1  ","R_0=2.5  ",
+                                     "R_0=1.7   ","R_0=2.1   ","R_0=2.5   ",
+                                     "R_0=1.7     ","R_0=2.1     ","R_0=2.5     ")
+mode(cumulative_time_groups)<-"integer"
+
+cumulative_time_groups<- as.data.frame(cumulative_time_groups)
+
+kable(cumulative_time_groups)%>%
+  kable_styling()%>%
+  pack_rows("Symptomatic Infections",1,3)%>%
+  pack_rows("Hospitalizations",4,6)%>%
+  pack_rows("ICU Beds",7,9)%>%
+  pack_rows("Vents",10,12)%>%
+  pack_rows("Death",13,15)%>%
+  add_header_above(c(" "=1, "April, 2020"=3, "May, 2020"=3, "June, 2020"=3, "July, 2020"=3))
+
+```
+Table 2: 
+
+```{r, message=FALSE, warning=FALSE, echo=TRUE}
+
+
+wide_incident_cases<- t(as.data.frame(cbind(data_combined_cats_median_R017_75,
+                                            data_combined_cats_median_R021_75,
+                                            data_combined_cats_median_R025_75)))
+                      
+wide_incident_lowbound<- t(as.data.frame(cbind(data_combined_cats_IQR_lower_R017_75,
+                                               data_combined_cats_IQR_lower_R021_75,
+                                               data_combined_cats_IQR_lower_R021_75)))
+
+wide_incident_upbound<- t(as.data.frame(cbind(data_combined_cats_IQR_upper_R017_75,
+                                               data_combined_cats_IQR_upper_R021_75,
+                                               data_combined_cats_IQR_upper_R021_75)))                               
+                                      
+
+
+
+wide_hosp_cases<- t(as.data.frame(cbind(cumulative_array_median_R017_75[,,1],
+                    cumulative_array_median_R021_75[,,1],
+                    cumulative_array_median_R025_75[,,1])))
+                      
+wide_hosp_lowbound<- t(as.data.frame(cbind(cumulative_array_IQR_lower_R017_75[,,1],
+                      cumulative_array_IQR_lower_R021_75[,,1],
+                      cumulative_array_IQR_lower_R025_75[,,1])))
+                      
+wide_hosp_upbound<- t(as.data.frame(cbind(cumulative_array_IQR_upper_R017_75[,,1],
+                      cumulative_array_IQR_upper_R021_75[,,1],
+                      cumulative_array_IQR_upper_R025_75[,,1])))
+
+
+
+wide_ICU_cases<- t(as.data.frame(cbind(cumulative_array_median_R017_75[,,3],
+                    cumulative_array_median_R021_75[,,3],
+                    cumulative_array_median_R025_75[,,3])))
+                      
+wide_ICU_lowbound<- t(as.data.frame(cbind(cumulative_array_IQR_lower_R017_75[,,3],
+                      cumulative_array_IQR_lower_R021_75[,,3],
+                      cumulative_array_IQR_lower_R025_75[,,3])))
+                      
+wide_ICU_upbound<- t(as.data.frame(cbind(cumulative_array_IQR_upper_R017_75[,,3],
+                      cumulative_array_IQR_upper_R021_75[,,3],
+                      cumulative_array_IQR_upper_R025_75[,,3])))
+
+
+
+
+wide_vent_cases<- t(as.data.frame(cbind(cumulative_array_median_R017_75[,,4],
+                    cumulative_array_median_R021_75[,,4],
+                    cumulative_array_median_R025_75[,,4])))
+                      
+wide_vent_lowbound<- t(as.data.frame(cbind(cumulative_array_IQR_lower_R017_75[,,4],
+                      cumulative_array_IQR_lower_R021_75[,,4],
+                      cumulative_array_IQR_lower_R025_75[,,4])))
+                      
+wide_vent_upbound<- t(as.data.frame(cbind(cumulative_array_IQR_upper_R017_75[,,4],
+                      cumulative_array_IQR_upper_R021_75[,,4],
+                      cumulative_array_IQR_upper_R025_75[,,4])))
+
+
+
+wide_death_cases<- t(as.data.frame(cbind(cumulative_array_median_R017_75[,,5],
+                    cumulative_array_median_R021_75[,,5],
+                    cumulative_array_median_R025_75[,,5])))
+                      
+wide_death_lowbound<- t(as.data.frame(cbind(cumulative_array_IQR_lower_R017_75[,,5],
+                      cumulative_array_IQR_lower_R021_75[,,5],
+                      cumulative_array_IQR_lower_R025_75[,,5])))
+                      
+wide_death_upbound<- t(as.data.frame(cbind(cumulative_array_IQR_upper_R017_75[,,5],
+                      cumulative_array_IQR_upper_R021_75[,,5],
+                      cumulative_array_IQR_upper_R025_75[,,5])))
+
+
+
+cumulative_time_groups <- rbind(cbind(wide_incident_cases[,100],
+                        wide_incident_lowbound[,100],wide_incident_upbound[,100],
+                        wide_incident_cases[,130],wide_incident_lowbound[,130],
+                        wide_incident_upbound[,130],wide_incident_cases[,160],
+                        wide_incident_lowbound[,160],wide_incident_upbound[,160],
+                        wide_incident_cases[,190],wide_incident_lowbound[,190],
+                        wide_incident_upbound[,190]),
+                        cbind(wide_hosp_cases[,100],wide_hosp_lowbound[,100],
+                        wide_hosp_upbound[,100],wide_hosp_cases[,130],
+                        wide_hosp_lowbound[,130],wide_hosp_upbound[,130],
+                        wide_hosp_cases[,160],wide_hosp_lowbound[,160],
+                        wide_hosp_upbound[,160],wide_hosp_cases[,190],
+                        wide_hosp_lowbound[,190],wide_hosp_upbound[,190]),
+                        cbind(wide_ICU_cases[,100],wide_ICU_lowbound[,100],
+                        wide_ICU_upbound[,100],wide_ICU_cases[,130],
+                        wide_ICU_lowbound[,130],wide_ICU_upbound[,130],
+                        wide_ICU_cases[,160],wide_ICU_lowbound[,160],
+                        wide_ICU_upbound[,160],wide_ICU_cases[,190],
+                        wide_ICU_lowbound[,190],wide_ICU_upbound[,190]),
+                        cbind(wide_vent_cases[,100],wide_vent_lowbound[,100],
+                        wide_vent_upbound[,100],wide_vent_cases[,130],
+                        wide_vent_lowbound[,130],wide_vent_upbound[,130],
+                        wide_vent_cases[,160],wide_vent_lowbound[,160],
+                        wide_vent_upbound[,160],wide_vent_cases[,190],
+                        wide_vent_lowbound[,190],wide_vent_upbound[,190]),
+                        cbind(wide_death_cases[,100],wide_death_lowbound[,100],
+                        wide_death_upbound[,100],wide_death_cases[,130],
+                        wide_death_lowbound[,130],wide_death_upbound[,130],
+                        wide_death_cases[,160],wide_death_lowbound[,160],
+                        wide_death_upbound[,160],wide_death_cases[,190],
+                        wide_death_lowbound[,190],wide_death_upbound[,190]))
+
+
+dim(cumulative_time_groups)
+
+colnames(cumulative_time_groups)<- c("Median","25th","75th",
+                                     "Median ","25th ", "75th ", 
+                                     "Median  ","25th  ", "75th  ",
+                                     "Median   ", "25th   ", "75th   ")
+
+rownames(cumulative_time_groups)<-c("Age 0-19","Age 20-34","Age 35-59","Age60-74",
+                                    "Age 75+","HCW","Homeless",
+                                    "Age 0-19 ","Age 20-34 ","Age 35-59 ","Age60-74 ",
+                                    "Age 75+ ","HCW ","Homeless ",
+                                    "Age 0-19  ","Age 20-34  ","Age 35-59  ","Age60-74  ",
+                                    "Age 75+  ","HCW  ","Homeless  ",
+                                    "Age 0-19   ","Age 20-34   ","Age 35-59   ","Age60-74   ",
+                                    "Age 75+   ","HCW   ","Homeless   ",
+                                    "Age 0-19    ","Age 20-34    ","Age 35-59    ","Age60-74    ",
+                                    "Age 75+    ","HCW    ","Homeless    ",
+                                    "Age 0-19     ","Age 20-34     ","Age 35-59     ","Age60-74     ",
+                                    "Age 75+     ","HCW     ","Homeless     ",
+                                    "Age 0-19      ","Age 20-34      ","Age 35-59      ","Age60-74      ",
+                                    "Age 75+      ","HCW      ","Homeless      ",
+                                    "Age 0-19       ","Age 20-34       ","Age 35-59       ","Age60-74       ",
+                                    "Age 75+       ","HCW       ","Homeless       ",
+                                    "Age 0-19        ","Age 20-34        ","Age 35-59        ","Age60-74        ",
+                                    "Age 75+        ","HCW        ","Homeless        ",
+                                    "Age 0-19         ","Age 20-34         ","Age 35-59         ","Age60-74         ",
+                                    "Age 75+         ","HCW         ","Homeless         ",
+                                    "Age 0-19          ","Age 20-34          ","Age 35-59          ","Age60-74          ",
+                                    "Age 75+          ","HCW          ","Homeless          ",
+                                    "Age 0-19           ","Age 20-34           ","Age 35-59           ","Age60-74           ",
+                                    "Age 75+           ","HCW           ","Homeless           ",
+                                    "Age 0-19            ","Age 20-34            ","Age 35-59            ","Age60-74            ",
+                                    "Age 75+            ","HCW            ","Homeless            ",
+                                    "Age 0-19             ","Age 20-34             ","Age 35-59             ","Age60-74             ",
+                                    "Age 75+             ","HCW             ","Homeless             ",
+                                    "Age 0-19              ","Age 20-34              ","Age 35-59              ","Age60-74              ",
+                                    "Age 75+              ","HCW              ","Homeless               ")
+mode(cumulative_time_groups)<-"integer"
+
+cumulative_time_groups<- as.data.frame(cumulative_time_groups)
+
+kable(cumulative_time_groups)%>%
+  kable_styling()%>%
+  pack_rows("Symptomatic Infections, R_0=1.7",1,7)%>%
+  pack_rows("Symptomatic Infections, R_0=2.1",8,14)%>%
+  pack_rows("Symptomatic Infections, R_0=2.5",15,21)%>%
+  pack_rows("Hospitalizations, R_0=1.7",22,28)%>%
+  pack_rows("Hospitalizations, R_0=2.1",29,35)%>%
+  pack_rows("Hospitalizations, R_0=2.5",36,42)%>%
+  pack_rows("ICU Beds, R_0=1.7",43,49)%>%
+  pack_rows("ICU Beds, R_0=2.1",50,56)%>%
+  pack_rows("ICU Beds, R_0=2.5",57,63)%>%
+  pack_rows("Vents, R_0=1.7",64,70)%>%
+  pack_rows("Vents, R_0=2.1",71,77)%>%
+  pack_rows("Vents, R_0=2.5",78,84)%>%
+  pack_rows("Death, R_0=1.7",85,91)%>%
+  pack_rows("Death, R_0=2.1",92,98)%>%
+   pack_rows("Death, R_0=2.5",99,105)%>%
+  add_header_above(c(" "=1, "April, 2020"=3, "May, 2020"=3, "June, 2020"=3, "July, 2020"=3))
+
 
 
 ```
