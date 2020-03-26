@@ -287,9 +287,9 @@ data_incident_lower_R025_50<- data_infected_R025_50%>%
 
 data_incident_median_R017_100<- data_incident_median_R017_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -297,9 +297,9 @@ data_incident_median_R017_100<- data_incident_median_R017_100%>%
 
 data_incident_mean_R017_100<- data_incident_mean_R017_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -307,9 +307,9 @@ data_incident_mean_R017_100<- data_incident_mean_R017_100%>%
 
 data_incident_upper_R017_100<- data_incident_upper_R017_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -317,9 +317,9 @@ data_incident_upper_R017_100<- data_incident_upper_R017_100%>%
 
 data_incident_lower_R017_100<- data_incident_lower_R017_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -328,9 +328,9 @@ data_incident_lower_R017_100<- data_incident_lower_R017_100%>%
 
 data_incident_median_R017_75<- data_incident_median_R017_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -338,9 +338,9 @@ data_incident_median_R017_75<- data_incident_median_R017_75%>%
 
 data_incident_mean_R017_75<- data_incident_mean_R017_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -348,9 +348,9 @@ data_incident_mean_R017_75<- data_incident_mean_R017_75%>%
 
 data_incident_upper_R017_75<- data_incident_upper_R017_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -358,9 +358,9 @@ data_incident_upper_R017_75<- data_incident_upper_R017_75%>%
 
 data_incident_lower_R017_75<- data_incident_lower_R017_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -368,9 +368,9 @@ data_incident_lower_R017_75<- data_incident_lower_R017_75%>%
 
 data_incident_median_R017_50<- data_incident_median_R017_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -378,9 +378,9 @@ data_incident_median_R017_50<- data_incident_median_R017_50%>%
 
 data_incident_mean_R017_50<- data_incident_mean_R017_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -388,9 +388,9 @@ data_incident_mean_R017_50<- data_incident_mean_R017_50%>%
 
 data_incident_upper_R017_50<- data_incident_upper_R017_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -398,9 +398,9 @@ data_incident_upper_R017_50<- data_incident_upper_R017_50%>%
 
 data_incident_lower_R017_50<- data_incident_lower_R017_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -408,9 +408,9 @@ data_incident_lower_R017_50<- data_incident_lower_R017_50%>%
 
 data_incident_median_R021_100<- data_incident_median_R021_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -418,9 +418,9 @@ data_incident_median_R021_100<- data_incident_median_R021_100%>%
 
 data_incident_mean_R021_100<- data_incident_mean_R021_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -428,9 +428,9 @@ data_incident_mean_R021_100<- data_incident_mean_R021_100%>%
 
 data_incident_upper_R021_100<- data_incident_upper_R021_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -438,9 +438,9 @@ data_incident_upper_R021_100<- data_incident_upper_R021_100%>%
 
 data_incident_lower_R021_100<- data_incident_lower_R021_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -448,9 +448,9 @@ data_incident_lower_R021_100<- data_incident_lower_R021_100%>%
 
 data_incident_median_R021_75<- data_incident_median_R021_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -458,9 +458,9 @@ data_incident_median_R021_75<- data_incident_median_R021_75%>%
 
 data_incident_mean_R021_75<- data_incident_mean_R021_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -468,9 +468,9 @@ data_incident_mean_R021_75<- data_incident_mean_R021_75%>%
 
 data_incident_upper_R021_75<- data_incident_upper_R021_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -478,9 +478,9 @@ data_incident_upper_R021_75<- data_incident_upper_R021_75%>%
 
 data_incident_lower_R021_75<- data_incident_lower_R021_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -489,9 +489,9 @@ data_incident_lower_R021_75<- data_incident_lower_R021_75%>%
 
 data_incident_median_R021_50<- data_incident_median_R021_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -499,9 +499,9 @@ data_incident_median_R021_50<- data_incident_median_R021_50%>%
 
 data_incident_mean_R021_50<- data_incident_mean_R021_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -509,9 +509,9 @@ data_incident_mean_R021_50<- data_incident_mean_R021_50%>%
 
 data_incident_upper_R021_50<- data_incident_upper_R021_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -519,9 +519,9 @@ data_incident_upper_R021_50<- data_incident_upper_R021_50%>%
 
 data_incident_lower_R021_50<- data_incident_lower_R021_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -529,9 +529,9 @@ data_incident_lower_R021_50<- data_incident_lower_R021_50%>%
 
 data_incident_median_R025_100<- data_incident_median_R025_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -539,9 +539,9 @@ data_incident_median_R025_100<- data_incident_median_R025_100%>%
 
 data_incident_mean_R025_100<- data_incident_mean_R025_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -549,9 +549,9 @@ data_incident_mean_R025_100<- data_incident_mean_R025_100%>%
 
 data_incident_upper_R025_100<- data_incident_upper_R025_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -559,9 +559,9 @@ data_incident_upper_R025_100<- data_incident_upper_R025_100%>%
 
 data_incident_lower_R025_100<- data_incident_lower_R025_100%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -569,9 +569,9 @@ data_incident_lower_R025_100<- data_incident_lower_R025_100%>%
 
 data_incident_median_R025_75<- data_incident_median_R025_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -579,9 +579,9 @@ data_incident_median_R025_75<- data_incident_median_R025_75%>%
 
 data_incident_mean_R025_75<- data_incident_mean_R025_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -589,9 +589,9 @@ data_incident_mean_R025_75<- data_incident_mean_R025_75%>%
 
 data_incident_upper_R025_75<- data_incident_upper_R025_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -599,9 +599,9 @@ data_incident_upper_R025_75<- data_incident_upper_R025_75%>%
 
 data_incident_lower_R025_75<- data_incident_lower_R025_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -609,9 +609,9 @@ data_incident_lower_R025_75<- data_incident_lower_R025_75%>%
 
 data_incident_median_R025_50<- data_incident_median_R025_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -619,9 +619,9 @@ data_incident_median_R025_50<- data_incident_median_R025_50%>%
 
 data_incident_mean_R025_50<- data_incident_mean_R025_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -629,9 +629,9 @@ data_incident_mean_R025_50<- data_incident_mean_R025_50%>%
 
 data_incident_upper_R025_50<- data_incident_upper_R025_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -639,9 +639,9 @@ data_incident_upper_R025_50<- data_incident_upper_R025_50%>%
 
 data_incident_lower_R025_50<- data_incident_lower_R025_50%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -650,9 +650,9 @@ data_incident_lower_R025_50<- data_incident_lower_R025_50%>%
 IQR_lower_R017_75<- as.data.frame(IQR_lower_R017_75)
 data_incident_IQR_lower_R017_75<- IQR_lower_R017_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -660,9 +660,9 @@ data_incident_IQR_lower_R017_75<- IQR_lower_R017_75%>%
 IQR_lower_R021_75<- as.data.frame(IQR_lower_R021_75)
 data_incident_IQR_lower_R021_75<- IQR_lower_R021_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -670,9 +670,9 @@ data_incident_IQR_lower_R021_75<- IQR_lower_R021_75%>%
 IQR_lower_R025_75<- as.data.frame(IQR_lower_R025_75)
 data_incident_IQR_lower_R025_75<- IQR_lower_R025_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -681,9 +681,9 @@ data_incident_IQR_lower_R025_75<- IQR_lower_R025_75%>%
 IQR_upper_R017_75<- as.data.frame(IQR_upper_R017_75)
 data_incident_IQR_upper_R017_75<- IQR_upper_R017_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -691,9 +691,9 @@ data_incident_IQR_upper_R017_75<- IQR_upper_R017_75%>%
 IQR_upper_R021_75<- as.data.frame(IQR_upper_R021_75)
 data_incident_IQR_upper_R021_75<- IQR_upper_R021_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -701,9 +701,9 @@ data_incident_IQR_upper_R021_75<- IQR_upper_R021_75%>%
 IQR_upper_R025_75<- as.data.frame(IQR_upper_R025_75)
 data_incident_IQR_upper_R025_75<- IQR_upper_R025_75%>%
   mutate(cat1=rowSums(.[1:4]))%>%
-  mutate(cat2=rowSums(.[5:6]))%>%
-  mutate(cat3=rowSums(.[7:9]))%>%
-  mutate(cat4=rowSums(.[10:11]))%>%
+  mutate(cat2=rowSums(.[5:7]))%>%
+  mutate(cat3=rowSums(.[8]))%>%
+  mutate(cat4=rowSums(.[9:11]))%>%
   mutate(cat5=rowSums(.[12]))%>%
   mutate(cat6=rowSums(.[13]))%>%
   mutate(cat7=rowSums(.[14]))
@@ -845,30 +845,20 @@ data_combined_cats_lower_R025_50<- data_incident_lower_R025_50%>%
 
 #working probabilities for severe cases, hospitalization, ICU, vent and death. 
 #these are nested conditional probabilities, and they rely on the following  assumptions: 
-#the percentage of severe cases in each categories is roughly an average of the percentage of people
-#with diabetes, the percentage of people with cancer and the percentage of people with hypertension in each of the age cagegories. 
+#the percentage of severe cases in each categories is obtained from CDC table where we combined the 55-74 age groups and the 75-80 and 80+ age groups. 
 #we assume now that 100% of severe cases get hospitalized (this could be adjusted)
-#we assume that globally, 24% of hospitalized cases get moved to ICU so this global percentage gets projected down to each age group
-#we assume that 25% of ICU cases are put on a vent again this gets projected down to age groups
-# we assume that 50% of ventilated cases die, again this is projected down to age groups. 
-#HCW and homeless people have the same probabilities as people in category 4
+# the remainder of the nested probabilities come from the CDC table, instead of using the denominator as all the cases in that age group, we shift the denoinator to be the preceding categoriy of sverity so prob ICU is the number of icu cases for that age group/ number of hospitalized cases for that age group. 
 
-#for now we are assuming the same number of incident infections in each category to simplify the calculations. 
-
-#suppose all 8 categories have 100 people (100 incident infections on a given day)
-
-#we are starting with the following assumptions about the proportion in each group that develop severe infections- groups are in ascending order of age with the last two groups being HCWs and homeless people we apply the assumptions we make for the 60-64 y.o. to them : 
-
-#these are loosely based on an average of the proportion of poeple 
-prob_severe<- c(0.0318, 0.043, 0.197, 0.357,0.409,0.357,0.357)
+#HCW workers and homeless have the same nested prob scheme as the 45-540y.o group.
+prob_severe<- c(0.02, 0.029, 0.066, 0.088,0.364,0.066,0.066)
 
 prob_hospitalized<- rep(1,ncol(data_combined_cats_median_R017_100))
 
-prob_ICU<- c(0.15,0.15,0.2,0.247,0.3,0.247,0.247)
+prob_ICU<- c(0,0.2,0.367,0.4,0.465,0.367,0.367)
 
-prob_vent<-c(0.1,0.1,0.125,0.259,0.337,0.259,0.259)
+prob_vent<-c(0,0.238,0.288,0.467,0.8,0.288,0.288)
 
-prob_death<-c(0.2,0.2,0.2,0.475,0.59,0.475,0.475)
+prob_death<-c(0,0.2,0.267,0.536,0.788,0.267,0.267)
 
 prob_matrix<- cbind(prob_severe,prob_hospitalized,prob_ICU,
                     prob_vent,prob_death)
