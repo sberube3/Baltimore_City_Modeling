@@ -867,11 +867,13 @@ This report compares the health impact and surge capacity needs for the 2020 COV
 
 We make the following assumptions:
 
-(1) We seed the epidemic with 8 asymptomatic cases and 2 symptomatic cases and assume the age structure of Baltimore City using data from the U.S. Census. 
-(2) Using current estimates from the CDC, we assume age-specific probabilities of becoming a hospitalized case and getting admitted to the ICU if hospitalized (https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm#T1_down). 
-(3) Using current statistics from the WHO, we assume 25% of cases in ICU across age groups get put on a ventilator.
-(4) Based on expert clinical opinion and similar estimates used in Great Britain, we assume 50% of those on a ventilator die and an age-dependent proportion of those that do not require a ventilator die (calculated to match the CDC age-specific CFR).
-(5) We assume healthcare workers and those who are homeless have the same hospitalization, ICU, ventilator probabilities as those in the 45-54 age category. 
+(1) We seed the epidemic with 8 asymptomatic cases and 2 symptomatic cases and assume homogeneous mixing within the population. 
+(2) We assume the age structure of Baltimore City using data from the U.S. Census. 
+(3) Using current estimates from the CDC, we assume age-specific probabilities of becoming a hospitalized case and getting admitted to the ICU if hospitalized (https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm#T1_down). 
+(4) Using current statistics from the WHO, we assume 25% of cases in ICU across age groups get put on a ventilator.
+(5) Based on expert clinical opinion and similar estimates used in Great Britain, we assume 50% of those on a ventilator die and an age-dependent proportion of those that do not require a ventilator die (calculated to match the CDC age-specific CFR). 
+(6) Of those that get put on a ventilator and of those that die, we apply a 11 day lag for the probability of death.
+(7) We assume healthcare workers and those who are homeless have the same hospitalization, ICU, ventilator probabilities as those in the 45-54 age category. 
 
 
 ```{r, include=FALSE, eval=TRUE}
@@ -4096,7 +4098,7 @@ cumulative_hosp_long<- cumulative_hosp_long%>%
 
 plt_cumulative_hosp<- ggplot(cumulative_hosp_long)+
   geom_line(aes(x=Day,y=cumulative_hosp,color=str_wrap(scenario,10)))+
-  labs(y="Number of hospital beds in use per day", title="Daily Hospital Bed Use") + labs(color="Age group")
+  labs(y="Number of hospital beds", title="Daily Hospital Bed Use") + labs(color="Age group")+   theme(legend.title = element_text(size = 7),legend.text = element_text(size = 7))
 
 pltA<- plt_cumulative_hosp
 
@@ -4125,7 +4127,7 @@ cumulative_ICU_long<- cumulative_ICU_long%>%
 
 plt_cumulative_ICU<- ggplot(cumulative_ICU_long)+
   geom_line(aes(x=Day,y=cumulative_ICU,color=str_wrap(scenario,10)))+
-  labs(y="Number of ICU beds in use per day", title="Daily ICU Bed Use") + labs(color="Age group")
+  labs(y="Number of ICU beds", title="Daily ICU Bed Use") + labs(color="Age group")+   theme(legend.title = element_text(size = 7),legend.text = element_text(size = 7))
 
 pltB<- plt_cumulative_ICU
 
@@ -4154,7 +4156,7 @@ cumulative_vent_long<- cumulative_vent_long%>%
 
 plt_cumulative_vent<- ggplot(cumulative_vent_long)+
   geom_line(aes(x=Day,y=cumulative_vent_use,color=str_wrap(scenario,10)))+
-  labs(y="Number of Vents in use per day", title="Daily Vent Use") + labs(color="Age group")
+  labs(y="Number of Vents", title="Daily Vent Use") + labs(color="Age group") +   theme(legend.title = element_text(size = 7),legend.text = element_text(size = 7))
 
 pltC<- plt_cumulative_vent
 
@@ -4165,7 +4167,7 @@ fig_nums(name = paste0("fig-four"), caption = paste("A. Plot of daily hospitaliz
 
 `r fig_nums("fig-four", display = "full")`
 
-```{r, fig-four, fig.dim = c(12,5)}
+```{r, fig-four, fig.dim = c(12,4.5)}
 
 plt <- cowplot::plot_grid(pltA, pltB, pltC, labels=c('A','B','C'), align = "h", ncol=3)
 print(plt)
