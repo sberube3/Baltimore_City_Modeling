@@ -867,13 +867,14 @@ This report compares the health impact and surge capacity needs for the 2020 COV
 
 We make the following assumptions:
 
-(1) We seed the epidemic with 8 asymptomatic cases and 2 symptomatic cases and assume homogeneous mixing within the population. 
-(2) We assume the age structure of Baltimore City using data from the U.S. Census. 
+(1) We assume age-structured mixing in the population and seed the epidemic with 8 asymptomatic cases and 2 symptomatic cases. Healthcare workers and the homeless population are considered as explicit populations that follow the mixing patterns of the 45-54 year age category.  
+(2) We assume the age structure of Baltimore City using data from the 2010 Baltimore census, and assume the population of healthcare workers is 5,000 and the population of individuals who are homeless is 3,000. 
 (3) Using current estimates from the CDC, we assume age-specific probabilities of becoming a hospitalized case and getting admitted to the ICU if hospitalized (https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm#T1_down). 
 (4) Using current statistics from the WHO, we assume 25% of cases in ICU across age groups get put on a ventilator.
 (5) Based on expert clinical opinion and similar estimates used in Great Britain, we assume 50% of those on a ventilator die and an age-dependent proportion of those that do not require a ventilator die (calculated to match the CDC age-specific CFR). 
-(6) Of those that get put on a ventilator and of those that die, we apply a 11 day lag for the probability of death.
-(7) We assume healthcare workers and those who are homeless have the same hospitalization, ICU, ventilator probabilities as those in the 45-54 age category. 
+(6) For time to ventilator use, hospital discharge, and death, we apply an 11 day lag based on data from China.
+(7) We assume healthcare workers and those who are homeless have the same hospitalization, ICU, ventilator, and death probabilities as those in the 45-54 age category. 
+(8) For the figures and tables here, we assume the epidemic started March 1st, 2020.
 
 
 ```{r, include=FALSE, eval=TRUE}
@@ -3576,11 +3577,12 @@ The three potential transmission scenarios for planning purposes fall within the
 
 2. **Moderate transmission** that mirrors estimates in the early stages of the outbreak in Wuhan, China (R~0~ = 2.1)
 
-3. **High transmission** where we assume a scaling factor to mimick higher transmission in an urban setting compared to open community settings (R~0~ = 2.5)
+3. **High transmission** where we assume a scaling factor to mimick higher transmission in an urban setting compared to open community settings (R~0~ = 2.5)  
 
 
 
-##### Daily incident symptomatic cases across all age groups
+
+#### Daily incident symptomatic infections across all population groups
 
 ```{r, include=FALSE, eval=TRUE}
 #Figure 1
@@ -3635,7 +3637,7 @@ combined_long_matrix<-combined_long_matrix%>%
   mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
                       length.out=length(incident_cases_R017_75)),times=3))
 
-fig_nums(name = paste0("fig-one"), caption = paste("Plot of the median number of incident cases across simulations by day for each transmission scenario. These estimates are summed across all age groups."), display = "false")
+fig_nums(name = paste0("fig-one"), caption = paste("Plot of the median number of incident cases across simulations by day for each transmission scenario. These estimates are summed across all age groups, and the healthcare worker and homeless populations."), display = "false")
 ```
 
 `r fig_nums("fig-one", display = "full")`
@@ -3653,7 +3655,7 @@ plt_incident_cases
 ```
 
 
-##### Daily incident hospitalizations across all age groups
+#### Daily incident hospitalizations across all population groups
 
 ```{r, include=FALSE, eval=TRUE}
 #Figure 2
@@ -3707,7 +3709,7 @@ combined_long_matrix<-combined_long_matrix%>%
   mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
                       length.out=length(incident_hosp_R017_75)),times=3))
 
-fig_nums(name = paste0("fig-two"), caption = paste("Plot of the median number of incident hospitalizations across simulations by day for each transmission scenario. These estimates are summed across all age groups."), display = "false")
+fig_nums(name = paste0("fig-two"), caption = paste("Plot of the median number of incident hospitalizations across simulations by day for each transmission scenario. These estimates are summed across all age groups, and the healthcare worker and homeless populations."), display = "false")
 ```
 
 `r fig_nums("fig-two", display = "full")`
@@ -3725,9 +3727,7 @@ plt_hosp_cases
 ```
 
 
-
-
-##### Daily incident deaths across all age groups
+#### Daily incident deaths across all population groups
 
 ```{r, include=FALSE, eval=TRUE}
 #Figure 3
@@ -3781,7 +3781,7 @@ combined_long_matrix<-combined_long_matrix%>%
   mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
                       length.out=length(incident_death_R017_75)),times=3))
 
-fig_nums(name = paste0("fig-three"), caption = paste("Plot of the median number of deaths across simulations by day for each transmission scenario. These estimates are summed across all age groups."), display = "false")
+fig_nums(name = paste0("fig-three"), caption = paste("Plot of the median number of deaths across simulations by day for each transmission scenario. These estimates are summed across all age groups, and the healthcare worker and homeless populations."), display = "false")
 ```
 
 `r fig_nums("fig-three", display = "full")`
@@ -4071,6 +4071,8 @@ print(plt)
 fig_nums(name = paste0("fig-five"), caption = paste("A. Plot of cumulative number of incident deaths by day for each transmission scenario (median). B. Plot of cumulative number of incident deaths for the low transmission scenario by age category. C. Plot of cumulative number of incident deaths for the moderate transmission scenario by age category. B. Plot of cumulative number of incident deaths for the high transmission scenario by age category."), display = "false")
 ```
 
+#### Considering new daily infections, what are the concurent number of hospital beds, ICU beds, and ventilators in use? 
+
 ```{r, include=FALSE, eval=TRUE}
 
 # Figure 4
@@ -4161,7 +4163,7 @@ plt_cumulative_vent<- ggplot(cumulative_vent_long)+
 pltC<- plt_cumulative_vent
 
 
-fig_nums(name = paste0("fig-four"), caption = paste("A. Plot of daily hospitalizations for each transmission scenario across all age categories. B. Plot of daily ICU admissions for each transmission scenario across all age categories. C. Plot of number of daily ventilators needed for each transmission scenario across all age categories."), display = "false")
+fig_nums(name = paste0("fig-four"), caption = paste("A. Plot of daily hospitalizations for each transmission scenario across all age categories, and the healthcare worker and homeless populations. B. Plot of daily ICU admissions for each transmission scenario across all age categories, and the healthcare worker and homeless populations. C. Plot of number of daily ventilators needed for each transmission scenario across all age categories, and the healthcare worker and homeless populations."), display = "false")
 
 ```
 
@@ -4174,11 +4176,10 @@ print(plt)
 
 ```
 
-##### Daily hospital, ICU, ventilator capacity needed 
 
 ```{r, include=FALSE, eval=TRUE}
 
-# Figure 6
+# Figure 5
 
 cumulative_hosp_R_017<- as.data.frame(cbind(rep(1:nrow(cumulative_array_median_R017_75[,,2])),
                                         cumulative_array_median_R017_75[,,2]))
@@ -4382,7 +4383,7 @@ plt_cumulative_vent_by_R_025<- ggplot(cumulative_vent_R_025_long)+
 
 plt_I <- plt_cumulative_vent_by_R_025
 
-fig_nums(name = paste0("fig-five"), caption = paste("A,B,C. Plots of daily hospital beds needed by transmission scenario and age category. D,E,F. Plots of daily ICU beds needed by transmission scenario and age category. G,H,I. Plots of daily ventilators needed by transmission scenario and age category."), display = "false")
+fig_nums(name = paste0("fig-five"), caption = paste("A,B,C. Plots of daily hospital beds needed by transmission scenario and population category. D,E,F. Plots of daily ICU beds needed by transmission scenario and population category. G,H,I. Plots of daily ventilators needed by transmission scenario and population category."), display = "false")
 ```
 
 `r fig_nums("fig-five", display = "full")`
@@ -4393,6 +4394,8 @@ plt <- cowplot::plot_grid(plt_A, plt_B, plt_C, plt_D, plt_E, plt_F, plt_G, plt_H
 print(plt)
 
 ```
+
+
 
 
 ```{r, include=FALSE, eval=TRUE}
@@ -4514,7 +4517,7 @@ mode(cumulative_time_groups)<-"integer"
 
 cumulative_time_groups<- as.data.frame(cumulative_time_groups)
 
-tab_nums(name = "table_one", caption = "Peak daily estimates of total infections, hospitalizations, ICU admissions, ventilators, and death summed across all age categories at monthly time periods by transmission scenario. We present the median and 25th and 75th percentiles across all simulations.", display = FALSE)
+tab_nums(name = "table_one", caption = "Estimates of the peak number of total infections, hospitalizations, ICU beds in use, ventilators in use, and deaths in a single day by month and transmission scenario. We present the median and 25th and 75th percentiles across all simulations and sum across all population categories.", display = FALSE)
 ```
 
 `r tab_nums("table_one", display = "full")`
@@ -4678,7 +4681,7 @@ mode(cumulative_time_groups)<-"integer"
 
 cumulative_time_groups<- as.data.frame(cumulative_time_groups)
 
-tab_nums(name = "table_two", caption = "Peak daily estimates of infections, hospitalizations, ICU admissions, ventilators, and death at monthly time periods by transmission scenario and age category. We present the median and 25th and 75th percentiles across all simulations.", display = FALSE)
+tab_nums(name = "table_two", caption = "Estimates of the peak number of total infections, hospitalizations, ICU beds in use, ventilators in use, and deaths in a single day by month, population category, and transmission scenario. We present the median and 25th and 75th percentiles across all simulations.", display = FALSE)
 ```
 
 `r tab_nums("table_two", display = "full")`
