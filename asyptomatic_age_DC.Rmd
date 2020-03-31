@@ -60,6 +60,7 @@ The function also adds a certain number of homeless individuals (`homeless_n`) a
 This function returns `Ncomp`, the number of age/healthcare worker/homeless categories included in the model, and `DC_pop`, the number of individuals in each age/other categories
 
 ```{r make_age_structure_matrix}
+
   make_age_structure_matrix <- function(age_data_file, homeless_n, healthcare_n){
     ## Pull out population data, removing total population row
     n_age_classes <- nrow(age_data_file)-1
@@ -87,13 +88,16 @@ The [Polymod study](https://journals.plos.org/plosmedicine/article?id=10.1371/jo
 
 This function sets up a matrix using POLYMOD data from the UK (there is no US data). It will make a mixing matrix set up for all of the different age classes (parameterizing the relative intensity of pairwise contact between age groups and the homeless and healthcare worker populations). 
 
-This function requires input `age.limits`, a vector of the lower limit of each age category to use, and `hcw.mix` and `hml.mix`, character string of the age category to use to approximate healthcare worker (`hcw.mix`) and homeless mixing patterns (`hml.mix`). Here, we have assumed that the the mixing patterns for the 45-49y age group approximate those of the healthcare workers and homeless individuals. `hcw_mix` and `hml.mix` should be formatted as `"min_age,max_age+1"`, e.g., `"45,50"`.
+This function requires input:
 
-Note that this code will combine all age categories >75y into a single age category. Hence Ncomp != length(age.limits) + 2.
+- `age.limits`, a vector of the lower limit of each age category to use. Note that this code will combine all age categories >75y into a single age category. Hence Ncomp != length(age.limits) + 2.
+
+- `hcw.mix` and `hml.mix`, character string of the age category to use to approximate healthcare worker (`hcw.mix`) and homeless mixing patterns (`hml.mix`). Here, we have assumed that the the mixing patterns for the 45-49y age group approximate those of the healthcare workers and homeless individuals. `hcw_mix` and `hml.mix` should be formatted as `"min_age,max_age+1"`, e.g., `"45,50"`.
 
 This function returns `W`, the contact matrix for each category included in the model.
 
 ```{r make_polymod_matrix}
+
   age.limits = seq(0, 85, 5)
 
   make_polymod_matrix <- function(age.limits, hcw.mix="45,50", hml.mix="45,50"){
@@ -130,17 +134,18 @@ We need to rescale the mixing matrix to ensure that $R_0 = \frac{\beta}{\gamma}$
 
 This function requires four inputs: 
 
-`Ncomp`, the number of age/other categories used in the model
+- `Ncomp`, the number of age/other categories used in the model
 
-`W`, the mixing matrix created by `make_polymod_matrix`
+- `W`, the mixing matrix created by `make_polymod_matrix`
 
-`DC_pop`, the cleaned population object created by `make_age_structure_matrix`
+- `DC_pop`, the cleaned population object created by `make_age_structure_matrix`
 
-`c_scale_vec`, a vector of length `Ncomp`, which can be used to rescale the contact rates for healthcare workers (and other categories), as necessary. When `c_scale_vec = 1`, there is no rescaling.
+- `c_scale_vec`, a vector of length `Ncomp`, which can be used to rescale the contact rates for healthcare workers (and other categories), as necessary. When `c_scale_vec = 1`, there is no rescaling.
 
-The function returns `W`, the rescaled contact matrix, and `C`, the rescaled matrix with additional changes to rescale healthcare worker contact rates.
+The function returns `W`, the rescaled contact matrix, and `C`, a rescaling matrix that can be used to implement changes to rescale healthcare worker contact rates.
 
 ```{r rescale_age_matrix}
+
 rescale_age_matrix <- function(Ncomp, W, DC_pop, c_scale_vec){
   A <- matrix(0,Ncomp,Ncomp)
   for (ii in 1:Ncomp){
@@ -160,53 +165,74 @@ rescale_age_matrix <- function(Ncomp, W, DC_pop, c_scale_vec){
 
 ```
 
+
  -------------------------------
 
 (4) `setup_seir_model(stoch)`
 
-This function is the only function which should require edits. The parameters for the 
-
-`stoch`: binary TRUE/FALSE for whether there should be stochasticity added to the force of infection for each age category, at each time point
-
-`R0`: the basic reproductive number of our model
-
-`c_scale_vec`, a vector of length `Ncomp`, which can be used to rescale the contact rates for healthcare workers (and other categories), as necessary
-
-This function serves as a wrapper function, incorporating the three functions above (`make_age_structure_matrix`, `make_polymod_matrix`, `rescale_mixing`. It returns output with all parameters needed to run the transmission model. Several of these values need to be directly defined in the function code below.
+This function is the only function which should require edits. This function serves as a wrapper function, incorporating the three functions above (`make_age_structure_matrix`, `make_polymod_matrix`, `rescale_mixing`. It returns output with all parameters needed to run the transmission model. Several of these values need to be directly defined in the function arguments below.
 
 
-`C` - the rescaled mixing matrix created by `rescale_age_matrix`
+- `stoch`: binary TRUE/FALSE for whether there should be stochasticity added to the force of infection for each age category, at each time point
 
-`W` - the mixing matrix created by `rescale_age_matrix`
+- `R0`: the basic reproductive number of our model
 
-`beta0` - the intercept, or baseline infectiousness, of the seasonal forcing function for $\beta_t$; a function of `R0`, `gamma`, `sigma`, and `v`.
+- `c_scale_vec`, a vector of length `Ncomp`, which can be used to rescale the contact rates for healthcare workers (and other categories), as necessary
 
-`beta1` - the amplitude of the seasonal forcing function for $\beta_t$; here, equal to 0, removing seasonal forcing from the model.
+- `gamma` - the rate of recovering once infectious; here, set to be 1/6.5d
 
-`phase` - $a$, or the phase in the seasonal forcing function for $\beta_t$
+- `sigma` - the rate of becoming infectious following exposure to SARS-CoV-2; here, set to be 1/5.2d
 
-`mu` - the birth rate in the population; here, set to be 0
+- `prop_symptomatic` - the proportion of infections assumed to develop symptoms; here, set to be 0.2.
 
-`v` - the natural death rate in the population; here, set to be 0
+- `beta1` - the amplitude of the seasonal forcing function for $\beta_t$; here, equal to 0, removing seasonal forcing from the model.
 
-`ICs` - The initial condition to start the model run, as a vector with number of individuals in each category. Here, we begin the model with 8 asymptomatically infected individuals and 2 symptomatically infected individuals in each age/other category.
+- `phase` - $a$, or the phase in the seasonal forcing function for $\beta_t$
 
-`Ncomp` - the number of age/other categories used in the model
+- `mu` - the birth rate in the population; here, set to be 0
 
-`N` - a vector of the population size in each age/other category
+- `v` - the natural death rate in the population; here, set to be 0
 
-`gamma` - the rate of recovering once infectious; here, set to be 1/6.5d
 
-`sigma` - the rate of becoming infectious following exposure to SARS-CoV-2; here, set to be 1/5.2d
 
-`prop_symptomatic` - the proportion of infections assumed to develop symptoms; here, set to be 0.2.
+
+This function returns a list with objects:
+
+- `C` - the rescaled mixing matrix created by `rescale_age_matrix`
+
+- `W` - the mixing matrix created by `rescale_age_matrix`
+
+- `beta0` - the intercept, or baseline infectiousness, of the seasonal forcing function for $\beta_t$; a function of `R0`, `gamma`, `sigma`, and `v`.
+
+- `beta1` - the amplitude of the seasonal forcing function for $\beta_t$; here, equal to 0, removing seasonal forcing from the model.
+
+- `phase` - $a$, or the phase in the seasonal forcing function for $\beta_t$
+
+- `mu` - the birth rate in the population; here, set to be 0
+
+- `v` - the natural death rate in the population; here, set to be 0
+
+- `ICs` - The initial condition to start the model run, as a vector with number of individuals in each category. Here, we begin the model with 8 asymptomatically infected individuals and 2 symptomatically infected individuals in each age/other category.
+
+- `Ncomp` - the number of age/other categories used in the model
+
+- `N` - a vector of the population size in each age/other category
+
+- `gamma` - the rate of recovering once infectious; here, set to be 1/6.5d
+
+- `sigma` - the rate of becoming infectious following exposure to SARS-CoV-2; here, set to be 1/5.2d
+
+- `prop_symptomatic` - the proportion of infections assumed to develop symptoms; here, set to be 0.2.
 
 
 ```{r setup_seir_model}
-setup_seir_model <- function(stoch, R0, c_scale_vec){
+setup_seir_model <- function(stoch, R0, c_scale_vec,
+                             gamma=1/6.5, sigma=1/5.2,
+                             phase=0, beta1=0, mu=0, v=0,
+                             prop_symptomatic=0.2){
   
   ## set prop_symtomatic
-  prop_symptomatic <- 0.2 ## will need to update/change
+  prop_symptomatic <- prop_symptomatic
   
   data <- read.csv('Washington_AgePopulation.csv')
   age_data <- make_age_structure_matrix(data, homeless_n = 2000, healthcare_n = 5000)
@@ -234,14 +260,14 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
   N <- DC_pop         
   
   ## units in days!! 
-  gamma <- 1/6.5 ## infectious period
-  sigma <- 1/5.2 ## latent period
-  phase <- 0 ## when should seasonal forcing peak?
-  mu <- 0 ## set births to be zero currently
-  v <- 0 ## set natural death rate to be zero currently
+  gamma <- gamma ## infectious period
+  sigma <- sigma ## latent period
+  phase <- phase ## when should seasonal forcing peak?
+  mu <- mu ## set births to be zero currently
+  v <- v ## set natural death rate to be zero currently
   #R0 <- 2.5 ## make a range?   ## R0 = beta * sigma / ((sigma + v) * (v + gamma)) for SEAIR model with split proportion into A-I and only A and I contributing to infection
   beta0 <- R0 * (gamma + v) * (sigma + v) / sigma ## set beta based on that value
-  beta1 <- 0.0 ## seasonal forcing should be modest here
+  beta1 <- beta1 ## seasonal forcing should be modest here
   ## now check to make sure the R0 we get is the R0 we put in
   ## using the same formula as above
   R0.mat <- matrix(0,Ncomp,Ncomp)
@@ -273,17 +299,17 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
 
 This is the critical function which runs the SEAIR model. It requires the following inputs:
 
-`stoch`: binary TRUE/FALSE for whether there should be stochasticity added to the force of infection for each age category, at each time point
+- `stoch`: binary TRUE/FALSE for whether there should be stochasticity added to the force of infection for each age category, at each time point
 
-`Ncomp`: the number of age/other categories used in the model. Can be pulled from the output of `setup_seir_model`
+- `Ncomp`: the number of age/other categories used in the model. Can be pulled from the output of `setup_seir_model`
 
-`ICs`: The initial condition to start the model run, as a vector with number of individuals in each category. Can be pulled from the output of `setup_seir_model`.
+- `ICs`: The initial condition to start the model run, as a vector with number of individuals in each category. Can be pulled from the output of `setup_seir_model`.
 
-`params`: a list of parameter values and objects, generated by the `setup_seir_model` model. Code is provided below to generate a list from the output of `setup_seir_model`.
+- `params`: a list of parameter values and objects, generated by the `setup_seir_model` model. Code is provided below to generate a list from the output of `setup_seir_model`.
 
-`time`: the sequence of time-steps over which to run the model (e.g., `time <- seq(0, 300, delta.t)`)
+- `time`: the sequence of time-steps over which to run the model (e.g., `time <- seq(0, 300, delta.t)`)
 
-`delta.t`: the time-step to use in the model; we recommend using at least daily time-steps, if not finer granularity
+- `delta.t`: the time-step to use in the model; we recommend using at least daily time-steps, if not finer granularity
 
 This function returns an object with the number of individuals in each model compartment (SEAIR + incidA (incident asymptomatic cases) + incidI (incident infectious cases)), per time point, per age-category+homeless+healthcare workers.
 
@@ -321,20 +347,20 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   seas <- beta0 * (1 + beta1 * cos(2 * pi * time/365 - phase))
   
   for(it in 1:(length(time) - 1)){
-  #  WI <- C%*%W%*%(A[it,] + I[it,])
-    C = 0.1
     WI <- (C*W)%*%(A[it,] + I[it,])
     
     WI[!is.finite(WI)] <- 0
     births <-rep(0,Ncomp)
     births[1] <- mu
     deaths <- rep(v,Ncomp)
+    
     ## add stochasticity to FOI
     if(stoch == T){
       dw <- rnorm(Ncomp,mean = 1, sd = 0.05)
     }else{
       dw <- 1
     }
+    
     ## declare transitions in model
     foi_prob <- 1 - exp( - seas[it] * WI/N * dw * delta.t)
     exposed_prob <- 1 - exp( - sigma * delta.t)
@@ -387,7 +413,7 @@ First, run the `setup_seir_model` function to produce the necessary parameters a
 
 ```{r initial_run R0}
   age.limits = seq(0, 85, 5) 
-  all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.0, c_scale_vec = 1)
+  all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 3.0, c_scale_vec = 1)
   ## what is printed should be R0 
 ```
 
