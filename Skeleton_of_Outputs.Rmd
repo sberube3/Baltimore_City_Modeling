@@ -352,71 +352,52 @@ Cumulative total incident symptomatic cases across all ages:
 ```{r,message=FALSE, echo=TRUE, warning=FALSE}
 #figure 1:  Median daily incident cases by transmission scenarios. 
 
-#incident_cases_R017_100<- apply(data_combined_cats_median_R017_100,1,sum)
-incident_cases_R017_75<- apply(data_combined_cats_median_R017_75,1,sum)
-#incident_cases_R017_50<- apply(data_combined_cats_median_R017_50,1,sum)
-#incident_cases_R021_100<- apply(data_combined_cats_median_R021_100,1,sum)
-incident_cases_R021_75<- apply(data_combined_cats_median_R021_75,1,sum)
-#incident_cases_R021_50<- apply(data_combined_cats_median_R021_50,1,sum)
-#incident_cases_R025_100<- apply(data_combined_cats_median_R025_100,1,sum)
-incident_cases_R025_75<- apply(data_combined_cats_median_R025_75,1,sum)
-#incident_cases_R025_50<- apply(data_combined_cats_median_R025_50,1,sum)
-incident_cases_lower_R017_75<- apply(data_combined_cats_IQR_lower_R017_75,1,sum)
-incident_cases_upper_R017_75<- apply(data_combined_cats_IQR_upper_R017_75,1,sum)
-incident_cases_lower_R021_75<- apply(data_combined_cats_IQR_lower_R021_75,1,sum)
-incident_cases_upper_R021_75<- apply(data_combined_cats_IQR_upper_R021_75,1,sum)
-incident_cases_lower_R025_75<- apply(data_combined_cats_IQR_lower_R025_75,1,sum)
-incident_cases_upper_R025_75<- apply(data_combined_cats_IQR_upper_R025_75,1,sum)
 
-wide_incident_cases<- as.data.frame(cbind(rep(1:length(incident_cases_R017_75)),
-                      incident_cases_R017_75,incident_cases_R021_75,incident_cases_R025_75))
-                      
-wide_bounds_lower<- as.data.frame(cbind(rep(1:length(incident_cases_R017_75)),
-                        incident_cases_lower_R017_75,
-                        incident_cases_lower_R021_75,
-                        incident_cases_lower_R025_75))
+#randomly select 15 sims to show for each R_0 scenario
 
-wide_bounds_upper<- as.data.frame(cbind(rep(1:length(incident_cases_R017_75)),
-                    incident_cases_upper_R017_75,incident_cases_upper_R021_75,
-                    incident_cases_upper_R025_75))
-colnames(wide_incident_cases)<- c("Day","R_0=1.7","R_0=2.1","R_0=2.5")
-
-colnames(wide_bounds_lower)<- c("Day","lower_R_0=1.7","lower_R_0=2.1", "lower_R_0=2.5")
-
-colnames(wide_bounds_upper)<- c("Day","upper_R_0=1.7","upper_R_0=2.1","upper_R_0=2.5")
-
-long_incident_cases<- gather(wide_incident_cases,scenario, incident_cases,
-                             "R_0=1.7":"R_0=2.5", factor_key=TRUE)
-
-long_bounds_lower<- gather(wide_bounds_lower,scenario, incident_lower,
-                     "lower_R_0=1.7":"lower_R_0=2.5")
-long_bounds_upper<- gather(wide_bounds_upper,scenario, incident_upper,
-                     "upper_R_0=1.7":"upper_R_0=2.5")
-
-combined_long_matrix<- as.data.frame(cbind(long_incident_cases,long_bounds_lower$incident_lower,
-                                           long_bounds_upper$incident_upper))
-
-colnames(combined_long_matrix)<- c("Day", "scenario","incident_cases","lower","upper")
+random_sample_R017<- which(complete_R017$run_index%in%sample(rep(1:500),15,replace=F))
+random_sample_R021<- which(complete_R021$run_index%in%sample(rep(1:500), 15, replace=F))
+random_sample_R025<- which(complete_R025$run_index%in%sample(rep(1:500), 15, replace = F))
 
 
-combined_long_matrix<-combined_long_matrix%>%
-  mutate(lower=ifelse(incident_cases==0,0,lower)) %>%
-  dplyr::mutate(scenario=recode(scenario, 
-                                "R_0=1.7"="Low transmission",
-                                "R_0=2.1"="Moderate transmission",
-                                "R_0=2.5"="High transmission"))%>%
-  mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
-                      length.out=length(incident_cases_R017_75)),times=3))
+incident_symptomatic_wide<- as.data.frame(cbind(median_incident_symptomatic_R017[,1],
+                            apply(median_incident_symptomatic_R017[,-1],1,sum),
+                            apply(median_incident_symptomatic_R021[,-1],1,sum),
+                            apply(median_incident_symptomatic_R025[,-1],1,sum)))
 
-combined_long_matrix$Day
+colnames(incident_symptomatic_wide)<- c("Day", "R_0=1.7,Median", "R_0=2.1,Median", "R_0=2.5,Median") 
 
-plt_incident_cases<- ggplot(combined_long_matrix)+ 
-  geom_line(aes(y= incident_cases, x=Day,color=scenario))+
-  geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
+random_sims<- as.data.frame(cbind(combined_incident_R017[random_sample_R017,1],
+                                apply(combined_incident_R017[random_sample_R017,-1],1,sum),
+                                apply(combined_incident_R021[random_sample_R021,-1],1,sum),
+                                apply(combined_incident_R025[random_sample_R021,-1],1,sum)))
+
+colnames(random_sims)<- c("Day","R_0=1.7,Random", "R_0=2.1,Random", "R_0=2.5,Random")
+
+
+incident_symptomatic_long<- incident_symptomatic_wide%>%
+  gather(scenario, incident_symptomatic, "R_0=1.7,Median":"R_0=2.5,Median", factor_key = TRUE)
+
+random_sims_long<- random_sims%>%
+  gather(scenario, incident_symptomatic, "R_0=1.7,Random":"R_0=2.5,Random", factor_key=TRUE)
+
+
+symptomatic_df<- as.data.frame(rbind(incident_symptomatic_long,random_sims_long))
+
+symptomatic_df_sep<- symptomatic_df%>%
+  separate(scenario, into=c("scenario", "summary_stat"), sep=",")%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7", "Low Transmission",
+                         ifelse(scenario=="R_0=2.1", "Moderate Transmission", "High Transmission")))
+
+which(symptomatic_df_sep$summary_stat=="Random")
+
+plt_incident_cases<- ggplot(symptomatic_df_sep[1096:(1096+365*2),])+ 
+  geom_line(aes(y= incident_symptomatic, x=Day,color=summary_stat,linetype=scenario))+
+  #geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
   labs(title="Incident Symptomatic Cases Per Day",y="Median Number of Cases") +
-  labs(color="Scenario", fill="Scenario") 
-  
-plt_incident_cases
+  labs(color="Scenario") 
+
+
 
 ```
 
@@ -707,6 +688,84 @@ plt_D <- plt_cumulative_hosp_R025
 plt1 <- cowplot::plot_grid(plt_B, plt_C, plt_D, labels=c('B','C','D'), align = "h", ncol=3)
 plt <- cowplot::plot_grid(plt_A, plt1, labels=c('A',''), align = "h", nrow=2)
 print(plt)
+
+```
+
+New(but actually old) figure 5:
+```{r, message=FALSE, warning=FALSE, echo=TRUE}
+#cumulative cases (symptomatic)
+#cumulative sum of incident cases for each of the 500 sims
+daily_incident_cases<- matrix(NA,nrow(combined_incident_R017),ncol=4)
+
+daily_incident_cases[,1]<- combined_incident_R017[,1]
+daily_incident_cases[,2]<- apply(combined_incident_R017[,-1],1,sum)
+daily_incident_cases[,3]<- apply(combined_incident_R021[,-1],1,sum)
+daily_incident_cases[,4]<- apply(combined_incident_R025[,-1],1,sum)
+
+cumulative_cases_symptomatic<- matrix(NA, nrow(daily_incident_cases), ncol(daily_incident_cases))
+cumulative_cases_symptomatic[,1]<- combined_incident_R017[,1]
+cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==1),]<- 
+  daily_incident_cases[which(daily_incident_cases[,1]==1),]
+for(i in 2:365){
+  for(j in 2: ncol(daily_incident_cases)){
+    cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==i),j]<-
+      cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==(i-1)),j]+
+      daily_incident_cases[which(daily_incident_cases[,1]==i),j]
+  }
+  
+}
+
+median_cumulative_cases_symptomatic<- matrix(NA, 365, ncol= 4)
+
+median_cumulative_cases_symptomatic[,1]<- rep(1:365)
+for(i in 1:nrow(median_cumulative_cases_symptomatic)){
+  median_cumulative_cases_symptomatic[i,-1]<- 
+    apply(cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==i),-1],2,median)
+}
+
+cumulative_cases_symptomatic<- as.data.frame(median_cumulative_cases_symptomatic)
+colnames(cumulative_cases_symptomatic)<- c("Day", "Low Transmission",
+                                          "Moderate Transmission", "High Transmission")
+
+cumulative_cases_symptomatic_long<- cumulative_cases_symptomatic%>%
+  gather(scenario, cumulative_cases, "Low Transmission": "High Transmission", factor_key = T)%>%
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by="day", length.out = 365),3))
+
+
+
+cumulative_symptomatic_cases_plt<- ggplot(cumulative_cases_symptomatic_long)+
+  geom_line(aes(x=Day, y= cumulative_cases, color=scenario))+
+  labs(y="Median Cumulative Symptomatic Cases", title= "Median Cumulative Symptomatic Cases")
+
+#cumulative deaths
+cumulative_deaths<- as.data.frame(cbind(rep(1:nrow(cumulative_array_R017[,,5])),
+                    apply(cumulative_array_R017[,-1,5],1,sum),
+                    apply(cumulative_array_R021[,-1,5],1,sum),
+                    apply(cumulative_array_R025[,-1,5],1,sum)))
+
+
+median_cumulative_deaths<- matrix(NA, 365, 4)
+median_cumulative_deaths[,1]<- rep(1:365)
+for(i in 1:nrow(median_cumulative_deaths)){
+
+    median_cumulative_deaths[i,-1]<- 
+      apply(cumulative_deaths[which(cumulative_deaths[,1]==i),-1],2,median)
+  
+}
+
+colnames(median_cumulative_deaths)<- c("Day", "Low Transmission", "Moderate Transmission", 
+                                       "High Transmission")
+
+median_cumulative_deaths<- as.data.frame(median_cumulative_deaths)
+
+median_cumulative_deaths_long<- median_cumulative_deaths%>%
+  gather(scenario, cumulative_death, "Low Transmission": "High Transmission", factor_key = T)%>%
+   mutate(Day= rep(seq(as.Date('2020/03/1'),by="day", length.out = 365),3))
+
+
+cumulative_deaths_plot<- ggplot(median_cumulative_deaths_long)+
+  geom_line(aes(x=Day, y= cumulative_death, color=scenario))+
+  labs(y= "Median Deaths", "Median Deaths")
 
 ```
 
