@@ -137,7 +137,6 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   seas <- beta0 * (1 + beta1 * cos(2 * pi * time/365 - phase))
   for(it in 1:(length(time) - 1)){
   #  WI <- C%*%W%*%(A[it,] + I[it,])
-    C = 0.1
     WI <- (C*W)%*%(A[it,] + I[it,])
     
     WI[!is.finite(WI)] <- 0
@@ -223,7 +222,7 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
   phase <- 0 ## when should seasonal forcing peak?
   mu <- 0 ## set births to be zero currently
   v <- 0 ## set natural death rate to be zero currently
-  #R0 <- 2.5 ## make a range?   ## R0 = beta * sigma / ((sigma + v) * (v + gamma)) for SEAIR model with split proportion into A-I and only A and I contributing to infection
+  ## R0 <- 2.5 ## make a range?   ## R0 = beta * sigma / ((sigma + v) * (v + gamma)) for SEAIR model with split proportion into A-I and only A and I contributing to infection
   beta0 <- R0 * (gamma + v) * (sigma + v) / sigma ## set beta based on that value
   beta1 <- 0.0 ## seasonal forcing should be modest here
   ## now check to make sure the R0 we get is the R0 we put in
@@ -234,7 +233,6 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
       R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]* beta0 * sigma / ( (sigma + v) * (v + gamma))
     }
   }
-  # 
   # for (i in 1:Ncomp){
   #   for (j in 1:Ncomp){
   #     R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]* beta0 * (gamma + v) * (sigma +v )/sigma
@@ -244,10 +242,9 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
   return(list(C = C, W = W, beta0 = beta0, beta1 = beta1, phase = phase, mu = mu, v = v, ICs = ICs, Ncomp = Ncomp, N=N, gamma=gamma,sigma = sigma,prop_symptomatic=prop_symptomatic))
 }
 
-
 ## how long to run the model for?
 ## currently set to be 100 days integrated at the day
-all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.0, c_scale_vec = 1)
+all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.0, c_scale_vec = 0.3)
 ## what is printed should be R0 
 
 delta.t <- 1/1
@@ -257,8 +254,6 @@ ICs = all_prelim_info$ICs
 
 params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, gamma=all_prelim_info$gamma, sigma = all_prelim_info$sigma, prop_symptomatic=all_prelim_info$prop_symptomatic)
 ## running some different simulations and making some basic plots
-
-
 single.sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
 single.sim %>% ggplot(aes(time,I5))+geom_line()
 single.sim %>% dplyr::select(paste0('I',1:Ncomp)) %>% rowSums() -> totalI
@@ -278,7 +273,6 @@ all_sim <- rbind(all_sim, test_sim)
 run_index = rep(0, nrow(test_sim))
 test_sim <- cbind(run_index, test_sim)
        
-
 nsim <- 500
 start_index <- seq(1, nsim*length(time)+1, by = length(time))
 all_sim <- matrix(,1,(Ncomp*7)+2)
@@ -299,7 +293,7 @@ Sys.time()
 ### loop over r0 and c values
 write_output_files = TRUE
 r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
-#c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
+c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
 
 delta.t <- 1/1
 time <- seq(1,365,by = delta.t)
@@ -307,12 +301,10 @@ Ncomp = all_prelim_info$Ncomp
 ICs = all_prelim_info$ICs
 
 for(ii in 1:length(r0_values)){
-#  for(jj in 1:length(c_values)){
+  for(jj in 1:length(c_values)){
     R0_test = r0_values[ii]
-    c_test = 1
-    print(R0_test)
-#    c_test = c_values[jj]
-#    print(c(R0_test, c_test))
+    c_test = c_values[jj]
+    print(c(R0_test, c_test))
     nsim <- 500
     start_index <- seq(1, nsim*length(time)+1, by = length(time))
     all_sim <- matrix(,1,(Ncomp*7)+2)
@@ -329,22 +321,22 @@ for(ii in 1:length(r0_values)){
       all_sim[start_index[n]:(start_index[n+1]-1),] = single.sim
     }
     if(write_output_files == TRUE){
-      write.csv(all_sim, file = paste(paste(paste('Output_20200322/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
+      write.csv(all_sim, file = paste(paste(paste('Output_20200322_v2/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
     }
+}
 }
 
 
-#}
-
+library(tidyverse)
 ## c(0.9797704, 9.487135e-05, 5.578693e-05, 8.364770e-05, 0.01999531)
+
 write_summary_files = TRUE
 if(write_summary_files == TRUE){
-  library(tidyverse)
   ### loop over r0 and c values to write summary incidence files will produce new files that have the mean, median, IQR and 95% quantile per time step across each incidence class. 
   r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
   c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
-  first_incid_name = 'incid1'
-  last_incid_name = 'incid14'
+  first_incid_name = 'incid_A1'
+  last_incid_name = 'incid_I14'
   n_incid = 14
   ## mean, median, IQR, 2.5%, 97.5%
   for(ii in 1:length(r0_values)){
@@ -352,12 +344,12 @@ if(write_summary_files == TRUE){
       R0_test = r0_values[ii]
       c_test = c_values[jj]
       print(c(R0_test, c_test))
-      file_name = paste(paste(paste('TestRun/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
+      file_name = paste(paste(paste('Output_20200322_v2/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
       data_file <- read.csv(file_name)
       inc_data <- data_file[,c(grep('time', colnames(data_file)), min(grep(first_incid_name, colnames(data_file))):max(grep(last_incid_name, colnames(data_file))))]
       inc_data[is.na(inc_data)] <- 0
       summary_inc_data <- inc_data %>% group_by(time) %>% summarise_all(.funs = list(mean = mean, median = median, IQR = IQR, Q1 =~quantile(x=.,probs = 0.025), Q4 = ~quantile(x=., probs = 0.975)))
-      output_file_name <- paste(paste(paste('TestRun/SUMMARY_INCIDENCE_SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
+      output_file_name <- paste(paste(paste('Output_20200322_v2/SUMMARY_INCIDENCE_SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
       write.csv(summary_inc_data, output_file_name, row.names = FALSE)
     }
   }
