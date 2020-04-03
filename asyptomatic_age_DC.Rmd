@@ -193,6 +193,8 @@ This function is the only function which should require edits. This function ser
 
 - `v` - the natural death rate in the population; here, set to be 0
 
+- `sd.dw` - the standard deviation for the stochasticity added to event rates at each time step; here, set to be 0.05
+
 - `hcw.mix` - the input to `make_polymod_matrix` which determines mixing patterns of healthcare workers
 
 - `hml.mix` - the input to `make_polymod_matrix` which determines mixing patterns of homeless
@@ -236,7 +238,7 @@ This function returns a list with objects:
 setup_seir_model <- function(stoch, R0, c_scale_vec,
                              gamma=1/6.5, sigma=1/5.2,
                              phase=0, beta1=0, mu=0, v=0,
-                             prop_symptomatic,
+                             prop_symptomatic, sd.dw=0.05,
                              hcw.mix="45,50", hml.mix="45,50",
                              homeless_n=2000, healthcare_n=5000){
   
@@ -279,6 +281,8 @@ setup_seir_model <- function(stoch, R0, c_scale_vec,
   #R0 <- 2.5 ## make a range?   ## R0 = beta * sigma / ((sigma + v) * (v + gamma)) for SEAIR model with split proportion into A-I and only A and I contributing to infection
   beta0 <- R0 * (gamma + v) * (sigma + v) / sigma ## set beta based on that value
   beta1 <- beta1 ## seasonal forcing should be modest here
+  sd.dw <- sd.dw
+  
   ## now check to make sure the R0 we get is the R0 we put in
   ## using the same formula as above
   R0.mat <- matrix(0,Ncomp,Ncomp)
@@ -297,7 +301,7 @@ setup_seir_model <- function(stoch, R0, c_scale_vec,
   return(list(C = C, W = W, 
               beta0 = beta0, beta1 = beta1, 
               phase = phase, mu = mu, v = v, ICs = ICs, 
-              Ncomp = Ncomp, N=N, gamma=gamma, 
+              Ncomp = Ncomp, N=N, gamma=gamma, sd.dw=sd.dw,
               sigma = sigma, prop_symptomatic=prop_symptomatic))
 }
 
@@ -338,6 +342,7 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   sigma = params$sigma
   gamma=params$gamma
   prop_symptomatic=params$prop_symptomatic
+  sd.dw <- params$sd.dw
   
   ## set up a matrix to store values in by variable and time
   ## each X[it,] is the variable at one hour
@@ -367,7 +372,7 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
     
     ## add stochasticity to FOI
     if(stoch == T){
-      dw <- rnorm(Ncomp,mean = 1, sd = 0.05)
+      dw <- rnorm(Ncomp,mean = 1, sd = sd.dw)
     }else{
       dw <- 1
     }
@@ -453,6 +458,7 @@ sair_step_variableR0 <- function(stoch = F, R0vec, Ncomp, ICs, params, time, del
   sigma = params$sigma
   gamma=params$gamma
   prop_symptomatic=params$prop_symptomatic
+  sd.dw <- params$sd.dw
   
   ## set up a matrix to store values in by variable and time
   ## each X[it,] is the variable at one hour
@@ -495,7 +501,7 @@ sair_step_variableR0 <- function(stoch = F, R0vec, Ncomp, ICs, params, time, del
     
     ## add stochasticity to FOI
     if(stoch == T){
-      dw <- rnorm(Ncomp,mean = 1, sd = 0.05)
+      dw <- rnorm(Ncomp,mean = 1, sd = sd.dw)
     }else{
       dw <- 1
     }
@@ -584,7 +590,8 @@ Next, create the parameter object to read into the `sair_step` function and to s
                 N=all_prelim_info$N, 
                 gamma=all_prelim_info$gamma, 
                 sigma = all_prelim_info$sigma, 
-                prop_symptomatic=all_prelim_info$prop_symptomatic)
+                prop_symptomatic=all_prelim_info$prop_symptomatic,
+                sd.dw = all_prelim_info$sd.dw)
 
 ```
 
@@ -645,7 +652,8 @@ For the sake of preparing this document, the code below will not run, but provid
                 N=all_prelim_info$N, 
                 gamma=all_prelim_info$gamma, 
                 sigma = all_prelim_info$sigma, 
-                prop_symptomatic=all_prelim_info$prop_symptomatic)
+                prop_symptomatic=all_prelim_info$prop_symptomatic,
+                sd.dw = all_prelim_info$sd.dw)
 
   # Multiple simulation setup
   nsim <- 500
@@ -722,7 +730,8 @@ We can also run multiple simulations across multiple values of a constant R0 sim
                     N=all_prelim_info$N, 
                     gamma=all_prelim_info$gamma,
                     prop_symptomatic=all_prelim_info$prop_symptomatic, 
-                    sigma = all_prelim_info$sigma)
+                    sigma = all_prelim_info$sigma,
+                    sd.dw = all_prelim_info$sd.dw)
       
       for(n in 1:nsim){
         single.sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
@@ -770,7 +779,8 @@ We can also run multiple simulations across multiple values of a constant R0 sim
                 N=all_prelim_info$N, 
                 gamma=all_prelim_info$gamma, 
                 sigma = all_prelim_info$sigma, 
-                prop_symptomatic=all_prelim_info$prop_symptomatic)
+                prop_symptomatic=all_prelim_info$prop_symptomatic,
+                sd.dw = all_prelim_info$sd.dw)
 
   
   single.sim.varR0 <- sair_step_variableR0(stoch = TRUE, R0vec, Ncomp, ICs, params, time, delta.t)
