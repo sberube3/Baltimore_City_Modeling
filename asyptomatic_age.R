@@ -11,6 +11,7 @@ require(stringr)
 require(reshape2)
 require(dplyr)
 require(ggplot2)
+require(truncnorm)
 
 ### Functions: this document has 5 different functions to clean up the age structured data, make a mixing matrix, rescale the mixing matrix, run the discrete time simulation, and set up all of the parameters/etc. for the discrete time simulation.
 # make_age_structure_matrix(age_data_file, homeless_n, healthcare_n)
@@ -69,13 +70,14 @@ make_age_structure_matrix <- function(age_data_file, homeless_n, healthcare_n){
 }
 
 ### sets up polymod matrix using data from the UK (we could not find any US polymod data). It will make a mixing matrix set up for all of the different age classes and takes the mixing patterns for the 45-55 age group for the healthcare workers and homeless individuals
-make_polymod_matrix <- function(){
+make_polymod_matrix <- function(age.limits=c(0,5,10,15,20,25,35,45,55,60,65,75,85,90), 
+                                hcw.mix="45,50", hml.mix="45,50"){
   ## setup polymod matrix
   ## use age classes in the data
   ## for now, hard code it into the function, but can change later
   ## use the UK mixing pattern as I don't believe US is available
   data(polymod)
-  age_mix <- contact_matrix(polymod, countries = "United Kingdom", age.limits = c(0,5,10,15,20,25,35,45,55,60,65,75,85,90))$matrix
+  age_mix <- contact_matrix(polymod, countries = "United Kingdom", age.limits = age.limits)$matrix
   ## assumes homeless and healthcare workers have the same mixing as 45-55 year olds
   W <- matrix(NA,nrow(age_mix)+2, ncol(age_mix)+2)
   
@@ -86,10 +88,10 @@ make_polymod_matrix <- function(){
   ## test case of uniform contact
   ## W[1:nrow(age_mix),1:ncol(age_mix)] <- 1
   
-  W[nrow(age_mix)+1,] = W[grep('45,55', rownames(W)),] ## healthcare
-  W[nrow(age_mix)+2,] = W[grep('45,55', rownames(W)),] ## homeless
-  W[,nrow(age_mix)+1] = W[,grep('45,55', rownames(W))] ## healthcare
-  W[,nrow(age_mix)+2] = W[,grep('45,55', rownames(W))] ## homeless
+  W[nrow(age_mix)+1,] = W[grep(hcw.mix, rownames(W)),] ## healthcare
+  W[nrow(age_mix)+2,] = W[grep(hml.mix, rownames(W)),] ## homeless
+  W[,nrow(age_mix)+1] = W[,grep(hcw.mix, rownames(W))] ## healthcare
+  W[,nrow(age_mix)+2] = W[,grep(hml.mix, rownames(W))] ## homeless
   return(W)
 }
 
@@ -117,9 +119,19 @@ rescale_age_matrix <- function(Ncomp, W, BC_pop, c_scale_vec){
 
 ## main S(A)IR function 
 sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
-  C = params$C; W = params$W; 
-  beta0 = params$beta0; beta1 = params$beta1; phase = params$phase; mu = params$mu; v = params$v
-  N=params$N; sigma = params$sigma; gamma=params$gamma; prop_symptomatic=params$prop_symptomatic
+  C = params$C
+  W = params$W
+  beta0 = params$beta0
+  beta1 = params$beta1
+  phase = params$phase
+  mu = params$mu
+  v = params$v
+  N=params$N
+  sigma = params$sigma
+  gamma=params$gamma
+  prop_symptomatic=params$prop_symptomatic
+  sd.dw = params$sd.dw
+  
   ## set up a matrix to store values in by variable and time
   ## each X[it,] is the variable at one hour
   x <- matrix(NA,length(time),Ncomp * 7)
@@ -130,23 +142,26 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   A <- x[,(2*Ncomp+1):(3*Ncomp)]; ## asymptomatic individuals
   I <- x[,(3*Ncomp+1):(4*Ncomp)];## symp individuals
   R <- x[,(4*Ncomp+1):(5*Ncomp)] ## recovered individuals
+  
   ## incidence
   incid_A <- x[,(5*Ncomp+1):(6*Ncomp)];
   incid_I <- x[,(6*Ncomp+1):(7*Ncomp)];
+  
   ## seasonal transmission
   seas <- beta0 * (1 + beta1 * cos(2 * pi * time/365 - phase))
+  
   for(it in 1:(length(time) - 1)){
   #  WI <- C%*%W%*%(A[it,] + I[it,])
-    C = 0.1
     WI <- (C*W)%*%(A[it,] + I[it,])
     
     WI[!is.finite(WI)] <- 0
     births <-rep(0,Ncomp)
     births[1] <- mu
     deaths <- rep(v,Ncomp)
+    
     ## add stochasticity to FOI
     if(stoch == T){
-      dw <- rnorm(Ncomp,mean = 1, sd = 0.05)
+      dw <- rtruncnorm(Ncomp, a=0, mean = 1, sd = sd.dw)
     }else{
       dw <- 1
     }
@@ -177,11 +192,12 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
     ## deterministic equations to check -- does not currently work 
     if(stoch == F){
       S[it + 1, ] <- S[it,] + delta.t * (births - seas[it] * WI * S[it,] * dw / N  - deaths*S[it,])
-      A[it + 1, ] <- A[it,] + delta.t * ( (1 - prop_symptomatic) *  seas[it] * WI * S[it,] * dw / N - A[it,]*(gamma - deaths))
-      I[it + 1, ] <- I[it,] + delta.t * (  prop_symptomatic *  seas[it] * WI * S[it,] * dw / N - I[it,]*(gamma - deaths))
+      E[it + 1, ] <- E[it,] + delta.t * (seas[it] * WI * S[it,] * dw / N - deaths*E[it,] - sigma*E[it,])
+      A[it + 1, ] <- A[it,] + delta.t * ( (1 - prop_symptomatic)*sigma*E[it,]   - A[it,]*(gamma - deaths))
+      I[it + 1, ] <- I[it,] + delta.t * (  prop_symptomatic*sigma*E[it,] - I[it,]*(gamma - deaths) )
       R[it + 1, ] <- R[it,] + delta.t * (A[it,]*gamma+ I[it,]*gamma - R[it,]* deaths)
-      incid_A[it,] <-  delta.t*(A[it,]*gamma)
-      incid_I[it,] <- delta.t*(I[it,]*gamma )
+      incid_A[it,] <-  (1 - prop_symptomatic)*(seas[it] * WI * S[it,] * dw / N)
+      incid_I[it,] <- prop_symptomatic*(seas[it] * WI * S[it,] * dw / N)
     }
   }
   out <- data.frame(cbind(time,S,E,A,I,R,incid_A, incid_I))
@@ -192,17 +208,26 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
 
 
 ### main function to set up and organize the mixing data, inital conditions, parameters, etc.  
-setup_seir_model <- function(stoch, R0, c_scale_vec){
-  ## set prop_symtomatic
-  ## right now just set it to be 5% but
-  prop_symptomatic <- 0.2 ## will need to update/change
+setup_seir_model <- function(stoch, R0, c_scale_vec,
+                             gamma=1/6.5, sigma=1/5.2,
+                             phase=0, beta1=0, mu=0, v=0,
+                             prop_symptomatic, sd.dw=0.05,
+                             hcw.mix="45,50", hml.mix="45,50",
+                             homeless_n=2000, healthcare_n=5000){
+  
   data <- read.csv('Baltimore_AgePopulation.csv')
-  age_data <- make_age_structure_matrix(data, homeless_n = 2000, healthcare_n = 5000)
+  age_data <- make_age_structure_matrix(data, homeless_n = homeless_n, healthcare_n = healthcare_n)
   BC_pop = age_data$BC_pop
   Ncomp = age_data$Ncomp
-  W <- make_polymod_matrix()
+  W <- make_polymod_matrix(age.limits, hcw.mix = hcw.mix, hml.mix = hml.mix)
   rescale_mixing <- rescale_age_matrix(Ncomp, W, BC_pop, c_scale_vec)
-  W <- rescale_mixing$W; C <- rescale_mixing$C
+  W <- rescale_mixing$W
+  C <- rescale_mixing$C
+  
+  ## set prop_symtomatic
+  prop_symptomatic <- prop_symptomatic
+  if(length(prop_symptomatic)!=Ncomp){print("prop_symptomatic is the wrong length")}
+
   ## set initial conditions
   ICs <- c(S = BC_pop * 1, 
            E = rep(0,length(BC_pop)),
@@ -215,17 +240,21 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
   ## crudely just set anything negative to be zero but we can fine tune this more depending on what we assume S0 does
   ICs[(4*Ncomp+1):(5*Ncomp)] <- BC_pop -  ICs[1:Ncomp] - ICs[(Ncomp+1):(2*Ncomp)] - ICs[(2*Ncomp+1):(3*Ncomp)] - ICs[(3*Ncomp+1):(4*Ncomp)]
   ICs[(4*Ncomp+1):(5*Ncomp)] [ICs[(4*Ncomp+1):(5*Ncomp)]  < 0 ] <- 0
+  
   ## population sizes by demographic data
-  N <- BC_pop         
+  N <- BC_pop
+  
   ## units in days!! 
-  gamma <- 1/6.5 ## infectious period
-  sigma <- 1/5.2 ## latent period
-  phase <- 0 ## when should seasonal forcing peak?
-  mu <- 0 ## set births to be zero currently
-  v <- 0 ## set natural death rate to be zero currently
+  gamma <- gamma ## infectious period
+  sigma <- sigma ## latent period
+  phase <- phase ## when should seasonal forcing peak?
+  mu <- mu ## set births to be zero currently
+  v <- v ## set natural death rate to be zero currently
   #R0 <- 2.5 ## make a range?   ## R0 = beta * sigma / ((sigma + v) * (v + gamma)) for SEAIR model with split proportion into A-I and only A and I contributing to infection
   beta0 <- R0 * (gamma + v) * (sigma + v) / sigma ## set beta based on that value
-  beta1 <- 0.0 ## seasonal forcing should be modest here
+  beta1 <- beta1 ## seasonal forcing should be modest here
+  sd.dw <- sd.dw
+  
   ## now check to make sure the R0 we get is the R0 we put in
   ## using the same formula as above
   R0.mat <- matrix(0,Ncomp,Ncomp)
@@ -234,20 +263,21 @@ setup_seir_model <- function(stoch, R0, c_scale_vec){
       R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]* beta0 * sigma / ( (sigma + v) * (v + gamma))
     }
   }
-  # 
   # for (i in 1:Ncomp){
   #   for (j in 1:Ncomp){
   #     R0.mat[i,j] <- W[i,j]*BC_pop[i]/BC_pop[j]* beta0 * (gamma + v) * (sigma +v )/sigma
   #   }
   # }
   print(eigen(R0.mat)$values[1]) ## just a check
-  return(list(C = C, W = W, beta0 = beta0, beta1 = beta1, phase = phase, mu = mu, v = v, ICs = ICs, Ncomp = Ncomp, N=N, gamma=gamma,sigma = sigma,prop_symptomatic=prop_symptomatic))
+  return(list(C = C, W = W, beta0 = beta0, beta1 = beta1, 
+              phase = phase, mu = mu, v = v, ICs = ICs, 
+              Ncomp = Ncomp, N=N, gamma=gamma, sigma = sigma,
+              prop_symptomatic=prop_symptomatic, sd.dw=sd.dw))
 }
-
 
 ## how long to run the model for?
 ## currently set to be 100 days integrated at the day
-all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.0, c_scale_vec = 1)
+all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.0, c_scale_vec = 0.3)
 ## what is printed should be R0 
 
 delta.t <- 1/1
@@ -255,10 +285,13 @@ time <- seq(1,300,by = delta.t)
 Ncomp = all_prelim_info$Ncomp
 ICs = all_prelim_info$ICs
 
-params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, gamma=all_prelim_info$gamma, sigma = all_prelim_info$sigma, prop_symptomatic=all_prelim_info$prop_symptomatic)
+params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, 
+              beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, 
+              mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, 
+              gamma=all_prelim_info$gamma, sigma = all_prelim_info$sigma, 
+              prop_symptomatic=all_prelim_info$prop_symptomatic, sd.dw=all_prelim_info$sd.dw)
+
 ## running some different simulations and making some basic plots
-
-
 single.sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
 single.sim %>% ggplot(aes(time,I5))+geom_line()
 single.sim %>% dplyr::select(paste0('I',1:Ncomp)) %>% rowSums() -> totalI
@@ -278,10 +311,9 @@ all_sim <- rbind(all_sim, test_sim)
 run_index = rep(0, nrow(test_sim))
 test_sim <- cbind(run_index, test_sim)
        
-
 nsim <- 500
 start_index <- seq(1, nsim*length(time)+1, by = length(time))
-all_sim <- matrix(,1,(Ncomp*7)+2)
+all_sim <- matrix(NA,1,(Ncomp*7)+2)
 colnames(all_sim) <- c('run_index', colnames(test_sim))#matrix(,nsim*length(time),(Ncomp*5)+2) ## +2 -> time step, run index
 Sys.time()
 for(n in 1:nsim){
@@ -299,7 +331,7 @@ Sys.time()
 ### loop over r0 and c values
 write_output_files = TRUE
 r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
-#c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
+c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
 
 delta.t <- 1/1
 time <- seq(1,365,by = delta.t)
@@ -307,12 +339,10 @@ Ncomp = all_prelim_info$Ncomp
 ICs = all_prelim_info$ICs
 
 for(ii in 1:length(r0_values)){
-#  for(jj in 1:length(c_values)){
+  for(jj in 1:length(c_values)){
     R0_test = r0_values[ii]
-    c_test = 1
-    print(R0_test)
-#    c_test = c_values[jj]
-#    print(c(R0_test, c_test))
+    c_test = c_values[jj]
+    print(c(R0_test, c_test))
     nsim <- 500
     start_index <- seq(1, nsim*length(time)+1, by = length(time))
     all_sim <- matrix(,1,(Ncomp*7)+2)
@@ -329,22 +359,22 @@ for(ii in 1:length(r0_values)){
       all_sim[start_index[n]:(start_index[n+1]-1),] = single.sim
     }
     if(write_output_files == TRUE){
-      write.csv(all_sim, file = paste(paste(paste('Output_20200322/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
+      write.csv(all_sim, file = paste(paste(paste('Output_20200322_v2/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
     }
+}
 }
 
 
-#}
-
+library(tidyverse)
 ## c(0.9797704, 9.487135e-05, 5.578693e-05, 8.364770e-05, 0.01999531)
+
 write_summary_files = TRUE
 if(write_summary_files == TRUE){
-  library(tidyverse)
   ### loop over r0 and c values to write summary incidence files will produce new files that have the mean, median, IQR and 95% quantile per time step across each incidence class. 
   r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
   c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
-  first_incid_name = 'incid1'
-  last_incid_name = 'incid14'
+  first_incid_name = 'incid_A1'
+  last_incid_name = 'incid_I14'
   n_incid = 14
   ## mean, median, IQR, 2.5%, 97.5%
   for(ii in 1:length(r0_values)){
@@ -352,12 +382,12 @@ if(write_summary_files == TRUE){
       R0_test = r0_values[ii]
       c_test = c_values[jj]
       print(c(R0_test, c_test))
-      file_name = paste(paste(paste('TestRun/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
+      file_name = paste(paste(paste('Output_20200322_v2/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
       data_file <- read.csv(file_name)
       inc_data <- data_file[,c(grep('time', colnames(data_file)), min(grep(first_incid_name, colnames(data_file))):max(grep(last_incid_name, colnames(data_file))))]
       inc_data[is.na(inc_data)] <- 0
       summary_inc_data <- inc_data %>% group_by(time) %>% summarise_all(.funs = list(mean = mean, median = median, IQR = IQR, Q1 =~quantile(x=.,probs = 0.025), Q4 = ~quantile(x=., probs = 0.975)))
-      output_file_name <- paste(paste(paste('TestRun/SUMMARY_INCIDENCE_SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
+      output_file_name <- paste(paste(paste('Output_20200322_v2/SUMMARY_INCIDENCE_SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
       write.csv(summary_inc_data, output_file_name, row.names = FALSE)
     }
   }
