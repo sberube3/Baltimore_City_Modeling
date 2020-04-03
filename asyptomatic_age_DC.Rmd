@@ -25,6 +25,7 @@ Note that version numbers provided are recommendations; code may run with differ
  - `reshape2`		version 1.4.3  
  - `dplyr`			version 0.83  
  - `ggplot2`		version 3.2.1  
+ - `truncnorm`    version 1.0.8
  
 
 ```{r setup, include=FALSE}
@@ -35,6 +36,7 @@ Note that version numbers provided are recommendations; code may run with differ
   require(reshape2)
   require(dplyr)
   require(ggplot2)
+  require(truncnorm)
 
 ```
 
@@ -372,7 +374,7 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
     
     ## add stochasticity to FOI
     if(stoch == T){
-      dw <- rnorm(Ncomp,mean = 1, sd = sd.dw)
+      dw <- rtruncnorm(Ncomp, a=0, mean = 1, sd = sd.dw)
     }else{
       dw <- 1
     }
@@ -501,7 +503,7 @@ sair_step_variableR0 <- function(stoch = F, R0vec, Ncomp, ICs, params, time, del
     
     ## add stochasticity to FOI
     if(stoch == T){
-      dw <- rnorm(Ncomp,mean = 1, sd = sd.dw)
+      dw <- rtruncnorm(Ncomp, a=0, mean = 1, sd = sd.dw)
     }else{
       dw <- 1
     }
@@ -629,7 +631,7 @@ Now, we use these input to run a single, stochastic iteration of the model with 
 
 #### Running multiple simulations - constant R0
 
-For the sake of preparing this document, the code below will not run, but provides the structure for running more than one simulation at a time.
+For the sake of preparing this document, the code below will not run, but provides the structure for running more than one simulation at a time. Note that the stochasticity has been increased here (`sd.dw=0.2`).
 
 ```{r multiple_sim, eval=FALSE}
   # setup functions
@@ -637,7 +639,7 @@ For the sake of preparing this document, the code below will not run, but provid
   prop_symptomatic <- c(0.141, 0.106, 0.074, 0.184, 0.293, 0.357, 0.417, 0.431, 0.445, 
                         0.505, 0.565, 0.693, 0.816, 0.781, 0.749, 0.749, 0.505, 0.505)
   
-  all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.0, c_scale_vec = 1, prop_symptomatic = prop_symptomatic)
+  all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.5, c_scale_vec = 1, prop_symptomatic = prop_symptomatic, sd.dw=0.2)
   delta.t <- 1/1
   time <- seq(1,300,by = delta.t)
   Ncomp = all_prelim_info$Ncomp
@@ -656,7 +658,7 @@ For the sake of preparing this document, the code below will not run, but provid
                 sd.dw = all_prelim_info$sd.dw)
 
   # Multiple simulation setup
-  nsim <- 500
+  nsim <- 50
   start_index <- seq(1, nsim*length(time)+1, by = length(time))
   all_sim <- matrix(NA,1,(Ncomp*7)+2)
   
@@ -681,7 +683,11 @@ For the sake of preparing this document, the code below will not run, but provid
   write.csv(all_sim, file = 'filename.csv')
   Sys.time()
 
-
+  # code to test and plot simulations
+  xx <- all_sim %>% select(starts_with("incid_I")) %>% rowSums()
+  xx <- cbind(xx, all_sim%>%select(run_index, time))
+  ggplot(xx, aes(x=time, y=xx, group=run_index)) + geom_line(alpha=0.3)
+  
 ```
 
 

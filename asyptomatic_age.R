@@ -11,6 +11,7 @@ require(stringr)
 require(reshape2)
 require(dplyr)
 require(ggplot2)
+require(truncnorm)
 
 ### Functions: this document has 5 different functions to clean up the age structured data, make a mixing matrix, rescale the mixing matrix, run the discrete time simulation, and set up all of the parameters/etc. for the discrete time simulation.
 # make_age_structure_matrix(age_data_file, homeless_n, healthcare_n)
@@ -160,7 +161,7 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
     
     ## add stochasticity to FOI
     if(stoch == T){
-      dw <- rnorm(Ncomp,mean = 1, sd = sd.dw)
+      dw <- rtruncnorm(Ncomp, a=0, mean = 1, sd = sd.dw)
     }else{
       dw <- 1
     }
