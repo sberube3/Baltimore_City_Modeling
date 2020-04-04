@@ -75,30 +75,20 @@ combined_incident_R025<- load_and_clean(complete_R025,R025)
 
 
 #HCW workers and homeless have the same nested prob scheme as the 45-540y.o group.
-prob_severe<- cbind(rep(0.0256,500),rep(0.263,500),rep(0.395,500),
-                    rep(0.577,500),rep(1.732,500),rep(0.577,500),
-                    rep(0.577,500))
+prob_severe<- c(0.0256,0.263,0.395,0.577,1.732,0.577,0.577)
 
-prob_hospitalized<- matrix(1,nrow=500,ncol=7)
+prob_hospitalized<- rep(1,7)
 
-prob_ICU<- cbind(rep(0,500),rep(0.253,500),rep(0.582,500),
-                    rep(0.686,500),rep(0.908,500),rep(0.582,500),
-                    rep(0.582,500))
+prob_ICU<- c(0,0.253,0.582,0.686,0.908,0.582,0.582)
 
-prob_dead_from_icu<-prob_ICU<- cbind(rep(0,500),rep(0.041,500),rep(0.071,500),
-                    rep(0.217,500),rep(0.445,500),rep(0.071,500),
-                    rep(0.071,500))
+prob_dead_from_icu<-c(0,0.041,0.071,0.217,0.445,0.071,0.071)
 
-prob_vent_icu<- cbind(rep(0,500),rep(0.035,500),rep(0.059,500),
-                    rep(0.214,500),rep(0.912,500),rep(0.059,500),
-                    rep(0.059,500))
+prob_vent_icu<- c(0,0.035,0.059,0.214,0.912,0.059,0.059)
 
-prob_dead_from_vent<- cbind(rep(0,500),rep(0.33,500),rep(0.25,500),
-                    rep(0.692,500),rep(1.27,500),rep(0.25,500),
-                    rep(0.25,500))
+prob_dead_from_vent<- c(0,0.33,0.25,0.692,1.27,0.25,0.25)
 
-prob_array<- array(c(prob_severe,prob_hospitalized,prob_ICU,prob_dead_from_icu,
-                     prob_vent_icu,prob_dead_from_vent),dim=c(500,7,6))
+prob_matrix<- cbind(prob_severe,prob_hospitalized,prob_ICU,prob_dead_from_icu,
+                     prob_vent_icu,prob_dead_from_vent)
 
 
 
@@ -119,107 +109,62 @@ incident_classifications<- function(data, complete_data, R0val){
   counts_array_R0val<- array(NA, dim=c(nrow(data),ncol(data),5))
   counts_array_R0val[,1,]<- data$time
   
- for(i in 1:500){
-   for(j in 2:ncol(data)){
-     for(k in 1:365){
-       if (k <=3){
-       
-       
-       counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,1]<-data[which(complete_data$run_index==i&complete_data$time==k),j,1]*prob_array[i,j-1,1]
-       
-       counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,2]<-counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,1]*prob_array[i,j-1,2]
-       
-        counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,3]<-counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,2]*prob_array[i,j-1,3]
-        
-       counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,4]<-counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,3]*prob_array[i,j-1,5]
-    
-   
-    
-     counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,5]<-(counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,3]*prob_array[i,j-1,4])+(counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,4]*prob_array[i,j-1,6])
-    
-       }
-       else if(k <=4&k>3){
-             counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,1]<-data[which(complete_data$run_index==i&complete_data$time==k),j,1]*prob_array[i,j-1,1]
-             
-             counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,2]<-counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,1]*prob_array[i,j-1,2]
-             
-              counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,3]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,2]*
-      prob_array[i,j-1,3]
-              
-              counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,4]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==(k-3)),j,3]*
-      prob_array[i,j-1,5] 
-         
-          counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,5]<- 
-      (counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,3]*
-         prob_array[i,j-1,4])+
-      (counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,4]*
-         prob_array[i,j-1,6])
-        
-   
-       }
-       else if(k <=5&k>4){
-         
-           counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,1]<- 
-      data[which(complete_data$run_index==i&complete_data$time==(k-4)),j,1]*prob_array[i,j-1,1]
-           
-           counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,2]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,1]*prob_array[i,j-1,2]
-               
-         counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,3]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==(k-4)),j,2]*prob_array[i,j-1,3]
-         
-          counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,4]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==(k-3)),j,3]*prob_array[i,j-1,5] 
-         
-          counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,5]<- 
-      (counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,3]*prob_array[i,j-1,4])+(counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,4]*prob_array[i,j-1,6])
-         
-          
-           
-       
-     
-       }
-      else if(k<=8&k>5){
-        
-        counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,1]<- 
-      data[which(complete_data$run_index==i&complete_data$time==(k-4)),j,1]*prob_array[i,j-1,1]
-        
-        counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,2]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,1]*prob_array[i,j-1,2]
-        
-        counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,3]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==(k-4)),j,2]*prob_array[i,j-1,3]
-        
-        counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,4]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==(k-3)),j,3]*prob_array[i,j-1,5] 
-           
-        counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,5]<- 
-      (counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,3]*prob_array[i,j-1,4])+(counts_array_R0val[which(complete_data$run_index==i&complete_data$time==(k-5)),j,4]*prob_array[i,j-1,6])
-      }
-      else{
-            
-         counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,1]<- 
-      data[which(complete_data$run_index==i&complete_data$time==(k-4)),j,1]*prob_array[i,j-1,1]
-         
-         counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,2]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,1]*prob_array[i,j-1,2]
-         
-           counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,3]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==(k-4)),j,2]*prob_array[i,j-1,3]
-         
-          counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,4]<- 
-      counts_array_R0val[which(complete_data$run_index==i&complete_data$time==(k-3)),j,3]*prob_array[i,j-1,5] 
-       
-         
-        counts_array_R0val[which(complete_data$run_index==i&complete_data$time==k),j,5]<- 
-      (counts_array_R0val[which(complete_data$run_index==i&complete_data$time==(k-8)),j,3]*prob_array[i,j-1,4])+(counts_array_R0val[which(complete_data$run_index==i&complete_data$time==(k-5)),j,4]*prob_array[i,j-1,6])
-      }
-     }
+for(i in 2:ncol(data)){
+  
+  for(j in 1:365){
+    if(j<=4){
+counts_array_R0val[which(complete_data$time==j),i,1]<- 
+      data[complete_data$time==j,i,1]*prob_matrix[i-1,1]
+}
+  else{
+    counts_array_R0val[which(complete_data$time==j),i,1]<- 
+      data[complete_data$time==(j-4),i,1]*prob_matrix[i-1,1]
+  }
 
+
+  }  
+ counts_array_R0val[,i,2]<- counts_array_R0val[,i,1]*prob_matrix[i-1,2] 
+ 
+for(k in 1:365){
+     if(k<=4){      
+counts_array_R0val[which(complete_data$time==k),i,3]<- 
+      counts_array_R0val[which(complete_data$time==k),i,2]*prob_matrix[i-1,3]
+     }
+  else{
+   counts_array_R0val[which(complete_data$time==k),i,3]<- 
+      counts_array_R0val[which(complete_data$time==(k-4)),i,2]*prob_matrix[i-1,3] 
+  }
+}
+ 
+ for(l in 1:365){
+        if(l<=3){
+counts_array_R0val[which(complete_data$time==l),i,4]<- 
+      counts_array_R0val[which(complete_data$time==(l)),i,3]*prob_matrix[i-1,5] 
+        }
+   else{
+     counts_array_R0val[which(complete_data$time==l),i,4]<- 
+      counts_array_R0val[which(complete_data$time==(l-3)),i,3]*prob_matrix[i-1,5] 
    }
  }
+ 
+ for(m in 1:365){
+   if(m<=5){
+     counts_array_R0val[which(complete_data$time==m),i,5]<- 
+      (counts_array_R0val[which(complete_data$time==(m)),i,3]*prob_matrix[i-1,4])+(counts_array_R0val[which(complete_data$time==(m)),i,4]*prob_matrix[i-1,6])
+   }
+   
+ else if(m>5&m<=8){
+   counts_array_R0val[which(complete_data$time==m),i,5]<- 
+      (counts_array_R0val[which(complete_data$time==(m)),i,3]*prob_matrix[i-1,4])+(counts_array_R0val[which(complete_data$time==(m-5)),i,4]*prob_matrix[i-1,6])
+ }
+ else{
+   counts_array_R0val[which(complete_data$time==m),i,5]<- 
+      (counts_array_R0val[which(complete_data$time==(m-8)),i,3]*prob_matrix[i-1,4])+(counts_array_R0val[which(complete_data$time==(m-5)),i,4]*prob_matrix[i-1,6])
+ }
+ }
+}
+
+
  
 return(counts_array_R0val)
 
