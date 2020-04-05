@@ -1,6 +1,8 @@
 rm(list=ls())
 ### code adapted from Alex Becker's COVID age structured discrete time model.
-### This code will incorporate age structured mixing between groups and produce estimates of the number of infected individuals per day (and cumulative incident infections). We have adapted the code to add in separate healthcare workers and homeless populations. 
+### This code will incorporate age structured mixing between groups and produce estimates of the number of 
+### infected individuals per day (and cumulative incident infections). We have adapted the code to add in 
+### separate healthcare workers and homeless populations. 
 
 #setwd('~/Dropbox/COVID-BaltimoreCity//')
 
@@ -13,7 +15,8 @@ require(dplyr)
 require(ggplot2)
 require(truncnorm)
 
-### Functions: this document has 5 different functions to clean up the age structured data, make a mixing matrix, rescale the mixing matrix, run the discrete time simulation, and set up all of the parameters/etc. for the discrete time simulation.
+### Functions: this document has 5 different functions to clean up the age structured data, make a mixing matrix, 
+### rescale the mixing matrix, run the discrete time simulation, and set up all of the parameters/etc. for the discrete time simulation.
 # make_age_structure_matrix(age_data_file, homeless_n, healthcare_n)
 # make_polymod_matrix()
 # rescale_age_matrix(Ncomp, W, BC_pop)
@@ -23,7 +26,8 @@ require(truncnorm)
 ### general things
 # BC_pop: the population of Baltimore by age
 # W: age specific mixing rates
-# C: an additional mixing matrix that can be included so mixing for healthcare workers does not decrease -- currently if you set it all to 1 then it is the same as turning it off
+# C: an additional mixing matrix that can be included so mixing for healthcare workers does not decrease -- 
+#    currently if you set it all to 1 then it is the same as turning it off
 # Ncomp: number of compartments (ages + healthcare + homeless)
 # SAIR with asymtompatics separate from symtomatics
 # currently there is a bit to estimate severity that will not be needed later
@@ -31,7 +35,7 @@ require(truncnorm)
 # R0 <- 2.5 ## make a range?
 # prop_symptomatic <- 0.20 ## will need to update/change
 
-### age categories:
+### age categories (Baltimore):
 # Under 5 years    41152
 # 5 to 9 years    35441
 # 10  to 14 years    34339
@@ -47,7 +51,9 @@ require(truncnorm)
 
 theme_set(theme_classic(base_size=12))
 
-### load [location] age structured demographic data. This code assumes that the first row will be the total population and the following rows are the ages broken down by age groups.
+## ---- loading demographic data ---- ####
+### load [location] age structured demographic data. This code assumes that the first row will be the total 
+### population and the following rows are the ages broken down by age groups.
 ## If you do not want homeless or healthcare workers, just set these values to zero
 ## assumes the additional of healthcare workers and homeless does not decrease from their respective age group 
 
@@ -69,7 +75,10 @@ make_age_structure_matrix <- function(age_data_file, homeless_n, healthcare_n){
   return(list(Ncomp = Ncomp, BC_pop = BC_pop))  
 }
 
-### sets up polymod matrix using data from the UK (we could not find any US polymod data). It will make a mixing matrix set up for all of the different age classes and takes the mixing patterns for the 45-55 age group for the healthcare workers and homeless individuals
+## ---- making polymod matrix ---- ####
+### sets up polymod matrix using data from the UK (we could not find any US polymod data). It will make a 
+### mixing matrix set up for all of the different age classes and takes the mixing patterns for the 45-55 age 
+### group for the healthcare workers and homeless individuals
 make_polymod_matrix <- function(age.limits=c(0,5,10,15,20,25,35,45,55,60,65,75,85,90), 
                                 hcw.mix="45,50", hml.mix="45,50"){
   ## setup polymod matrix
@@ -95,6 +104,7 @@ make_polymod_matrix <- function(age.limits=c(0,5,10,15,20,25,35,45,55,60,65,75,8
   return(W)
 }
 
+## ---- rescaling age matrix ---- ####
 ## we also need to adjust our matrix to make sure R0 = beta/gamma
 ## we want the max eigen value of our input matrix to be 1 such that we can say R0 is just beta / gamma
 ## the following formula gives the R0 calculation for age strucutred matrix models
@@ -117,8 +127,8 @@ rescale_age_matrix <- function(Ncomp, W, BC_pop, c_scale_vec){
   return(list(W = W, C = C))
 }
 
-## main S(A)IR function 
-sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
+## ---- main S(A)IR function ---- ####
+sair_step <- function(stoch = F, stoch.init = F, sNcomp, ICs, params, time, delta.t){
   C = params$C
   W = params$W
   beta0 = params$beta0
@@ -135,7 +145,23 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   ## set up a matrix to store values in by variable and time
   ## each X[it,] is the variable at one hour
   x <- matrix(NA,length(time),Ncomp * 7)
-  x[1,] <- round(ICs)
+
+  ## set initial conditions
+  if(stoch.init){
+    Ninit <- sample(10:60, 1)
+    Ninit_byage <- rmultinom(1, Ninit, prob = N/sum(N))[,1]
+    Ninit_asy <- round(Ninit_byage * prop_symptomatic)
+    Ninit_sym <- Ninit_byage - Ninit_asy
+    ICs <- c(S = N, 
+             E = rep(0, Ncomp),
+             A = Ninit_asy,
+             I = Ninit_sym,
+             R = rep(0, Ncomp),
+             incid_A = rep(0, Ncomp),
+             incid_I = rep(0, Ncomp))
+    x[1,] <- round(ICs)
+    
+  }else{ x[1,] <- round(ICs) }
 
   S <- x[,1:Ncomp]; ## susceptible individuals
   E <- x[,(Ncomp+1):(2*Ncomp)]; ## exposed individuals 
@@ -206,8 +232,129 @@ sair_step <- function(stoch = F, Ncomp, ICs, params, time, delta.t){
   return(out)
 }
 
+## ---- main SEAIR function with variable R0 input ---- ####
+sair_step_variableR0 <- function(stoch = F, stoch.init = F, R0vec, Ncomp, ICs, params, time, delta.t){
+  
+  C = params$C
+  W = params$W
+  beta0 = params$beta0
+  beta1 = params$beta1
+  phase = params$phase
+  mu = params$mu
+  v = params$v
+  N=params$N
+  sigma = params$sigma
+  gamma=params$gamma
+  prop_symptomatic=params$prop_symptomatic
+  sd.dw <- params$sd.dw
+  
+  ## set up a matrix to store values in by variable and time
+  ## each X[it,] is the variable at one hour
+  x <- matrix(NA,length(time),Ncomp * 7)
+  
+  ## set initial conditions
+  if(stoch.init){
+    Ninit <- sample(10:60, 1)
+    Ninit_byage <- rmultinom(1, Ninit, prob = N/sum(N))[,1]
+    Ninit_asy <- round(Ninit_byage * prop_symptomatic)
+    Ninit_sym <- Ninit_byage - Ninit_asy
+    ICs <- c(S = N, 
+             E = rep(0, Ncomp),
+             A = Ninit_asy,
+             I = Ninit_sym,
+             R = rep(0, Ncomp),
+             incid_A = rep(0, Ncomp),
+             incid_I = rep(0, Ncomp))
+    x[1,] <- round(ICs)
+    
+  }else{ x[1,] <- round(ICs) }
+  
+  S <- x[,1:Ncomp]; ## susceptible individuals
+  E <- x[,(Ncomp+1):(2*Ncomp)]; ## exposed individuals 
+  A <- x[,(2*Ncomp+1):(3*Ncomp)]; ## asymptomatic individuals
+  I <- x[,(3*Ncomp+1):(4*Ncomp)];## symp individuals
+  R <- x[,(4*Ncomp+1):(5*Ncomp)] ## recovered individuals
+  
+  ## incidence
+  incid_A <- x[,(5*Ncomp+1):(6*Ncomp)]
+  incid_I <- x[,(6*Ncomp+1):(7*Ncomp)]
+  
+  # recalculate beta0 for each R0 value
+  beta0 <- R0vec * (gamma + v) * (sigma + v) / sigma 
+  seas <- beta0 * (1 + beta1 * cos(2 * pi * time/365 - phase))
+  R0 <- vector(length=length(time))
+  
+  for(it in 1:(length(time) - 1)){
+    
+    # calculate and store the R0 value for time-specific beta0 - to confirm the new value is correct
+    R0.mat <- matrix(0,Ncomp,Ncomp)
+    for (i in 1:Ncomp){
+      for (j in 1:Ncomp){
+        R0.mat[i,j] <- W[i,j]*N[i]/N[j]* beta0[it] * sigma / ( (sigma + v) * (v + gamma))
+      }
+    }
+    R0[it] <- eigen(R0.mat)$values[1]
+    
+    # proceed with model step, as in sair_step
+    WI <- (C*W)%*%(A[it,] + I[it,])
+    
+    WI[!is.finite(WI)] <- 0
+    births <-rep(0,Ncomp)
+    births[1] <- mu
+    deaths <- rep(v,Ncomp)
+    
+    ## add stochasticity to FOI
+    if(stoch == T){
+      dw <- rtruncnorm(Ncomp, a=0, mean = 1, sd = sd.dw)
+    }else{
+      dw <- 1
+    }
+    
+    ## declare transitions in model
+    foi_prob <- 1 - exp( - seas[it] * WI/N * dw * delta.t)
+    exposed_prob <- 1 - exp( - sigma * delta.t)
+    inf_prob <- 1 - exp( - gamma * delta.t)
+    death_prob <- 1 - exp( - deaths * delta.t)
+    
+    ## stochastic formulation of the model
+    if(stoch == T){
+      new_exp <- rbinom(n = Ncomp, size = round(S[it,]), prob = foi_prob)
+      new_inf <- rbinom(n = Ncomp, size = round(E[it,]) , prob = exposed_prob)
+      new_rec_A <- rbinom(n = Ncomp, size = round(A[it,]), prob = inf_prob)
+      new_rec_I <- rbinom(n = Ncomp, size = round(I[it,]), prob = inf_prob)
+      
+      S[it + 1, ] <- S[it,] +  births*delta.t - new_exp - rbinom(n = Ncomp, size = round(S[it,]), prob = death_prob)
+      E[it + 1, ] <- E[it,] +  new_exp - new_inf - rbinom(n = Ncomp, size = round(E[it,]), prob = death_prob )
+      A[it + 1, ] <- A[it,] +  (1 - prop_symptomatic) * new_inf - new_rec_A - rbinom(n = Ncomp, size = round(A[it,]), prob = death_prob)
+      I[it + 1, ] <- I[it,] +  prop_symptomatic * new_inf - new_rec_I - rbinom(n = Ncomp, size = round(I[it,]), prob = death_prob)
+      R[it + 1, ] <- R[it,] +  new_rec_I + new_rec_A - rbinom(n = Ncomp, size = round(R[it,]), prob = death_prob)
+      
+      ## make incidence the new number of daily individuals becoming infected
+      incid_A[it, ] <- (1 - prop_symptomatic) * new_inf 
+      incid_I[it, ] <- prop_symptomatic * new_inf
+    }
+    
+    ## deterministic equations to check -- does not currently work 
+    if(stoch == F){
+      S[it + 1, ] <- S[it,] + delta.t * (births - seas[it] * WI * S[it,] * dw / N  - deaths*S[it,])
+      E[it + 1, ] <- E[it,] + delta.t * (seas[it] * WI * S[it,] * dw / N - deaths*E[it,] - sigma*E[it,])
+      A[it + 1, ] <- A[it,] + delta.t * ( (1 - prop_symptomatic)*sigma*E[it,]   - A[it,]*(gamma - deaths))
+      I[it + 1, ] <- I[it,] + delta.t * (  prop_symptomatic*sigma*E[it,] - I[it,]*(gamma - deaths) )
+      R[it + 1, ] <- R[it,] + delta.t * (A[it,]*gamma+ I[it,]*gamma - R[it,]* deaths)
+      incid_A[it,] <-  (1 - prop_symptomatic)*(seas[it] * WI * S[it,] * dw / N)
+      incid_I[it,] <- prop_symptomatic*(seas[it] * WI * S[it,] * dw / N)
+    }
+  }
+  
+  out <- data.frame(cbind(time,S,E,A,I,R,incid_A, incid_I,R0))
+  names(out) <- c('time',names(ICs),"R0")
+  ## output is the number in each class per time point per age-category+homeless+healthcare workers
+  return(out)
+  
+}
 
-### main function to set up and organize the mixing data, inital conditions, parameters, etc.  
+
+## ---- main function to set up and organize the mixing data, inital conditions, parameters, etc. ---- ####
 setup_seir_model <- function(stoch, R0, c_scale_vec,
                              gamma=1/6.5, sigma=1/5.2,
                              phase=0, beta1=0, mu=0, v=0,
@@ -275,6 +422,7 @@ setup_seir_model <- function(stoch, R0, c_scale_vec,
               prop_symptomatic=prop_symptomatic, sd.dw=sd.dw))
 }
 
+## ---- Setting up a run ---- ####
 ## how long to run the model for?
 ## currently set to be 100 days integrated at the day
 all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2.0, c_scale_vec = 0.3)
@@ -310,7 +458,8 @@ all_sim <- rbind(all_sim, test_sim)
 
 run_index = rep(0, nrow(test_sim))
 test_sim <- cbind(run_index, test_sim)
-       
+  
+## ---- running multiple simulations ---- ####     
 nsim <- 500
 start_index <- seq(1, nsim*length(time)+1, by = length(time))
 all_sim <- matrix(NA,1,(Ncomp*7)+2)
@@ -328,7 +477,7 @@ for(n in 1:nsim){
 write.csv(all_sim, file = 'Output_20200322/TEST_SEIR_results__n500__r02_2__c1.csv')
 Sys.time()
 
-### loop over r0 and c values
+## ---- loop over r0 and c values ---- ####
 write_output_files = TRUE
 r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
 c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
@@ -345,10 +494,20 @@ for(ii in 1:length(r0_values)){
     print(c(R0_test, c_test))
     nsim <- 500
     start_index <- seq(1, nsim*length(time)+1, by = length(time))
-    all_sim <- matrix(,1,(Ncomp*7)+2)
+    all_sim <- matrix(NA,1,(Ncomp*7)+2)
     colnames(all_sim) <- colnames(test_sim)#matrix(,nsim*length(time),(Ncomp*5)+2) ## +2 -> time step, run index
     all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = R0_test, c_scale_vec = 1)
-    params = list(C = all_prelim_info$C, W = all_prelim_info$W, beta0 = all_prelim_info$beta0, beta1 = all_prelim_info$beta1, phase = all_prelim_info$phase, mu = all_prelim_info$mu, v = all_prelim_info$v, N=all_prelim_info$N, gamma=all_prelim_info$gamma,prop_symptomatic=all_prelim_info$prop_symptomatic, sigma = all_prelim_info$sigma)
+    params = list(C = all_prelim_info$C, 
+                  W = all_prelim_info$W, 
+                  beta0 = all_prelim_info$beta0, 
+                  beta1 = all_prelim_info$beta1, 
+                  phase = all_prelim_info$phase, 
+                  mu = all_prelim_info$mu, 
+                  v = all_prelim_info$v, 
+                  N=all_prelim_info$N, 
+                  gamma=all_prelim_info$gamma,
+                  prop_symptomatic=all_prelim_info$prop_symptomatic, 
+                  sigma = all_prelim_info$sigma)
     for(n in 1:nsim){
       #  prop_serious <- 0.2 ### will update later
       ## run the simulation one time
@@ -370,7 +529,8 @@ library(tidyverse)
 
 write_summary_files = TRUE
 if(write_summary_files == TRUE){
-  ### loop over r0 and c values to write summary incidence files will produce new files that have the mean, median, IQR and 95% quantile per time step across each incidence class. 
+  ### loop over r0 and c values to write summary incidence files will produce 
+  ### new files that have the mean, median, IQR and 95% quantile per time step across each incidence class. 
   r0_values <- c(1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
   c_values <- c(1, 0.75, 0.5, 0.25, 0.1, 0.01)
   first_incid_name = 'incid_A1'
@@ -386,7 +546,9 @@ if(write_summary_files == TRUE){
       data_file <- read.csv(file_name)
       inc_data <- data_file[,c(grep('time', colnames(data_file)), min(grep(first_incid_name, colnames(data_file))):max(grep(last_incid_name, colnames(data_file))))]
       inc_data[is.na(inc_data)] <- 0
-      summary_inc_data <- inc_data %>% group_by(time) %>% summarise_all(.funs = list(mean = mean, median = median, IQR = IQR, Q1 =~quantile(x=.,probs = 0.025), Q4 = ~quantile(x=., probs = 0.975)))
+      summary_inc_data <- inc_data %>% 
+                          group_by(time) %>% 
+                          summarise_all(.funs = list(mean = mean, median = median, IQR = IQR, Q1 =~quantile(x=.,probs = 0.025), Q4 = ~quantile(x=., probs = 0.975)))
       output_file_name <- paste(paste(paste('Output_20200322_v2/SUMMARY_INCIDENCE_SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.')
       write.csv(summary_inc_data, output_file_name, row.names = FALSE)
     }
