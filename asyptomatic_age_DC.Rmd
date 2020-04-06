@@ -256,7 +256,7 @@ setup_seir_model <- function(stoch, R0, c_scale_vec,
     
   ## set prop_symtomatic
   prop_symptomatic <- prop_symptomatic
-  if(length(prop_symptomatic)!=Ncomp){print("prop_symptomatic is the wrong length")}
+  if(length(prop_symptomatic)!=Ncomp){warning("prop_symptomatic is the wrong length")}
   
 
   ICs <- c(S = DC_pop * 1, 
@@ -406,21 +406,23 @@ sair_step <- function(stoch = F, stoch.init = F, Ncomp, ICs, params, time, delta
     if(stoch == T){
       new_exp <- rbinom(n = Ncomp, size = round(S[it,]), prob = foi_prob)
       new_inf <- rbinom(n = Ncomp, size = round(E[it,]) , prob = exposed_prob)
+      new_infA <- round( (1-prop_symptomatic)*new_inf )
+      new_infI <- new_inf - new_infA
       new_rec_A <- rbinom(n = Ncomp, size = round(A[it,]), prob = inf_prob)
       new_rec_I <- rbinom(n = Ncomp, size = round(I[it,]), prob = inf_prob)
       
       S[it + 1, ] <- S[it,] +  births*delta.t - new_exp - rbinom(n = Ncomp, size = round(S[it,]), prob = death_prob)
       E[it + 1, ] <- E[it,] +  new_exp - new_inf - rbinom(n = Ncomp, size = round(E[it,]), prob = death_prob )
-      A[it + 1, ] <- A[it,] +  (1 - prop_symptomatic) * new_inf - new_rec_A - rbinom(n = Ncomp, size = round(A[it,]), prob = death_prob)
-      I[it + 1, ] <- I[it,] +  prop_symptomatic * new_inf - new_rec_I - rbinom(n = Ncomp, size = round(I[it,]), prob = death_prob)
+      A[it + 1, ] <- A[it,] +  new_infA - new_rec_A - rbinom(n = Ncomp, size = round(A[it,]), prob = death_prob)
+      I[it + 1, ] <- I[it,] +  new_infI - new_rec_I - rbinom(n = Ncomp, size = round(I[it,]), prob = death_prob)
       R[it + 1, ] <- R[it,] +  new_rec_I + new_rec_A - rbinom(n = Ncomp, size = round(R[it,]), prob = death_prob)
       
       ## make incidence the new number of daily individuals becoming infected
-      incid_A[it, ] <- (1 - prop_symptomatic) * new_inf 
-      incid_I[it, ] <- prop_symptomatic * new_inf
+      incid_A[it, ] <- new_infA
+      incid_I[it, ] <- new_infI
     }
     
-    ## deterministic equations to check -- does not currently work 
+    ## deterministic equations
     if(stoch == F){
       S[it + 1, ] <- S[it,] + delta.t * (births - seas[it] * WI * S[it,] * dw / N  - deaths*S[it,])
       E[it + 1, ] <- E[it,] + delta.t * (seas[it] * WI * S[it,] * dw / N - deaths*E[it,] - sigma*E[it,])
@@ -551,18 +553,20 @@ sair_step_variableR0 <- function(stoch = F, stoch.init = F, R0vec, Ncomp, ICs, p
     if(stoch == T){
       new_exp <- rbinom(n = Ncomp, size = round(S[it,]), prob = foi_prob)
       new_inf <- rbinom(n = Ncomp, size = round(E[it,]) , prob = exposed_prob)
+      new_infA <- round( (1-prop_symptomatic)*new_inf )
+      new_infI <- new_inf - new_infA
       new_rec_A <- rbinom(n = Ncomp, size = round(A[it,]), prob = inf_prob)
       new_rec_I <- rbinom(n = Ncomp, size = round(I[it,]), prob = inf_prob)
       
       S[it + 1, ] <- S[it,] +  births*delta.t - new_exp - rbinom(n = Ncomp, size = round(S[it,]), prob = death_prob)
       E[it + 1, ] <- E[it,] +  new_exp - new_inf - rbinom(n = Ncomp, size = round(E[it,]), prob = death_prob )
-      A[it + 1, ] <- A[it,] +  (1 - prop_symptomatic) * new_inf - new_rec_A - rbinom(n = Ncomp, size = round(A[it,]), prob = death_prob)
-      I[it + 1, ] <- I[it,] +  prop_symptomatic * new_inf - new_rec_I - rbinom(n = Ncomp, size = round(I[it,]), prob = death_prob)
+      A[it + 1, ] <- A[it,] +  new_infA - new_rec_A - rbinom(n = Ncomp, size = round(A[it,]), prob = death_prob)
+      I[it + 1, ] <- I[it,] +  new_infI - new_rec_I - rbinom(n = Ncomp, size = round(I[it,]), prob = death_prob)
       R[it + 1, ] <- R[it,] +  new_rec_I + new_rec_A - rbinom(n = Ncomp, size = round(R[it,]), prob = death_prob)
       
       ## make incidence the new number of daily individuals becoming infected
-      incid_A[it, ] <- (1 - prop_symptomatic) * new_inf 
-      incid_I[it, ] <- prop_symptomatic * new_inf
+      incid_A[it, ] <- new_infA
+      incid_I[it, ] <- new_infI
     }
     
     ## deterministic equations to check -- does not currently work 
