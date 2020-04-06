@@ -294,7 +294,7 @@ theme_set(theme_classic(base_size=12))
           R0.mat[i,j] <- W[i,j]*N[i]/N[j]* beta0[it] * sigma / ( (sigma + v) * (v + gamma))
         }
       }
-      R0[it] <- eigen(R0.mat)$values[1]
+      R0[it] <- Re(eigen(R0.mat)$values[1])
       
       # proceed with model step, as in sair_step
       WI <- (C*W)%*%(A[it,] + I[it,])
