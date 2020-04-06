@@ -319,6 +319,8 @@ This is the critical function which runs the SEAIR model. It requires the follow
 
 - `stoch`: binary TRUE/FALSE for whether there should be stochasticity added to the force of infection for each age category, at each time point
 
+- `stoch.init`: binary TRUE/FALSE for whether the initial conditions should be randomly drawn, and therefore varied between simulations (even when given the same `ICs` argument)
+
 - `Ncomp`: the number of age/other categories used in the model. Can be pulled from the output of `setup_seir_model`
 
 - `ICs`: The initial condition to start the model run, as a vector with number of individuals in each category. Can be pulled from the output of `setup_seir_model`.
@@ -444,11 +446,13 @@ sair_step <- function(stoch = F, stoch.init = F, Ncomp, ICs, params, time, delta
 
  -------------------------------
 
-(6) `setup_sair_model_variableR0` `sair_step_variableR0`
+(6) `sair_step_variableR0`
 
 This is an adaptation of `sair_step` which allows R0 to vary across time. It requires some input from `setup_sair_model` (run with the first R0 value for t=1), along with `time`, `delta.t`, and a vector of R0 values at each time step:
 
 - `stoch`: binary TRUE/FALSE for whether there should be stochasticity added to the force of infection for each age category, at each time point
+
+- `stoch.init`: binary TRUE/FALSE for whether the initial conditions should be randomly drawn, and therefore varied between simulations (even when given the same `ICs` argument)
 
 - `Ncomp`: the number of age/other categories used in the model. Can be pulled from the output of `setup_seir_model`
 
@@ -642,7 +646,8 @@ Next, create the parameter object to read into the `sair_step` function and to s
 Now, we use these input to run a single, stochastic iteration of the model with the inputs defined above.
 
 ```{r sim1}
-  single.sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
+  single.sim <- sair_step(stoch = TRUE, stoch.init=F, Ncomp, ICs, params, time, delta.t)
+
 ```
 
 
@@ -696,7 +701,6 @@ For the sake of preparing this document, the code below will not run, but provid
 
   # Multiple simulation setup
   nsim <- 50
-  start_index <- seq(1, nsim*length(time)+1, by = length(time))
   all_sim <- matrix(NA,1,(Ncomp*7)+2)
   
   colnames(all_sim) <- c('run_index', 'time',
@@ -715,10 +719,9 @@ For the sake of preparing this document, the code below will not run, but provid
     run_index = rep(n, nrow(single.sim))
     single.sim <- cbind(run_index, single.sim)
     all_sim <- rbind(all_sim, single.sim)
-    all_sim[start_index[n]:(start_index[n+1]-1),] = single.sim
   }
-  write.csv(all_sim, file = 'filename.csv')
-  Sys.time()
+  all_sim <- all_sim[-1,]
+  # write.csv(all_sim, file = 'filename.csv')
 
   # code to test and plot simulations
   xx <- all_sim %>% select(starts_with("incid_I")) %>% rowSums()
@@ -751,8 +754,7 @@ We can also run multiple simulations across multiple values of a constant R0 sim
       print(R0_test)
       
       nsim <- 500
-      start_index <- seq(1, nsim*length(time)+1, by = length(time))
-      all_sim <- matrix(,1,(Ncomp*7)+3)
+      all_sim <- matrix(NA,1,(Ncomp*7)+3)
       colnames(all_sim) <- c('R0', 'run_index', 'time',
                              paste0("S", 1:Ncomp),
                              paste0("E", 1:Ncomp),
@@ -762,7 +764,7 @@ We can also run multiple simulations across multiple values of a constant R0 sim
                              paste0("incid_A", 1:Ncomp),
                              paste0("incid_I", 1:Ncomp))
   
-      all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = R0_test, c_scale_vec = 1)
+      all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = R0_test, c_scale_vec = 1, prop_symptomatic = prop_symptomatic)
       params = list(C = all_prelim_info$C, 
                     W = all_prelim_info$W, 
                     beta0 = all_prelim_info$beta0, 
@@ -777,14 +779,14 @@ We can also run multiple simulations across multiple values of a constant R0 sim
                     sd.dw = all_prelim_info$sd.dw)
       
       for(n in 1:nsim){
-        single.sim <- sair_step(stoch = TRUE, Ncomp, ICs, params, time, delta.t)
+        single.sim <- sair_step(stoch = TRUE, stoch.init = FALSE, Ncomp, ICs, params, time, delta.t)
         run_index = rep(n, nrow(single.sim))
-        r0_index = rep(R0, nrow(single.sim))
+        r0_index = rep(R0_test, nrow(single.sim))
         single.sim <- cbind(run_index, single.sim)
-        single.sim <- cbind(r0_index, single.sim)
+        single.sim <- cbind(R0=r0_index, single.sim)
         all_sim <- rbind(all_sim, single.sim)
-        all_sim[start_index[n]:(start_index[n+1]-1),] = single.sim
       }
+      all_sim <- all_sim[-1,]
       
       if(write_output_files == TRUE){
         write.csv(all_sim, file = paste(paste(paste('Output_20200322/SEIR_results__n500__r0', R0_test*10, sep = ''), c_test*100, sep = '__'), 'csv', sep = '.'))
@@ -826,13 +828,40 @@ We can also run multiple simulations across multiple values of a constant R0 sim
                 sd.dw = all_prelim_info$sd.dw)
 
   
-  single.sim.varR0 <- sair_step_variableR0(stoch = TRUE, R0vec, Ncomp, ICs, params, time, delta.t)
+  single.sim.varR0 <- sair_step_variableR0(stoch = TRUE, stoch.init=TRUE, R0vec, Ncomp, ICs, params, time, delta.t)
 
   single.sim.varR0 %>% dplyr::select(paste0('I',1:Ncomp)) %>% rowSums() -> totalI
   plot(as.numeric(totalI), type='l')
   
 ```
 
+The structure to loop across many iteractions of the variable R0 function is very similar to the structure for the constant R0 function. The key difference is that the variable R0 function automatically outputs R0 and, therefore, you do not need to manually add an R0 column to the `all_sim` object. This code shows how to repeat the variable R0 simulation `nsim` times, where the R0 vector is randomly drawn for each simulation to be a constant R0 between 1.5 and 2.5.
+
+
+```{r multiple_sim variable R0, eval=FALSE}
+
+    all_sim <- matrix(NA,1,(Ncomp*7)+3)
+    colnames(all_sim) <- c('run_index', 'time',
+                           paste0("S", 1:Ncomp),
+                           paste0("E", 1:Ncomp),
+                           paste0("A", 1:Ncomp),
+                           paste0("I", 1:Ncomp),
+                           paste0("R", 1:Ncomp),
+                           paste0("incid_A", 1:Ncomp),
+                           paste0("incid_I", 1:Ncomp),
+                           "R0")
+  
+    for(n in 1:nsim){
+      R0vec <- runif(length(time), min = 1.5, max = 2.5)
+      tmp <- sair_step_variableR0(stoch = TRUE, stoch.init = TRUE, 
+                                  R0vec, Ncomp, ICs, params, time, delta.t)
+      run_index = rep(n, nrow(tmp))
+      tmp <- cbind(run_index, tmp)
+      all_sim <- rbind(all_sim, tmp)
+    }
+    all_sim <- all_sim[-1,]
+    
+```
 
 
  -------------------------------
