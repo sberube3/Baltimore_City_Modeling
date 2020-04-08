@@ -104,6 +104,9 @@ Now calculate the number in of severe, hospitalized, ICU and vented infections a
 #this is for each age group (+ HCW and homeless)
 #note this categorization is NOT a disease progression, a person gets assigned based on the worst state they could possibly reach. 
 
+#no so its 8 days from icu to death and 4.5 days from vent to death which are the only two ways you can die according to our model and its reflected with a lag in probability multiplication.
+#11 days is hospital to discharge and vent to discharge.
+
 
 incident_classifications<- function(data, complete_data, R0val){
   counts_array_R0val<- array(NA, dim=c(nrow(data),ncol(data),5))
