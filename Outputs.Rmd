@@ -1114,7 +1114,7 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
 
  -------------------------------
 
-##### Technical Appendix
+#### Technical Appendix
 
 Below we list the more detailed assumptions used in our model. First, we make the following assumptions for the inital conditions in our SEIR model:
 
