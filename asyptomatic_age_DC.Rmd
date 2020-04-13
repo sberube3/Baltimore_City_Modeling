@@ -142,7 +142,7 @@ This function requires four inputs:
 
 - `DC_pop`, the cleaned population object created by `make_age_structure_matrix`
 
-- `c_scale_vec`, a vector of length `Ncomp`, which can be used to rescale the contact rates for healthcare workers (and other categories), as necessary. When `c_scale_vec = 1`, there is no rescaling.
+- `c_scale_vec`, a vector of length `Ncomp`, which can be used to rescale the contact rates for healthcare workers (and other categories), as necessary. When `c_scale_vec = 1`, there is no rescaling. Note that this increases contacts between compartment *i* and all other compartments; it cannot be used, e.g., to increase only child-child contacts without also increasing child-adult contacts.
 
 The function returns `W`, the rescaled contact matrix, and `C`, a rescaling matrix that can be used to implement changes to rescale healthcare worker contact rates.
 
@@ -174,12 +174,16 @@ rescale_age_matrix <- function(Ncomp, W, DC_pop, c_scale_vec){
 
 This function is the only function which should require edits. This function serves as a wrapper function, incorporating the three functions above (`make_age_structure_matrix`, `make_polymod_matrix`, `rescale_mixing`. It returns output with all parameters needed to run the transmission model. Several of these values need to be directly defined in the function arguments below.
 
+Note that this same function is used to run the initial setup for `sair_step_variableR0`, which allows both `R0` and `c_scale_vec` to change over time. The `R0`output of this function will **not** be used in the model runs; rather, R0 will be recalculated in the `sair_step_variableR0` funtcion at each time point. If `c_scale_mat` is specified as an argument in `sair_step_variableR0`, then `c_scale_vec` and `C` from this function will be ignored. Similarly, the `ICs` output from this function will ignored in `sair_step` and `sair_step_variableR0` if `stoch.init=TRUE`.
+
+
+Inputs to `setup_seir_model`:
 
 - `stoch`: binary TRUE/FALSE for whether there should be stochasticity added to the force of infection for each age category, at each time point
 
 - `R0`: the basic reproductive number of our model
 
-- `c_scale_vec`, a vector of length `Ncomp`, which can be used to rescale the contact rates for healthcare workers (and other categories), as necessary
+- `c_scale_vec`, a vector of length `Ncomp`, which can be used to rescale the contact rates for healthcare workers (and other categories), as necessary. Defaults to 1, meaning no rescaling for any compartments. Note that this increases contacts between compartment *i* and all other compartments; it cannot be used, e.g., to increase only child-child contacts without also increasing child-adult contacts.
 
 - `gamma` - the rate of recovering once infectious; here, set to be 1/6.5d
 
@@ -237,7 +241,7 @@ This function returns a list with objects:
 
 
 ```{r setup_seir_model}
-setup_seir_model <- function(stoch, R0, c_scale_vec,
+setup_seir_model <- function(stoch, R0, c_scale_vec=1,
                              gamma=1/6.5, sigma=1/5.2,
                              phase=0, beta1=0, mu=0, v=0,
                              prop_symptomatic, sd.dw=0.05,
@@ -331,11 +335,17 @@ This is the critical function which runs the SEAIR model. It requires the follow
 
 - `delta.t`: the time-step to use in the model; we recommend using at least daily time-steps, if not finer granularity
 
+- `init.min`: the minimum number of infected individuals at t=0; only used if `stoch.init=TRUE`
+
+- `init.max`: the maximum number of infected individuals at t=0; only used if `stoch.init=TRUE`
+
+- `init.dist`: a vector of length `Ncomp` giving the relative number of initial infections (in absolute numbers - **not** incidence) in each category If not specified, initial infections will be distributed to categories propotional to population size.
+
 This function returns an object with the number of individuals in each model compartment (SEAIR + incidA (incident asymptomatic cases) + incidI (incident infectious cases)), per time point, per age-category+homeless+healthcare workers.
 
 ```{r sair_step}
 
-sair_step <- function(stoch = F, stoch.init = F, Ncomp, ICs, params, time, delta.t){
+sair_step <- function(stoch = F, stoch.init = F, Ncomp, ICs, params, time, delta.t, init.min = 10, init.max=60, init.dist = NULL){
   C = params$C
   W = params$W
   beta0 = params$beta0
@@ -355,9 +365,10 @@ sair_step <- function(stoch = F, stoch.init = F, Ncomp, ICs, params, time, delta
   
   ## set initial conditions
   if(stoch.init){
-    Ninit <- sample(10:60, 1)
-    Ninit_byage <- rmultinom(1, Ninit, prob = N/sum(N))[,1]
-    Ninit_asy <- round(Ninit_byage * prop_symptomatic)
+    Ninit <- sample(init.min:init.max, 1)
+    if(is.null(init.dist)){pinit <- N / sum(N)}else{pinit <- init.dist}
+    Ninit_byage <- rmultinom(1, Ninit, prob = pinit)[,1]
+    Ninit_asy <- round(Ninit_byage * (1-prop_symptomatic))
     Ninit_sym <- Ninit_byage - Ninit_asy
     ICs <- c(S = N, 
              E = rep(0, Ncomp),
@@ -454,23 +465,31 @@ This is an adaptation of `sair_step` which allows R0 to vary across time. It req
 
 - `stoch.init`: binary TRUE/FALSE for whether the initial conditions should be randomly drawn, and therefore varied between simulations (even when given the same `ICs` argument)
 
+- `R0vec`: a vector of the R0 value at each time step in the model. This must have the same length as `time`.
+
 - `Ncomp`: the number of age/other categories used in the model. Can be pulled from the output of `setup_seir_model`
 
 - `ICs`: The initial condition to start the model run, as a vector with number of individuals in each category. Can be pulled from the output of `setup_seir_model`.
 
-- `params`: a list of parameter values and objects, generated by the `setup_seir_model` model run for `R0vec[1]`. Code is provided below to generate a list from the output of `setup_seir_model`.
+- `params`: a list of parameter values and objects, generated by the `setup_seir_model` model run for `R0vec[1]`. Code is provided below to generate a list from the output of `setup_seir_model`. Note that in this function `params$R0` is always ignored, `params$ICs` will be ignored if `stoch.init=TRUE`, and `params$C` will be ignored if `c_scale_mat` is provided.
 
 - `time`: the sequence of time-steps over which to run the model (e.g., `time <- seq(0, 300, delta.t)`)
 
 - `delta.t`: the time-step to use in the model; we recommend using at least daily time-steps, if not finer granularity
 
-- `R0vec`: a vector of the R0 value at each time step in the model. This must have the same length as `time`.
+- `init.min`: the minimum number of infected individuals at t=0; only used if `stoch.init=TRUE`
+
+- `init.max`: the maximum number of infected individuals at t=0; only used if `stoch.init=TRUE`
+
+- `init.dist`: a vector of length `Ncomp` giving the relative number of initial infections (in absolute numbers - **not** incidence) in each category If not specified, initial infections will be distributed to categories propotional to population size.
+
+- `c_scale_mat`: an OPTIONAL matrix of `c_scale_vec` for each time point (i.e., each row is the c_scale_vec for one time point in the model). If this is not specified, the model will default to using `params$C`, genereted in `setup_sair_model`.
 
 This function returns an object with the number of individuals in each model compartment (SEAIR + incidA (incident asymptomatic cases) + incidI (incident infectious cases)), per time point, per age-category+homeless+healthcare workers.
 
 ```{r sair_step_variableR0}
 
-sair_step_variableR0 <- function(stoch = F, stoch.init = F, R0vec, Ncomp, ICs, params, time, delta.t){
+sair_step_variableR0 <- function(stoch = F, stoch.init = F, R0vec, Ncomp, ICs, params, time, delta.t, init.min = 10, init.max=60, init.dist = NULL, c_scale_mat=NULL){
   
   C = params$C
   W = params$W
@@ -491,9 +510,10 @@ sair_step_variableR0 <- function(stoch = F, stoch.init = F, R0vec, Ncomp, ICs, p
   
   ## set initial conditions
   if(stoch.init){
-    Ninit <- sample(10:60, 1)
-    Ninit_byage <- rmultinom(1, Ninit, prob = N/sum(N))[,1]
-    Ninit_asy <- round(Ninit_byage * prop_symptomatic)
+    Ninit <- sample(init.min:init.max, 1)
+    if(is.null(init.dist)){pinit <- N / sum(N)}else{pinit <- init.dist}
+    Ninit_byage <- rmultinom(1, Ninit, prob = pinit)[,1]
+    Ninit_asy <- round(Ninit_byage * (1-prop_symptomatic))
     Ninit_sym <- Ninit_byage - Ninit_asy
     ICs <- c(S = N, 
              E = rep(0, Ncomp),
@@ -520,7 +540,8 @@ sair_step_variableR0 <- function(stoch = F, stoch.init = F, R0vec, Ncomp, ICs, p
   beta0 <- R0vec * (gamma + v) * (sigma + v) / sigma 
   seas <- beta0 * (1 + beta1 * cos(2 * pi * time/365 - phase))
   R0 <- vector(length=length(time))
-  
+  Re <- vector(length=length(time))
+
   for(it in 1:(length(time) - 1)){
     
     # calculate and store the R0 value for time-specific beta0 - to confirm the new value is correct
@@ -533,9 +554,28 @@ sair_step_variableR0 <- function(stoch = F, stoch.init = F, R0vec, Ncomp, ICs, p
     R0[it] <- Re(eigen(R0.mat)$values[1])
      
     # proceed with model step, as in sair_step
+    # if c_scale_mat is provided, recalculate C matrix
+    if(!is.null(c_scale_mat)){
+      C <- matrix(c_scale_mat[it,],nrow(W),ncol(W))
+    }
     WI <- (C*W)%*%(A[it,] + I[it,])
-    
     WI[!is.finite(WI)] <- 0
+    
+    # calculate and store the effective R value (if any value of C is non-1)
+    if(sum(C!=1)>0){
+      Wscal <- C*W
+      Re.mat <- matrix(0,Ncomp,Ncomp)
+      for (i in 1:Ncomp){
+         for (j in 1:Ncomp){
+            Re.mat[i,j] <- Wscal[i,j]*N[i]/N[j]* beta0[it] * sigma / ( (sigma + v) * (v + gamma))
+         }
+      }
+      Re[it] <- Re(eigen(Re.mat)$values[1])
+    }else{
+        Re[it] <- R0[it]
+    }
+     
+    
     births <-rep(0,Ncomp)
     births[1] <- mu
     deaths <- rep(v,Ncomp)
@@ -585,8 +625,8 @@ sair_step_variableR0 <- function(stoch = F, stoch.init = F, R0vec, Ncomp, ICs, p
     }
   }
   
-  out <- data.frame(cbind(time,S,E,A,I,R,incid_A, incid_I,R0))
-  names(out) <- c('time',names(ICs),"R0")
+  out <- data.frame(cbind(time,S,E,A,I,R,incid_A, incid_I,R0, Re))
+  names(out) <- c('time',names(ICs),"R0", "Reff")
   ## output is the number in each class per time point per age-category+homeless+healthcare workers
   return(out)
   
@@ -800,6 +840,14 @@ We can also run multiple simulations across multiple values of a constant R0 sim
  -------------------------------
 
 #### Setting up a model run - variable R0
+
+This functions requires a nearly identical setup as `sair_step`. The key differences are:
+
+- Must provide `R0vec`, a vector of the same length as `time` which contains the R0 value at each time step.
+
+- Optionally, can provide `c_scale_mat`, a matrix of `c_scale_vec` at each time point, with the same number of rows as `length(time)`. If this matrix is not applied, it is assumed that that a constant `c_scale_vec` defined in `all_prelim_info` applies to each time step.
+
+
 ```{r initial_run variable R0}
   age.limits = seq(0, 85, 5) 
   prop_symptomatic <- c(0.141, 0.106, 0.074, 0.184, 0.293, 0.357, 0.417, 0.431, 0.445, 
@@ -829,38 +877,122 @@ We can also run multiple simulations across multiple values of a constant R0 sim
 
   
   single.sim.varR0 <- sair_step_variableR0(stoch = TRUE, stoch.init=TRUE, R0vec, Ncomp, ICs, params, time, delta.t)
-
   single.sim.varR0 %>% dplyr::select(paste0('I',1:Ncomp)) %>% rowSums() -> totalI
   plot(as.numeric(totalI), type='l')
   
 ```
 
-The structure to loop across many iteractions of the variable R0 function is very similar to the structure for the constant R0 function. The key difference is that the variable R0 function automatically outputs R0 and, therefore, you do not need to manually add an R0 column to the `all_sim` object. This code shows how to repeat the variable R0 simulation `nsim` times, where the R0 vector is randomly drawn for each simulation to be a constant R0 between 1.5 and 2.5.
+The structure to loop across many iteractions of the variable R0 function is very similar to the structure for the constant R0 function. The key difference is that the variable R0 function automatically outputs R0 and Reff and, therefore, you do not need to manually add an R0 column to the `all_sim` object. This code shows how to repeat the variable R0 simulation `nsim` times, where the R0 vector is randomly drawn for each simulation to be a constant R0 between 1.5 and 2.5.
 
 
 ```{r multiple_sim variable R0, eval=FALSE}
 
-    all_sim <- matrix(NA,1,(Ncomp*7)+3)
-    colnames(all_sim) <- c('run_index', 'time',
-                           paste0("S", 1:Ncomp),
-                           paste0("E", 1:Ncomp),
-                           paste0("A", 1:Ncomp),
-                           paste0("I", 1:Ncomp),
-                           paste0("R", 1:Ncomp),
-                           paste0("incid_A", 1:Ncomp),
-                           paste0("incid_I", 1:Ncomp),
-                           "R0")
+  age.limits = seq(0, 85, 5) 
+  prop_symptomatic <- c(0.141, 0.106, 0.074, 0.184, 0.293, 0.357, 0.417, 0.431, 0.445, 
+                        0.505, 0.565, 0.693, 0.816, 0.781, 0.749, 0.749, 0.505, 0.505)
+  delta.t <- 1/1
+  time <- seq(1,300,by = delta.t)
   
-    for(n in 1:nsim){
-      R0vec <- runif(length(time), min = 1.5, max = 2.5)
-      tmp <- sair_step_variableR0(stoch = TRUE, stoch.init = TRUE, 
-                                  R0vec, Ncomp, ICs, params, time, delta.t)
-      run_index = rep(n, nrow(tmp))
-      tmp <- cbind(run_index, tmp)
-      all_sim <- rbind(all_sim, tmp)
-    }
-    all_sim <- all_sim[-1,]
-    
+  all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2, c_scale_vec = 1, prop_symptomatic = prop_symptomatic)
+  Ncomp = all_prelim_info$Ncomp
+  ICs = all_prelim_info$ICs
+  params = list(C = all_prelim_info$C, 
+                W = all_prelim_info$W, 
+                beta0 = all_prelim_info$beta0, 
+                beta1 = all_prelim_info$beta1, 
+                phase = all_prelim_info$phase, 
+                mu = all_prelim_info$mu, 
+                v = all_prelim_info$v, 
+                N=all_prelim_info$N, 
+                gamma=all_prelim_info$gamma, 
+                sigma = all_prelim_info$sigma, 
+                prop_symptomatic=all_prelim_info$prop_symptomatic,
+                sd.dw = all_prelim_info$sd.dw)
+  
+  all_sim <- matrix(NA,1,(Ncomp*7)+4)
+  colnames(all_sim) <- c('run_index', 'time',
+                         paste0("S", 1:Ncomp),
+                         paste0("E", 1:Ncomp),
+                         paste0("A", 1:Ncomp),
+                         paste0("I", 1:Ncomp),
+                         paste0("R", 1:Ncomp),
+                         paste0("incid_A", 1:Ncomp),
+                         paste0("incid_I", 1:Ncomp),
+                         "R0",
+                         "Reff")
+  nsim <- 10
+  
+  for(n in 1:nsim){
+    R0vec <- runif(length(time), min = 1.5, max = 2.5)
+    tmp <- sair_step_variableR0(stoch = TRUE, stoch.init = TRUE, 
+                                R0vec, Ncomp, ICs, params, time, delta.t)
+    run_index = rep(n, nrow(tmp))
+    tmp <- cbind(run_index, tmp)
+    all_sim <- rbind(all_sim, tmp)
+  }
+  all_sim <- all_sim[-1,]
+  
+```
+
+
+This runs the same model, except it assumes contact rates among those <20y increase 1.5-fold at time=100, using `c_scale_mat`.
+
+```{r multiple_sim variable R0 variable c_scale_mat}
+
+  age.limits = seq(0, 85, 5) 
+  prop_symptomatic <- c(0.141, 0.106, 0.074, 0.184, 0.293, 0.357, 0.417, 0.431, 0.445, 
+                        0.505, 0.565, 0.693, 0.816, 0.781, 0.749, 0.749, 0.505, 0.505)
+  delta.t <- 1/1
+  time <- seq(1,300,by = delta.t)
+  
+  all_prelim_info <- setup_seir_model(stoch = TRUE, R0 = 2, c_scale_vec = 1, prop_symptomatic = prop_symptomatic)
+  Ncomp = all_prelim_info$Ncomp
+  ICs = all_prelim_info$ICs
+  params = list(C = all_prelim_info$C, 
+                W = all_prelim_info$W, 
+                beta0 = all_prelim_info$beta0, 
+                beta1 = all_prelim_info$beta1, 
+                phase = all_prelim_info$phase, 
+                mu = all_prelim_info$mu, 
+                v = all_prelim_info$v, 
+                N=all_prelim_info$N, 
+                gamma=all_prelim_info$gamma, 
+                sigma = all_prelim_info$sigma, 
+                prop_symptomatic=all_prelim_info$prop_symptomatic,
+                sd.dw = all_prelim_info$sd.dw)
+  
+  c_scale_mat <- matrix(1, nrow=length(time), ncol=Ncomp)
+  c_scale_mat[100:300, 1:4] <- 1.5
+  
+  all_sim <- matrix(NA,1,(Ncomp*7)+4)
+  colnames(all_sim) <- c('run_index', 'time',
+                         paste0("S", 1:Ncomp),
+                         paste0("E", 1:Ncomp),
+                         paste0("A", 1:Ncomp),
+                         paste0("I", 1:Ncomp),
+                         paste0("R", 1:Ncomp),
+                         paste0("incid_A", 1:Ncomp),
+                         paste0("incid_I", 1:Ncomp),
+                         "R0",
+                         "Reff")
+  nsim <- 10
+  
+  for(n in 1:nsim){
+    R0vec <- runif(length(time), min = 1.5, max = 2.5)
+    tmp <- sair_step_variableR0(stoch = TRUE, stoch.init = TRUE, 
+                                R0vec, Ncomp, ICs, params, time, delta.t,
+                                c_scale_mat=c_scale_mat)
+    run_index = rep(n, nrow(tmp))
+    tmp <- cbind(run_index, tmp)
+    all_sim <- rbind(all_sim, tmp)
+  }
+  all_sim <- all_sim[-1,]
+  xx <- all_sim %>% select(starts_with("incid_I")) %>% rowSums()
+  all_sim = cbind(all_sim, incidI=xx)
+  
+  plot(all_sim$R0, all_sim$Reff, pch=19, col=rgb(0,0,0,0.1), xlim=c(1.5, 2.5))
+  ggplot(all_sim, aes(x=time, y=incidI, group=run_index)) + geom_line(alpha=0.3)
+  
 ```
 
 

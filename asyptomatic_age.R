@@ -149,7 +149,7 @@ theme_set(theme_classic(base_size=12))
     if(stoch.init){
       Ninit <- sample(10:60, 1)
       Ninit_byage <- rmultinom(1, Ninit, prob = N/sum(N))[,1]
-      Ninit_asy <- round(Ninit_byage * prop_symptomatic)
+      Ninit_asy <- round(Ninit_byage * (1-prop_symptomatic))
       Ninit_sym <- Ninit_byage - Ninit_asy
       ICs <- c(S = N, 
                E = rep(0, Ncomp),
@@ -257,7 +257,7 @@ theme_set(theme_classic(base_size=12))
     if(stoch.init){
       Ninit <- sample(10:60, 1)
       Ninit_byage <- rmultinom(1, Ninit, prob = N/sum(N))[,1]
-      Ninit_asy <- round(Ninit_byage * prop_symptomatic)
+      Ninit_asy <- round(Ninit_byage * (1-prop_symptomatic))
       Ninit_sym <- Ninit_byage - Ninit_asy
       ICs <- c(S = N, 
                E = rep(0, Ncomp),
