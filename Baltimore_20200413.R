@@ -93,7 +93,7 @@
     all_sim <- rbind(all_sim, tmp)
   }
   all_sim <- all_sim[-1,]
-  write.csv(all_sim, file="output_20200408/scenarioA_moderate.csv")
+  write.csv(all_sim, file="output_20200413/scenarioA_moderate.csv")
   
   
 ## ---- Scenario B. Moderate Social Distancing with Degrading Effectiveness --- ####
@@ -131,7 +131,7 @@
     all_sim <- rbind(all_sim, tmp)
   }
   all_sim <- all_sim[-1,]
-  write.csv(all_sim, file="output_20200408/scenarioB_mod_degrading.csv")
+  write.csv(all_sim, file="output_20200413/scenarioB_mod_degrading.csv")
   
 ## ---- Scenario C. Moderate Social Distancing Maintained when Schools Re-open April 27. ---- ####
 ## This scenario has mildly restrictive social distancing from March 13-29, 
@@ -169,7 +169,7 @@
     all_sim <- rbind(all_sim, tmp)
   }
   all_sim <- all_sim[-1,]
-  write.csv(all_sim, file="output_20200408/scenarioC_mod_degrading_scl.csv")
+  write.csv(all_sim, file="output_20200413/scenarioC_mod_degrading_scl.csv")
   
   
 ## ---- Scenario D. All restrictions lifted April 27 --- ####
