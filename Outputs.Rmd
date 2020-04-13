@@ -2,7 +2,7 @@
 knit: (function(inputFile, encoding) { 
           rmarkdown::render(inputFile,
                         encoding=encoding, 
-                output_file='Outputs.html') })
+                output_file='Outputs.pdf') })
 ---
 
 #### Planning for COVID-19 in Baltimore City
@@ -23,8 +23,8 @@ The purpose of this report is to compare the health impact and surge capacity ne
 
 We compare three intervention strategies under two transmission scenarios for model simulations from February 1, 2020 through November 30, 2020. The transmission scenarios are:
 
-- Low transmission scenario where $R_0$ is assumed to be between 1.5-2.5.
-- High transmission scenario where $R_0$ is assumed to be between 2.5-3.5.
+- Moderate transmission scenario where $R_0$ is assumed to be between 2-3.
+- High transmission scenario where $R_0$ is assumed to be between 3.5-4.
 
 Within each scenario we considered the following three intervention strategies:
 
@@ -39,7 +39,7 @@ Given the limited amount of information on some of the key epidemiologic feature
 
 ```{r data, include=FALSE, eval=TRUE, echo=FALSE}
 
-setwd("~/Dropbox/Postdoc/COVID19/COVID-BaltimoreCity/output_20200405")
+setwd("~/Dropbox/Postdoc/COVID19/COVID-BaltimoreCity/output_20200408")
 
 require(socialmixr)
 require(xlsx)
@@ -514,6 +514,36 @@ return(list(plt_incident_cases,random_sample_R017,random_sample_R021,random_samp
 
 }
 
+est_fig_1<- function(complete_data_1,complete_data_2,complete_data_3,
+                      median_data_1,median_data_2,median_data_3,
+                      combined_data_1,combined_data_2,combined_data_3){
+random_sample_R017<- which(complete_data_1$run_index%in%sample(rep(1:500),15,replace=F))
+random_sample_R021<- which(complete_data_2$run_index%in%sample(rep(1:500), 15, replace=F))
+random_sample_R025<- which(complete_data_3$run_index%in%sample(rep(1:500), 15, replace = F))
+incident_symptomatic_wide<- as.data.frame(cbind(median_data_1[,1],
+                            apply(median_data_1[,-1],1,sum),
+                            apply(median_data_2[,-1],1,sum),
+                            apply(median_data_3[,-1],1,sum)))
+colnames(incident_symptomatic_wide)<- c("Day", "R_0=1.7,Median", "R_0=2.1,Median", "R_0=2.5,Median") 
+random_sims<- as.data.frame(cbind(combined_data_1[random_sample_R017,1],
+                                apply(combined_data_1[random_sample_R017,-1],1,sum),
+                                apply(combined_data_2[random_sample_R021,-1],1,sum),
+                                apply(combined_data_3[random_sample_R021,-1],1,sum)))
+colnames(random_sims)<- c("Day","R_0=1.7,Random", "R_0=2.1,Random", "R_0=2.5,Random")
+incident_symptomatic_long<- incident_symptomatic_wide%>%
+  gather(scenario, incident_symptomatic, "R_0=1.7,Median":"R_0=2.5,Median", factor_key = TRUE)
+random_sims_long<- random_sims%>%
+  gather(scenario, incident_symptomatic, "R_0=1.7,Random":"R_0=2.5,Random", factor_key=TRUE)
+symptomatic_df<- as.data.frame(rbind(incident_symptomatic_long,random_sims_long))
+symptomatic_df_sep<- symptomatic_df%>%
+  separate(scenario, into=c("scenario", "summary_stat"), sep=",")%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=n_days),48))
+  return(symptomatic_df_sep)
+}
+
 f_1_low<- make_fig_1(complete_scenario1A,complete_scenario1B,complete_scenario1C,
            median_incident_symptomatic_R0lowA,median_incident_symptomatic_R0lowB,
            median_incident_symptomatic_R0lowC,
@@ -524,6 +554,23 @@ f_1_high<- make_fig_1(complete_scenario2A,complete_scenario2B,complete_scenario2
            median_incident_symptomatic_R0highC,
            combined_incident_R0highA,combined_incident_R0highB,combined_incident_R0highC)
 
+calc_1_low<- est_fig_1(complete_scenario1A,complete_scenario1B,complete_scenario1C,
+           median_incident_symptomatic_R0lowA,median_incident_symptomatic_R0lowB,
+           median_incident_symptomatic_R0lowC,
+           combined_incident_R0lowA,combined_incident_R0lowB,combined_incident_R0lowC) 
+
+est_1_low <- calc_1_low %>% dplyr::group_by(scenario,summary_stat) %>% 
+  dplyr::summarise(incident_symptomatic=max(incident_symptomatic,na.rm=TRUE),min=min(incident_symptomatic,na.rm=TRUE)) %>% ungroup %>% left_join(.,calc_1_low)
+
+calc_1_high<- est_fig_1(complete_scenario2A,complete_scenario2B,complete_scenario2C,
+           median_incident_symptomatic_R0highA,median_incident_symptomatic_R0highB,
+           median_incident_symptomatic_R0highC,
+           combined_incident_R0highA,combined_incident_R0highB,combined_incident_R0highC) 
+
+est_1_high <- calc_1_high %>% dplyr::group_by(scenario,summary_stat) %>% 
+  dplyr::summarise(incident_symptomatic=max(incident_symptomatic,na.rm=TRUE),min=min(incident_symptomatic,na.rm=TRUE)) %>% ungroup %>% left_join(.,calc_1_high)
+
+
 ```
 
 
@@ -532,9 +579,9 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
 </style>
 
 <div class = "row"><div class = "col-md-6"><div class = "blue">
-- In the low transmission scenario, the peak when no intervention strategies are used is expected X days after the start of the epidemic with XX incident infections. 
-- When a mildly restrictive intervention strategy is employed, the peak is shifted and expected to occur X days after the start of the epidemic with XX daily incident infections. 
-- When a moderately restrictive intervention strategy is employed, the epidemic does not take off.
+- In the moderate transmission scenario, the peak when no intervention strategies are used is expected May 16 with 3,567 incident infections. 
+- When a mildly restrictive intervention strategy is employed, the peak is shifted and expected to occur June 10 with 3,499	 daily incident infections. 
+- When a moderately restrictive intervention strategy is employed, we see minimal cases.
 </div></div>
 
 <div class = "col-md-6">
@@ -550,9 +597,9 @@ print(plt)
 <br><br>
 
 <div class = "row"><div class = "col-md-6"><div class = "blue">
-- In the high transmission scenario, the peak when no intervention strategies are used is expected X days after the start of the epidemic with the peak number of incident infections is markedly higher compared to the low transmission scenario. 
+- In the high transmission scenario, the peak when no intervention strategies are used is expected to have already occurred on April 10 with 6,735 incidenct infection, which is markedly higher compared to the low transmission scenario. 
 - Employing a mildly restrictive intervention strategy only delays the the peak of infections, but does not significantly reduce the number of incident cases. 
-- When a moderately restrictive intervention strategy is employed, the epidemic is slow to take off and remains relatively flat.
+- When a moderately restrictive intervention strategy is employed, the epidemic is slow to take off and remains relatively flat with 723 peak incident infections.
 </div></div>
 
 <div class = "col-md-6">
@@ -621,6 +668,34 @@ plt_hosp_cases<- ggplot(hosp_df_sep)+
 return(plt_hosp_cases)
 }
 
+est_fig_2<- function(random_sample_1,random_sample_2,random_sample_3,
+                      counts_data_1,counts_data_2,counts_data_3,
+                      median_counts_data_1,median_counts_data_2,median_counts_data_3){
+incident_hosp_wide<- as.data.frame(cbind(median_counts_data_1[,1,1],
+                            apply(median_counts_data_1[,-1,1],1,sum),
+                            apply(median_counts_data_2[,-1,1],1,sum),
+                            apply(median_counts_data_3[,-1,1],1,sum)))
+colnames(incident_hosp_wide)<- c("Day", "R_0=1.7,Median", "R_0=2.1,Median", "R_0=2.5,Median") 
+random_sims<- as.data.frame(cbind(counts_data_1[random_sample_1,1,1],
+                                apply(counts_data_1[random_sample_1,-1,1],1,sum),
+                                apply(counts_data_2[random_sample_2,-1,1],1,sum),
+                                apply(counts_data_3[random_sample_3,-1,1],1,sum)))
+colnames(random_sims)<- c("Day","R_0=1.7,Random", "R_0=2.1,Random", "R_0=2.5,Random")
+incident_hosp_long<- incident_hosp_wide%>%
+  gather(scenario, incident_hosp, "R_0=1.7,Median":"R_0=2.5,Median", factor_key = TRUE)
+random_sims_long<- random_sims%>%
+  gather(scenario, incident_hosp, "R_0=1.7,Random":"R_0=2.5,Random", factor_key=TRUE)
+hosp_df<- as.data.frame(rbind(incident_hosp_long,random_sims_long))
+hosp_df_sep<- hosp_df%>%
+  separate(scenario, into=c("scenario", "summary_stat"), sep=",")%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=n_days),48))
+return(hosp_df_sep)
+}
+
+
 f_2_low<- make_fig_2(f_1_low[[2]],f_1_low[[3]],f_1_low[[4]],
                  counts_array_R0lowA,counts_array_R0lowB,counts_array_R0lowC,
                  median_counts_array_R0lowA,median_counts_array_R0lowB,median_counts_array_R0lowC)
@@ -628,6 +703,21 @@ f_2_low<- make_fig_2(f_1_low[[2]],f_1_low[[3]],f_1_low[[4]],
 f_2_high<- make_fig_2(f_1_high[[2]],f_1_high[[3]],f_1_high[[4]],
                  counts_array_R0highA,counts_array_R0highB,counts_array_R0highC,
                  median_counts_array_R0highA,median_counts_array_R0highB,median_counts_array_R0highC)
+
+
+calc_2_low<- est_fig_2(f_1_low[[2]],f_1_low[[3]],f_1_low[[4]],
+                 counts_array_R0lowA,counts_array_R0lowB,counts_array_R0lowC,
+                 median_counts_array_R0lowA,median_counts_array_R0lowB,median_counts_array_R0lowC) 
+
+est_2_low <- calc_2_low %>% dplyr::group_by(scenario,summary_stat) %>% 
+  dplyr::summarise(incident_hosp=max(incident_hosp,na.rm=TRUE),min=min(incident_hosp,na.rm=TRUE)) %>% ungroup %>% left_join(.,calc_2_low)
+
+calc_2_high<- est_fig_2(f_1_high[[2]],f_1_high[[3]],f_1_high[[4]],
+                 counts_array_R0highA,counts_array_R0highB,counts_array_R0highC,
+                 median_counts_array_R0highA,median_counts_array_R0highB,median_counts_array_R0highC) 
+
+est_2_high <- calc_2_high %>% dplyr::group_by(scenario,summary_stat) %>% 
+  dplyr::summarise(incident_hosp=max(incident_hosp,na.rm=TRUE),min=min(incident_hosp,na.rm=TRUE)) %>% ungroup %>% left_join(.,calc_2_high)
 
 ```
 
@@ -637,8 +727,8 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
 </style>
 
 <div class = "row"><div class = "col-md-6"><div class = "blue">
-- In the low transmission scenario, the peak of incident hospitalizations when no intervention strategies are used is expected X days after the start of the epidemic. 
-- When a mildly restrictive intervention strategy is employed, the peak is shifted and expected to occur X days after the start of the epidemic with XX daily incident hospitalizations. 
+- In the low transmission scenario, the peak of incident hospitalizations when no intervention strategies are used is May 20 with 1,807 incident hospitalizations. 
+- When a mildly restrictive intervention strategy is employed, the peak is shifted and expected to occur June 14 with 1,772 incident hospitalizations. 
 </div></div>
 
 <div class = "col-md-6">
@@ -654,9 +744,9 @@ print(plt)
 <br><br>
 
 <div class = "row"><div class = "col-md-6"><div class = "blue">
-- In the high transmission scenario, the peak of incident hospitalizations when no intervention strategies are used is expected X days after the start of the epidemic. 
-- When a mildly restrictive intervention strategy is employed, the peak is shifted and expected to occur X days after the start of the epidemic with XX daily incident hospitalizations. 
-- When a moderately restrictive intervention strategy is employed, the epidemic is slow to take off and hospitalizations remain manageable.
+- In the high transmission scenario, the peak of incident hospitalizations when no intervention strategies are used is expected April 15 with 3,430 incident hospitalizations. 
+- When a mildly restrictive intervention strategy is employed, the peak is shifted and expected to occur May 9 with 3,126 incident hospitalizations. 
+- When a moderately restrictive intervention strategy is employed, the epidemic is slow to take off and hospitalizations reach a peak in June with a maximum of 621 incident hospitalizations.
 </div></div>
 
 <div class = "col-md-6">
@@ -726,6 +816,34 @@ plt_death_cases<- ggplot(death_df_sep)+
 return(plt_death_cases)
 }
 
+est_fig_3<- function(random_sample_1,random_sample_2,random_sample_3,
+                      counts_data_1,counts_data_2,counts_data_3,
+                      median_counts_data_1,median_counts_data_2,median_counts_data_3){
+incident_death_wide<- as.data.frame(cbind(median_counts_data_1[,1,5],
+                            apply(median_counts_data_1[,-1,5],1,sum),
+                            apply(median_counts_data_2[,-1,5],1,sum),
+                            apply(median_counts_data_3[,-1,5],1,sum)))
+colnames(incident_death_wide)<- c("Day", "R_0=1.7,Median", "R_0=2.1,Median", "R_0=2.5,Median") 
+random_sims<- as.data.frame(cbind(counts_data_1[random_sample_1,1,5],
+                                apply(counts_data_1[random_sample_1,-1,5],1,sum),
+                                apply(counts_data_2[random_sample_2,-1,5],1,sum),
+                                apply(counts_data_3[random_sample_3,-1,5],1,sum)))
+colnames(random_sims)<- c("Day","R_0=1.7,Random", "R_0=2.1,Random", "R_0=2.5,Random")
+incident_death_long<- incident_death_wide%>%
+  gather(scenario, incident_death, "R_0=1.7,Median":"R_0=2.5,Median", factor_key = TRUE)
+random_sims_long<- random_sims%>%
+  gather(scenario, incident_death, "R_0=1.7,Random":"R_0=2.5,Random", factor_key=TRUE)
+death_df<- as.data.frame(rbind(incident_death_long,random_sims_long))
+death_df_sep<- death_df%>%
+  separate(scenario, into=c("scenario", "summary_stat"), sep=",")%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=n_days),48))
+return(death_df_sep)
+}
+
+
 f_3_low<- make_fig_3(f_1_low[[2]],f_1_low[[3]],f_1_low[[4]],
                  counts_array_R0lowA,counts_array_R0lowB,counts_array_R0lowC,
                  median_counts_array_R0lowA,median_counts_array_R0lowB,median_counts_array_R0lowC)
@@ -734,6 +852,20 @@ f_3_high<- make_fig_3(f_1_high[[2]],f_1_high[[3]],f_1_high[[4]],
                  counts_array_R0highA,counts_array_R0highB,counts_array_R0highC,
                  median_counts_array_R0highA,median_counts_array_R0highB,median_counts_array_R0highC)
 
+calc_3_low<- est_fig_3(f_1_low[[2]],f_1_low[[3]],f_1_low[[4]],
+                 counts_array_R0lowA,counts_array_R0lowB,counts_array_R0lowC,
+                 median_counts_array_R0lowA,median_counts_array_R0lowB,median_counts_array_R0lowC)
+
+est_3_low <- calc_3_low %>% dplyr::group_by(scenario,summary_stat) %>% 
+  dplyr::summarise(incident_death=max(incident_death,na.rm=TRUE),min=min(incident_death,na.rm=TRUE)) %>% ungroup %>% left_join(.,calc_3_low)
+
+calc_3_high<- est_fig_3(f_1_high[[2]],f_1_high[[3]],f_1_high[[4]],
+                 counts_array_R0highA,counts_array_R0highB,counts_array_R0highC,
+                 median_counts_array_R0highA,median_counts_array_R0highB,median_counts_array_R0highC)
+
+est_3_high <- calc_3_high %>% dplyr::group_by(scenario,summary_stat) %>% 
+  dplyr::summarise(incident_death=max(incident_death,na.rm=TRUE),min=min(incident_death,na.rm=TRUE)) %>% ungroup %>% left_join(.,calc_3_high)
+
 ```
 
 <style>
@@ -741,8 +873,9 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
 </style>
 
 <div class = "row"><div class = "col-md-6"><div class = "blue">
-- In the low transmission scenario, the peak of incident deaths when no intervention strategies are used is expected X days after the start of the epidemic. 
-- When a mildly restrictive intervention strategy is employed, the peak is shifted and expected to occur X days after the start of the epidemic with XX daily incident deaths. 
+- In the low transmission scenario, the peak of incident deaths when no intervention strategies are used is expected June 1 with 1,018 incident deaths. 
+- When a mildly restrictive intervention strategy is employed, the peak is shifted and expected to occur June 30 with 1,005 incident deaths. 
+- With a moderately restrictive intervention strategy, we expect to see a maximum of 38 incident deaths by July end.
 </div></div>
 
 <div class = "col-md-6">
@@ -758,8 +891,9 @@ print(plt)
 <br><br>
 
 <div class = "row"><div class = "col-md-6"><div class = "blue">
-- In the high transmission scenario, the peak of incident deaths when no intervention strategies are used is expected X days after the start of the epidemic. 
-- When a mildly restrictive intervention strategy is employed, the peak is shifted and expected to occur X days after the start of the epidemic with XX daily incident deaths 
+- In the high transmission scenario, the peak of incident deaths when no intervention strategies are used is expected April 27 with 1,962 incident deaths. 
+- When a mildly restrictive intervention strategy is employed, the peak is shifted and expected to occur May 21 with 1,792 incident deaths.
+- With a moderately restrictive intervention strategy, we expect to see a maximum of 349 incident deaths by June end.
 </div></div>
 
 <div class = "col-md-6">
@@ -969,9 +1103,9 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
 </style>
 
 <div class = "row"><div class = "row-md-6"><div class = "blue">
-- These results suggest that in a high transmission scenario with no intervention or a mildly restrictive intervention strategy,  hospital capacity may be reached before mid-May. 
-- If we assume there are 600 ventilators in Baltimore City, we may reach ventilator capacity by mid-April if no intervention or mildly restrictive intervention strategies are imposed.
-- With moderately restrictive intervention strategies, capacity may not be reached until the fall in the high transmission scenario.
+- These results suggest that in a high transmission scenario with no intervention or a mildly restrictive intervention strategy,  hospital capacity may be reached before May. 
+- If we assume there are 600 ventilators in Baltimore City, we may reach ventilator capacity by April-end if no intervention or mildly restrictive intervention strategies are imposed.
+- With moderately restrictive intervention strategies, capacity may not be reached until the late July in the high transmission scenario.
 </div></div>
 
 <br><br>
