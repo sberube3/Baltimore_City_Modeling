@@ -34,7 +34,8 @@
                                       R0 = 2, 
                                       c_scale_vec = 1, 
                                       prop_symptomatic = prop_symptomatic,
-                                      sd.dw = 0.1)
+                                      sd.dw = 0.1, 
+                                      healthcare_n = 26890)
   Ncomp = all_prelim_info$Ncomp
   ICs = all_prelim_info$ICs
   params = list(C = all_prelim_info$C, 
