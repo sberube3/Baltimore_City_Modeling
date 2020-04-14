@@ -1,0 +1,1337 @@
+---
+title: "DC_outputs_test"
+author: "Sophie Berube"
+date: "4/11/2020"
+output: pdf_document
+---
+```{r data, echo=TRUE, message=FALSE, warning=FALSE}
+
+setwd("~/Dropbox/COVID-BaltimoreCity/output_20200405")
+
+require(socialmixr)
+require(xlsx)
+require(magrittr)
+require(stringr)
+require(reshape2)
+require(dplyr)
+require(ggplot2) 
+require(tidyr)
+require(xtable)
+require(cowplot)
+require(stringr)
+
+##load data
+complete_scenario1A <- read.csv("scenario1A_lowR0_uncontrolled.csv")
+complete_scenario1B <- read.csv("scenario1B_lowR0_MildDistancing.csv")
+complete_scenario1C <- read.csv("scenario1C_lowR0_ModDistancing.csv")
+complete_scenario2A <- read.csv("scenario2A_highR0_uncontrolled.csv")
+complete_scenario2B <- read.csv("scenario2B_highR0_MildDistancing.csv")
+complete_scenario2C <- read.csv("scenario2C_highR0_ModDistancing.csv")
+
+##load_and_clean function to concatenate age categories
+
+load_and_clean<- function(data, r0val){
+  complete_incident_r0val<- data%>%
+    select(time,incid_I1,incid_I2,incid_I3,incid_I4,incid_I5,
+         incid_I6,incid_I7,incid_I8,incid_I9,
+         incid_I10,incid_I11,incid_I12,incid_I13,incid_I14)
+  
+  combined_incident_r0val<- complete_incident_r0val%>%
+        mutate(cat1=rowSums(.[2:5]))%>%
+        mutate(cat2=rowSums(.[6:8]))%>%
+        mutate(cat3=rowSums(.[9]))%>%
+        mutate(cat4=rowSums(.[10:12]))%>%
+        mutate(cat5=rowSums(.[13]))%>%
+        mutate(cat6=rowSums(.[14]))%>%
+        mutate(cat7=rowSums(.[15]))
+  
+  combined_incident_r0val<- combined_incident_r0val%>%
+    select(time, cat1, cat2, cat3, cat4, cat5, cat6, cat7)
+  
+  return(combined_incident_r0val)
+}
+
+##run the function on each transmission scenario
+combined_incident_R0lowA<- load_and_clean(complete_scenario1A,R0lowA)  
+combined_incident_R0lowB<- load_and_clean(complete_scenario1B,R0lowB)  
+combined_incident_R0lowC<- load_and_clean(complete_scenario1C,R0lowC)  
+combined_incident_R0highA<- load_and_clean(complete_scenario2A,R0highA)  
+combined_incident_R0highB<- load_and_clean(complete_scenario2B,R0highB)  
+combined_incident_R0highC<- load_and_clean(complete_scenario2C,R0highC)  
+
+
+```
+
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+
+#Here we create a probability matrix of working probabilities from the literature for the probability of becoming a hospitalized case, getting admitted to ICU, needing a ventilator and death. These are nested conditional probabilities that rely on the following assumptions:
+#The percentage of hospitalized cases in each category is obtained from the [CDC](https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm#T1_down) where we combined the 55-74 age groups and the 75-80 and 80+ age groups.
+#We assume the remainder of the nested probabilities from the [CDC](https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm#T1_down) and in each subsequent state (hospitalization to ICU, ICU to death) we shift the denominator to be the preceding state's total (e.g. the probability of getting admitted to the ICU is the number of ICU cases for the age group/number of hospitalized cases for the age group).
+#We assume a global probability that 25% of cases admitted to the ICU require a ventilator per [WHO reports](https://www.who.int/publications-detail/report-of-the-who-china-joint-mission-on-coronavirus-disease-2019-(covid-19)).  
+#We assume healthcare workers and the homeless population follow a similar nested probability scheme as those in the 45-54 year age group.
+#Note that this function takes the raw numbers of people in each disease state and converts it to a probability. 
+#importantly, if you look at your final probability matrix and you have a value that is strictly less than 0 or striclty greater than 1 you have made a mistake in entering your data!!
+
+#each num_diseaseState vector is an arugement of this function, these vectors should be numeric vectors of length 7 (for the seven age groups) and each value should correspond to the raw numbers of people in each disease state observed for each particular age group. 
+
+#also note that if you divide by 0, you will get NaN (not a number) as an entry, if that just means that 0 percent are in that disease state for age categories, you can manually replace NaN with 0. 
+make_prob_matrix<- function(num_symptomatic,num_severe, num_hospitalized, num_ICU, num_deadFromICU,num_vent, num_deadFromVent){
+
+prob_severe<- num_severe/num_symptomatic
+
+prob_hospitalized<- num_hospitalized/num_severe
+
+prob_ICU<- num_ICU/num_hospitalized
+
+prob_dead_from_icu<-num_deadFromICU/num_ICU
+
+prob_vent_icu<- num_vent/num_ICU
+
+prob_dead_from_vent<- num_deadFromVent/num_vent
+
+prob_matrix<- cbind(prob_severe,prob_hospitalized,prob_ICU,prob_dead_from_icu,
+                     prob_vent_icu,prob_dead_from_vent)
+
+return(prob_matrix)
+
+}
+#cdc imputs
+
+symptomatic<- c(123,705,429,838,354,429,429)
+hosp<- c(3.08,146.64,121.41,307.05,224.5,121.41,121.41)
+ICU<-c(0,29.61,44.62,124.94,106.86,44.62,44.62)
+dead_ICU<- c(0, 1.16,2.93,22.19,32.86,2.93,2.93)
+vent<- c(0,1,2.5,22.01,51,2.5,2.5)
+dead_vent<- c(0,0.25,0.5,9,28.5,0.5,0.5)
+
+prob_matrix<- make_prob_matrix(symptomatic,hosp,hosp,ICU,dead_ICU,vent,dead_vent)
+prob_matrix[1,c(4,5,6)]<- c(0,0,0)
+
+prob_matrix
+#define number of days simulations run for
+n_days <- 300
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE}
+#only consider first 100 sims 
+trim_combined_incident_R0lowA<- combined_incident_R0lowA[1:(50*n_days),]
+trim_combined_incident_R0lowB<- combined_incident_R0lowB[1:(50*n_days),]
+trim_combined_incident_R0lowC<- combined_incident_R0lowC[1:(50*n_days),]
+
+trim_combined_incident_R0highA<- combined_incident_R0highA[1:(50*n_days),]
+trim_combined_incident_R0highB<- combined_incident_R0highB[1:(50*n_days),]
+trim_combined_incident_R0highC<- combined_incident_R0highC[1:(50*n_days),]
+
+trim_complete_R0lowA<- complete_scenario1A[1:(50*n_days),]
+trim_complete_R0lowB<- complete_scenario1B[1:(50*n_days),]
+trim_complete_R0lowC<- complete_scenario1C[1:(50*n_days),]
+
+trim_complete_R0highA<- complete_scenario2A[1:(50*n_days),]
+trim_complete_R0highB<- complete_scenario2B[1:(50*n_days),]
+trim_complete_R0highC<- complete_scenario2C[1:(50*n_days),]
+
+trim_complete_R0lowA<- trim_complete_R0lowA[which(is.na(trim_combined_incident_R0highA[,2])==F),]
+trim_complete_R0lowB<- trim_complete_R0lowB[which(is.na(trim_combined_incident_R0highA[,2])==F),]
+trim_complete_R0lowC<- trim_complete_R0lowC[which(is.na(trim_combined_incident_R0highA[,2])==F),]
+
+trim_complete_R0highA<- trim_complete_R0highA[which(is.na(trim_combined_incident_R0highA[,2])==F),]
+trim_complete_R0highB<- trim_complete_R0highB[which(is.na(trim_combined_incident_R0highA[,2])==F),]
+trim_complete_R0highC<- trim_complete_R0highC[which(is.na(trim_combined_incident_R0highA[,2])==F),]
+
+
+trim_combined_incident_R0lowA<- trim_combined_incident_R0lowA[which(is.na(trim_combined_incident_R0lowA[,2])==F),]
+trim_combined_incident_R0lowB<- trim_combined_incident_R0lowB[which(is.na(trim_combined_incident_R0lowB[,2])==F),]
+trim_combined_incident_R0lowC<- trim_combined_incident_R0lowC[which(is.na(trim_combined_incident_R0lowC[,2])==F),]
+
+trim_combined_incident_R0highA<- trim_combined_incident_R0highA[which(is.na(trim_combined_incident_R0highA[,2])==F),]
+trim_combined_incident_R0highB<- trim_combined_incident_R0highB[which(is.na(trim_combined_incident_R0highB[,2])==F),]
+trim_combined_incident_R0highC<- trim_combined_incident_R0highC[which(is.na(trim_combined_incident_R0highC[,2])==F),]
+
+
+```
+
+
+
+
+```{r, message=FALSE, echo=FALSE, warning=FALSE}
+
+##### Estimate number of hospitalizations, ICU admissions, ventilators used, and deaths
+
+incident_classifications<- function(data, complete_data, R0val){
+  counts_array_R0val<- array(NA, dim=c(nrow(data),ncol(data),5))
+  counts_array_R0val[,1,]<- data$time
+  
+for(i in 2:ncol(data)){
+  for(r in 1:50){
+  for(j in 1:299){
+    if(data[which(complete_data$time==j & complete_data$run_index==r),i,1]==0){
+      counts_array_R0val[which(complete_data$time==j&complete_data$run_index==r),i,1]<-0
+    }
+    else if(j<=4){
+counts_array_R0val[which(complete_data$time==j&complete_data$run_index==r),i,1]<- 
+      sum(rbinom(data[which(complete_data$time==j&complete_data$run_index==r),i,1],1,prob_matrix[i-1,1]))
+}
+  else{
+    counts_array_R0val[which(complete_data$time==j&complete_data$run_index==r),i,1]<- 
+      sum(rbinom(data[which(complete_data$time==(j-4)&complete_data$run_index==r),i,1],1,prob_matrix[i-1,1]))
+  }
+  }
+
+  for(n in 1:299){
+  if(counts_array_R0val[which(complete_data$time==n&complete_data$run_index==r),i,1]==0){
+    counts_array_R0val[which(complete_data$time==n&complete_data$run_index==r),i,2]<-0
+  }
+    else{
+ counts_array_R0val[which(complete_data$time==n&complete_data$run_index==r),i,2]<- sum(rbinom(counts_array_R0val[which(complete_data$time==n&complete_data$run_index==r),i,1],1,prob_matrix[i-1,2]))
+    }
+  }
+for(k in 1:299){
+  if(counts_array_R0val[which(complete_data$time==k&complete_data$run_index==r),i,2]==0){
+    counts_array_R0val[which(complete_data$time==k&complete_data$run_index==r),i,3]<-0
+  }
+    else if(k<=4){      
+counts_array_R0val[which(complete_data$time==k&complete_data$run_index==r),i,3]<- 
+      sum(rbinom(counts_array_R0val[which(complete_data$time==k&complete_data$run_index==r),i,2],1,prob_matrix[i-1,3]))
+     }
+ 
+  else {
+   counts_array_R0val[which(complete_data$time==k&complete_data$run_index==r),i,3]<- 
+      sum(rbinom(counts_array_R0val[which(complete_data$time==(k-4)&complete_data$run_index==r),i,2],1,prob_matrix[i-1,3])) 
+  }
+  
+}
+ 
+ for(l in 1:299){
+   if(counts_array_R0val[which(complete_data$time==l&complete_data$run_index==r),i,3]==0){
+     counts_array_R0val[which(complete_data$time==l&complete_data$run_index==r),i,4]<-0
+   }
+       else if(l<=3){
+counts_array_R0val[which(complete_data$time==l&complete_data$run_index==r),i,4]<- 
+      sum(rbinom(counts_array_R0val[which(complete_data$time==(l)&complete_data$run_index==r),i,3],1,prob_matrix[i-1,5])) 
+        }
+   else{
+     counts_array_R0val[which(complete_data$time==l&complete_data$run_index==r),i,4]<- 
+      sum(rbinom(counts_array_R0val[which(complete_data$time==(l-3)&complete_data$run_index==r),i,3],1,prob_matrix[i-1,5])) 
+   }
+ }
+ 
+ for(m in 1:299){
+   if(m<=5){
+     counts_array_R0val[which(complete_data$time==m&complete_data$run_index==r),i,5]<- 
+      sum(rbinom(counts_array_R0val[which(complete_data$time==(m)&complete_data$run_index==r),i,3],1,prob_matrix[i-1,4]))+sum(rbinom(counts_array_R0val[which(complete_data$time==(m)&complete_data$run_index==r),i,4],1,prob_matrix[i-1,6]))
+   }
+   
+ else if(m>5&m<=8){
+   counts_array_R0val[which(complete_data$time==m&complete_data$run_index==r),i,5]<- 
+      sum(rbinom(counts_array_R0val[which(complete_data$time==(m)&complete_data$run_index==r),i,3],1,prob_matrix[i-1,4]))+sum(rbinom(counts_array_R0val[which(complete_data$time==(m-5)&complete_data$run_index==r),i,4],1,prob_matrix[i-1,6]))
+ }
+ else{
+   counts_array_R0val[which(complete_data$time==m&complete_data$run_index==r),i,5]<- 
+      sum(rbinom(counts_array_R0val[which(complete_data$time==(m-8)&complete_data$run_index==r),i,3],1,prob_matrix[i-1,4]))+sum(rbinom(counts_array_R0val[which(complete_data$time==(m-5)&complete_data$run_index==r),i,4],1,prob_matrix[i-1,6]))
+ }
+
+ }
+print(r)
+  }
+  
+}
+
+return(counts_array_R0val)
+
+}
+
+counts_array_R0lowA<- incident_classifications(trim_combined_incident_R0lowA,trim_complete_R0lowA,R0lowA)
+counts_array_R0lowB<- incident_classifications(trim_combined_incident_R0lowB,trim_complete_R0lowB,R0lowB)
+counts_array_R0lowC<- incident_classifications(trim_combined_incident_R0lowC,trim_complete_R0lowC,R0lowC)
+counts_array_R0highA<- incident_classifications(trim_combined_incident_R0highA,trim_complete_R0highA,R0highA)
+counts_array_R0highB<- incident_classifications(trim_combined_incident_R0highB,trim_complete_R0highB,R0highB)
+counts_array_R0highC<- incident_classifications(trim_combined_incident_R0highC,trim_complete_R0highC,R0highC)
+
+```
+
+
+```{r,message=FALSE, warning=FALSE, echo=FALSE}
+
+##define the point estimates of how long people stay in each of the state   
+
+
+##cumulative_counts function
+cumulative_counts<- function(data, complete_data, R0val){
+  cumulative_array_R0val<- array(NA, dim=dim(data))
+  
+  cumulative_array_R0val[,1,]<- data[,1,]
+
+  for(j in 2:dim(cumulative_array_R0val)[2]){
+    cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==1),j,]<-
+      data[which(data[,1,1]==1),j,]
+   
+    for(i in 2:299){
+      
+      cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==i),j,1]<-
+        cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(i-1)),j,1]+
+        data[which(data[,1,1]==i),j,1]
+      cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==i),j,5]<-
+        cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(i-1)),j,5]+
+        data[which(data[,1,1]==i),j,5]
+    }
+  for(n in 1:50){
+     length_of_stay<- c(NA,rtpois(1,12,8,18),rtpois(1,8,4,12),rtpois(1,11,7,17),NA)
+    for(k in 2:n_days){
+      if(k<=length_of_stay[2]){
+      cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==k&complete_data$run_index==n),j,2]<-
+        cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(k-1)&complete_data$run_index==n),j,2]+
+        data[which(data[,1,1]==k&complete_data$run_index==n),j,2]
+      }
+      else {
+        cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==k&complete_data$run_index==n),j,2]<-
+          cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==k-1&complete_data$run_index==n),j,2]+
+          data[which(data[,1,1]==k&complete_data$run_index==n),j,2]-data[which(data[,1,1]==(k-length_of_stay[2])&complete_data$run_index==n),j,2]
+      }
+     }
+    }
+ 
+    for(p in 1:50){
+    length_of_stay<- c(NA,rtpois(1,12,8,18),rtpois(1,8,4,12),rtpois(1,11,7,17),NA)
+    for(l in 2:n_days){
+     
+      if(l <= length_of_stay[3]){
+        cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==l&complete_data$run_index==p),j,3]<-
+          cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(l-1)&complete_data$run_index==p),j,3]+
+          data[which(data[,1,1]==l&complete_data$run_index==p),j,3]
+      }
+    else{
+      cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==l&complete_data$run_index==p),j,3]<-
+        cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(l-1)&complete_data$run_index==p),j,3]+
+          data[which(data[,1,1]==l&complete_data$run_index==p),j,3]-data[which(data[,1,1]==(l-length_of_stay[3])&complete_data$run_index==p),j,3]
+    }
+   }
+    }
+     for(q in 1:50){ 
+       length_of_stay<- c(NA,rtpois(1,12,8,18),rtpois(1,8,4,12),rtpois(1,11,7,17),NA)
+    for(m in 2:n_days){
+    
+    if(m<=length_of_stay[4]){
+      cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==m&complete_data$run_index==q),j,4]<-
+        cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(m-1)&complete_data$run_index==q),j,4]+
+        data[which(data[,1,1]==m&complete_data$run_index==q),j,4]
+    }
+    else{
+      cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==m&complete_data$run_index==q),j,4]<-
+        cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(m-1)&complete_data$run_index==q),j,4]+
+          data[which(data[,1,1]==m&complete_data$run_index==q),j,4]-data[which(data[,1,1]==(m-length_of_stay[4])&complete_data$run_index==q),j,4]
+      }
+    }
+   
+    }
+    print(j)
+}
+return(cumulative_array_R0val)
+  
+}
+
+cumulative_array_R0lowA<- cumulative_counts(counts_array_R0lowA,trim_complete_R0lowA,R0lowA)
+cumulative_array_R0lowB<- cumulative_counts(counts_array_R0lowB,trim_complete_R0lowB,R0lowB)
+cumulative_array_R0lowC<- cumulative_counts(counts_array_R0lowC,trim_complete_R0lowC, R0lowC)
+cumulative_array_R0highA<- cumulative_counts(counts_array_R0highA,trim_complete_R0highA,R0highA)
+cumulative_array_R0highB<- cumulative_counts(counts_array_R0highB,trim_complete_R0highB,R0highB)
+cumulative_array_R0highC<- cumulative_counts(counts_array_R0highC,trim_complete_R0highC,R0highC)
+
+```
+
+
+```{r, message=FALSE, warning-FALSE, echo=FALSE}
+
+median_incident_symptomatic<- function(data, R0val){
+  median_incident_combined_R0val<- matrix(NA,n_days,ncol(data))
+
+    for(i in 1:nrow(median_incident_combined_R0val)){
+      median_incident_combined_R0val[i,]<-
+        apply(data[which(data[,1]==i),],2,median)
+    }
+  upper_incident_combined_R0val<- matrix(NA,n_days,ncol(data))
+
+    for(i in 1:nrow(upper_incident_combined_R0val)){
+      upper_incident_combined_R0val[i,]<-
+        apply(data[which(data[,1]==i),],2,quantile, probs=(0.75), na.rm=TRUE)
+    }
+  
+  lower_incident_combined_R0val<- matrix(NA,n_days,ncol(data))
+
+    for(i in 1:nrow(lower_incident_combined_R0val)){
+      lower_incident_combined_R0val[i,]<-
+        apply(data[which(data[,1]==i),],2,quantile, probs=(0.25), na.rm=TRUE)
+    }
+  
+  
+  return(list(median_incident_combined_R0val, upper_incident_combined_R0val,
+              lower_incident_combined_R0val))
+  }
+
+incident_symptomatic_R0lowA<- median_incident_symptomatic(combined_incident_R0lowA,R0lowA)
+median_incident_symptomatic_R0lowA<- incident_symptomatic_R0lowA[[1]]
+upper_incident_symptomatic_R0lowA<- incident_symptomatic_R0lowA[[2]]
+lower_incident_symptomatic_R0lowA<- incident_symptomatic_R0lowA[[3]]
+incident_symptomatic_R0lowB<- median_incident_symptomatic(combined_incident_R0lowB,R0lowB)
+median_incident_symptomatic_R0lowB<- incident_symptomatic_R0lowB[[1]]
+upper_incident_symptomatic_R0lowB<- incident_symptomatic_R0lowB[[2]]
+lower_incident_symptomatic_R0lowB<- incident_symptomatic_R0lowB[[3]]
+incident_symptomatic_R0lowC<- median_incident_symptomatic(combined_incident_R0lowC,R0lowC)
+median_incident_symptomatic_R0lowC<- incident_symptomatic_R0lowC[[1]]
+upper_incident_symptomatic_R0lowC<- incident_symptomatic_R0lowC[[2]]
+lower_incident_symptomatic_R0lowC<- incident_symptomatic_R0lowC[[3]]
+
+incident_symptomatic_R0highA<- median_incident_symptomatic(combined_incident_R0highA,R0highA)
+median_incident_symptomatic_R0highA<- incident_symptomatic_R0highA[[1]]
+upper_incident_symptomatic_R0highA<- incident_symptomatic_R0highA[[2]]
+lower_incident_symptomatic_R0highA<- incident_symptomatic_R0highA[[3]]
+incident_symptomatic_R0highB<- median_incident_symptomatic(combined_incident_R0highB,R0highB)
+median_incident_symptomatic_R0highB<- incident_symptomatic_R0highB[[1]]
+upper_incident_symptomatic_R0highB<- incident_symptomatic_R0highB[[2]]
+lower_incident_symptomatic_R0highB<- incident_symptomatic_R0highB[[3]]
+incident_symptomatic_R0highC<- median_incident_symptomatic(combined_incident_R0highC,R0highC)
+median_incident_symptomatic_R0highC<- incident_symptomatic_R0highC[[1]]
+upper_incident_symptomatic_R0highC<- incident_symptomatic_R0highC[[2]]
+lower_incident_symptomatic_R0highC<- incident_symptomatic_R0highC[[3]]
+
+
+####################################################################
+
+median_counts_array<- function(data, R0val){
+  median_counts_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
+  
+  for(i in 1:dim(median_counts_array)[3]){
+    for(j in 1:dim(median_counts_array)[1]){
+      median_counts_array[j,,i]<- apply(data[which(data[,1,1]==j),,i],2,median)
+    }
+  }
+ 
+   upper_counts_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
+  
+  for(i in 1:dim(upper_counts_array)[3]){
+    for(j in 1:dim(upper_counts_array)[1]){
+      upper_counts_array[j,,i]<- apply(data[which(data[,1,1]==j),,i],2,quantile, prob=0.75,na.rm=T)
+    }
+  } 
+   
+    lower_counts_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
+  
+  for(i in 1:dim(lower_counts_array)[3]){
+    for(j in 1:dim(lower_counts_array)[1]){
+      lower_counts_array[j,,i]<- apply(data[which(data[,1,1]==j),,i],2,quantile, prob=0.25,na.rm=T)
+    }
+  } 
+    return(list(median_counts_array, upper_counts_array,lower_counts_array))
+}
+
+summary_counts_array_R0lowA<- median_counts_array(counts_array_R0lowA,R0lowA)
+median_counts_array_R0lowA<- summary_counts_array_R0lowA[[1]]
+upper_counts_array_R0lowA<- summary_counts_array_R0lowA[[2]]
+lower_counts_array_R0lowA<- summary_counts_array_R0lowA[[3]]
+summary_counts_array_R0lowB<- median_counts_array(counts_array_R0lowB,R0lowB)
+median_counts_array_R0lowB<- summary_counts_array_R0lowB[[1]]
+upper_counts_array_R0lowB<- summary_counts_array_R0lowB[[2]]
+lower_counts_array_R0lowB<- summary_counts_array_R0lowB[[3]]
+summary_counts_array_R0lowC<- median_counts_array(counts_array_R0lowC,R0lowC)
+median_counts_array_R0lowC<- summary_counts_array_R0lowC[[1]]
+upper_counts_array_R0lowC<- summary_counts_array_R0lowC[[2]]
+lower_counts_array_R0lowC<- summary_counts_array_R0lowC[[3]]
+
+summary_counts_array_R0highA<- median_counts_array(counts_array_R0highA,R0highA)
+median_counts_array_R0highA<- summary_counts_array_R0highA[[1]]
+upper_counts_array_R0highA<- summary_counts_array_R0highA[[2]]
+lower_counts_array_R0highA<- summary_counts_array_R0highA[[3]]
+summary_counts_array_R0highB<- median_counts_array(counts_array_R0highB,R0highB)
+median_counts_array_R0highB<- summary_counts_array_R0highB[[1]]
+upper_counts_arrayc_R0highB<- summary_counts_array_R0highB[[2]]
+lower_counts_array_R0highB<- summary_counts_array_R0highB[[3]]
+summary_counts_array_R0highC<- median_counts_array(counts_array_R0highC,R0highC)
+median_counts_array_R0highC<- summary_counts_array_R0highC[[1]]
+upper_counts_array_R0highC<- summary_counts_array_R0highC[[2]]
+lower_counts_array_R0highC<- summary_counts_array_R0highC[[3]]
+
+
+########################################
+
+median_cumulative_array<- function(data, R0val){
+  median_cumulative_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
+  
+  for(i in 1:dim(median_cumulative_array)[3]){
+    for(j in 1:dim(median_cumulative_array)[1]){
+      median_cumulative_array[j,,i]<- apply(data[which(data[,1,1]==j),,i],2,median,na.rm=T)
+    }
+  }
+ 
+   upper_cumulative_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
+  
+  for(i in 1:dim(upper_cumulative_array)[3]){
+    for(j in 1:dim(upper_cumulative_array)[1]){
+      upper_cumulative_array[j,,i]<- apply(data[which(data[,1,1]==j),,i],2,quantile, prob=0.75,na.rm=T)
+    }
+  } 
+   
+    lower_cumulative_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
+  
+  for(i in 1:dim(lower_cumulative_array)[3]){
+    for(j in 1:dim(lower_cumulative_array)[1]){
+      lower_cumulative_array[j,,i]<- apply(data[which(data[,1,1]==j),,i],2,quantile, prob=0.25,na.rm=T)
+    }
+  } 
+    return(list(median_cumulative_array, upper_cumulative_array,lower_cumulative_array))
+}
+
+
+summary_cumulative_array_R0lowA<- median_cumulative_array(cumulative_array_R0lowA,R0lowA)
+median_cumulative_array_R0lowA<- summary_cumulative_array_R0lowA[[1]]
+upper_cumulative_array_R0lowA<- summary_cumulative_array_R0lowA[[2]]
+lower_cumulative_array_R0lowA<- summary_cumulative_array_R0lowA[[3]]
+summary_cumulative_array_R0lowB<- median_cumulative_array(cumulative_array_R0lowB,R0lowB)
+median_cumulative_array_R0lowB<- summary_cumulative_array_R0lowB[[1]]
+upper_cumulative_array_R0lowB<- summary_cumulative_array_R0lowB[[2]]
+lower_cumulative_array_R0lowB<- summary_cumulative_array_R0lowB[[3]]
+summary_cumulative_array_R0lowC<- median_cumulative_array(cumulative_array_R0lowC,R0lowC)
+median_cumulative_array_R0lowC<- summary_cumulative_array_R0lowC[[1]]
+upper_cumulative_array_R0lowC<- summary_cumulative_array_R0lowC[[2]]
+lower_cumulative_array_R0lowC<- summary_cumulative_array_R0lowC[[3]]
+
+summary_cumulative_array_R0highA<- median_cumulative_array(cumulative_array_R0highA,R0highA)
+median_cumulative_array_R0highA<- summary_cumulative_array_R0highA[[1]]
+upper_cumulative_array_R0highA<- summary_cumulative_array_R0highA[[2]]
+lower_cumulative_array_R0highA<- summary_cumulative_array_R0highA[[3]]
+summary_cumulative_array_R0highB<- median_cumulative_array(cumulative_array_R0highB,R0highB)
+median_cumulative_array_R0highB<- summary_cumulative_array_R0highB[[1]]
+upper_cumulative_array_R0highB<- summary_cumulative_array_R0highB[[2]]
+lower_cumulative_array_R0highB<- summary_cumulative_array_R0highB[[3]]
+summary_cumulative_array_R0highC<- median_cumulative_array(cumulative_array_R0highC,R0highC)
+median_cumulative_array_R0highC<- summary_cumulative_array_R0highC[[1]]
+upper_cumulative_array_R0highC<- summary_cumulative_array_R0highC[[2]]
+lower_cumulative_array_R0highC<- summary_cumulative_array_R0highC[[3]]
+
+```
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE}
+
+make_fig_1<- function(complete_data_1,complete_data_2,complete_data_3,
+                      median_data_1,median_data_2,median_data_3,
+                      combined_data_1,combined_data_2,combined_data_3){
+random_sample_R017<- which(complete_data_1$run_index%in%sample(rep(1:50),15,replace=F))
+random_sample_R021<- which(complete_data_2$run_index%in%sample(rep(1:50), 15, replace=F))
+random_sample_R025<- which(complete_data_3$run_index%in%sample(rep(1:50), 15, replace = F))
+
+
+incident_symptomatic_wide<- as.data.frame(cbind(median_data_1[,1],
+                            apply(median_data_1[,-1],1,sum),
+                            apply(median_data_2[,-1],1,sum),
+                            apply(median_data_3[,-1],1,sum)))
+
+colnames(incident_symptomatic_wide)<- c("Day", "R_0=1.7,median", "R_0=2.1,median", "R_0=2.5,median") 
+
+random_sims<- as.data.frame(cbind(combined_data_1[random_sample_R017,1],
+                                apply(combined_data_1[random_sample_R017,-1],1,sum),
+                                apply(combined_data_2[random_sample_R021,-1],1,sum),
+                                apply(combined_data_3[random_sample_R021,-1],1,sum)))
+
+colnames(random_sims)<- c("Day","R_0=1.7,Random", "R_0=2.1,Random", "R_0=2.5,Random")
+
+
+incident_symptomatic_long<- incident_symptomatic_wide%>%
+  gather(scenario, incident_symptomatic, "R_0=1.7,median":"R_0=2.5,median", factor_key = TRUE)
+
+random_sims_long<- random_sims%>%
+  gather(scenario, incident_symptomatic, "R_0=1.7,Random":"R_0=2.5,Random", factor_key=TRUE)
+
+
+symptomatic_df<- as.data.frame(rbind(incident_symptomatic_long,random_sims_long))
+
+
+
+symptomatic_df_sep<- symptomatic_df%>%
+  separate(scenario, into=c("scenario", "summary_stat"), sep=",")%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=299),48))
+
+
+
+plt_incident_cases<- ggplot(symptomatic_df_sep)+ 
+  geom_line(aes(y= incident_symptomatic, x=Day,color=str_wrap(scenario,10),linetype=summary_stat))+
+  #geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
+  labs(title="Incident Symptomatic Cases Per Day",y="Number of Cases") +
+  labs(color="Strategy",linetype="Summary Statistic") 
+return(list(plt_incident_cases,random_sample_R017,random_sample_R021,random_sample_R025))
+
+}
+
+f_1_low<- make_fig_1(trim_complete_R0lowA,trim_complete_R0lowB,trim_complete_R0lowC,
+           median_incident_symptomatic_R0lowA[-300,],
+           median_incident_symptomatic_R0lowB[-300,],
+           median_incident_symptomatic_R0lowC[-300,],
+           trim_combined_incident_R0lowA,trim_combined_incident_R0lowB,
+           trim_combined_incident_R0lowC)
+
+f_1_high<- make_fig_1(trim_complete_R0highA,trim_complete_R0highB,trim_complete_R0highC,
+           median_incident_symptomatic_R0highA[-300,],
+           median_incident_symptomatic_R0highB[-300,],
+           median_incident_symptomatic_R0highC[-300,],
+           trim_combined_incident_R0highA,trim_combined_incident_R0highB,
+           trim_combined_incident_R0highC)
+
+```
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE, fig.align="center", fig.cap="Figure 1A."}
+
+plt <- cowplot::plot_grid(f_1_low[[1]] , labels=c('A'), align = "h", nrow=1)
+print(plt)
+
+```
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE, fig.align="center", fig.cap="Figure 1B."}
+
+plt <- cowplot::plot_grid(f_1_high[[1]] , labels=c('B'), align = "h", nrow=1)
+print(plt)
+
+```
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+
+make_fig_2<- function(random_sample_1,random_sample_2,random_sample_3,
+                      counts_data_1,counts_data_2,counts_data_3,
+                      median_counts_data_1,median_counts_data_2,median_counts_data_3){
+
+
+incident_hosp_wide<- as.data.frame(cbind(median_counts_data_1[,1,1],
+                            apply(median_counts_data_1[,-1,1],1,sum),
+                            apply(median_counts_data_2[,-1,1],1,sum),
+                            apply(median_counts_data_3[,-1,1],1,sum)))
+
+colnames(incident_hosp_wide)<- c("Day", "R_0=1.7,median", "R_0=2.1,median", "R_0=2.5,median") 
+
+random_sims<- as.data.frame(cbind(counts_data_1[random_sample_1,1,1],
+                                apply(counts_data_1[random_sample_1,-1,1],1,sum),
+                                apply(counts_data_2[random_sample_2,-1,1],1,sum),
+                                apply(counts_data_3[random_sample_3,-1,1],1,sum)))
+
+colnames(random_sims)<- c("Day","R_0=1.7,Random", "R_0=2.1,Random", "R_0=2.5,Random")
+
+
+incident_hosp_long<- incident_hosp_wide%>%
+  gather(scenario, incident_hosp, "R_0=1.7,median":"R_0=2.5,median", factor_key = TRUE)
+
+random_sims_long<- random_sims%>%
+  gather(scenario, incident_hosp, "R_0=1.7,Random":"R_0=2.5,Random", factor_key=TRUE)
+
+
+hosp_df<- as.data.frame(rbind(incident_hosp_long,random_sims_long))
+
+hosp_df_sep<- hosp_df%>%
+  separate(scenario, into=c("scenario", "summary_stat"), sep=",")%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=299),48))
+
+
+
+plt_hosp_cases<- ggplot(hosp_df_sep)+ 
+  geom_line(aes(y= incident_hosp, x=Day,color=str_wrap(scenario,10),linetype=summary_stat))+
+  #geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
+  labs(title="Incident Hospitalizations Per Day",y="Number of Hospitalizations") +
+  labs(color="Strategy",linetype="Summary Statistic") 
+return(plt_hosp_cases)
+}
+
+f_2_low<- make_fig_2(f_1_low[[2]],f_1_low[[3]],f_1_low[[4]],
+                 counts_array_R0lowA,counts_array_R0lowB,counts_array_R0lowC,
+                 median_counts_array_R0lowA[-300,,],
+                 median_counts_array_R0lowB[-300,,],median_counts_array_R0lowC[-300,,])
+
+f_2_high<- make_fig_2(f_1_high[[2]],f_1_high[[3]],f_1_high[[4]],
+                 counts_array_R0highA,counts_array_R0highB,counts_array_R0highC,
+                 median_counts_array_R0highA[-300,,],
+                 median_counts_array_R0highB[-300,,],median_counts_array_R0highC[-300,,])
+
+```
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE, fig.align="center", fig.cap="Figure 2A."}
+
+plt <- cowplot::plot_grid(f_2_low, labels=c('A'), align = "h", nrow=1)
+print(plt)
+
+```
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE, fig.align="center", fig.cap="Figure 2B."}
+
+plt <- cowplot::plot_grid(f_2_high , labels=c('B'), align = "h", nrow=1)
+print(plt)
+
+```
+
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+
+make_fig_3<- function(random_sample_1,random_sample_2,random_sample_3,
+                      counts_data_1,counts_data_2,counts_data_3,
+                      median_counts_data_1,median_counts_data_2,median_counts_data_3){
+
+
+incident_death_wide<- as.data.frame(cbind(median_counts_data_1[,1,5],
+                            apply(median_counts_data_1[,-1,5],1,sum),
+                            apply(median_counts_data_2[,-1,5],1,sum),
+                            apply(median_counts_data_3[,-1,5],1,sum)))
+
+colnames(incident_death_wide)<- c("Day", "R_0=1.7,median", "R_0=2.1,median", "R_0=2.5,median") 
+
+random_sims<- as.data.frame(cbind(counts_data_1[random_sample_1,1,5],
+                                apply(counts_data_1[random_sample_1,-1,5],1,sum),
+                                apply(counts_data_2[random_sample_2,-1,5],1,sum),
+                                apply(counts_data_3[random_sample_3,-1,5],1,sum)))
+
+colnames(random_sims)<- c("Day","R_0=1.7,Random", "R_0=2.1,Random", "R_0=2.5,Random")
+
+
+incident_death_long<- incident_death_wide%>%
+  gather(scenario, incident_death, "R_0=1.7,median":"R_0=2.5,median", factor_key = TRUE)
+
+random_sims_long<- random_sims%>%
+  gather(scenario, incident_death, "R_0=1.7,Random":"R_0=2.5,Random", factor_key=TRUE)
+
+
+death_df<- as.data.frame(rbind(incident_death_long,random_sims_long))
+
+death_df_sep<- death_df%>%
+  separate(scenario, into=c("scenario", "summary_stat"), sep=",")%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=299),48))
+
+
+
+plt_death_cases<- ggplot(death_df_sep)+ 
+  geom_line(aes(y= incident_death, x=Day,color=str_wrap(scenario,10),linetype=summary_stat))+
+  #geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
+  labs(title="Incident Deaths Per Day",y="Number of Deaths") +
+  labs(color="Strategy",linetype="Summary Statistic") 
+return(plt_death_cases)
+}
+
+f_3_low<- make_fig_3(f_1_low[[2]],f_1_low[[3]],f_1_low[[4]],
+                 counts_array_R0lowA,counts_array_R0lowB,counts_array_R0lowC,
+                 median_counts_array_R0lowA[-300,,],
+                 median_counts_array_R0lowB[-300,,],
+                 median_counts_array_R0lowC[-300,,])
+
+f_3_high<- make_fig_3(f_1_high[[2]],f_1_high[[3]],f_1_high[[4]],
+                 counts_array_R0highA,counts_array_R0highB,counts_array_R0highC,
+                 median_counts_array_R0highA[-300,,],
+                 median_counts_array_R0highB[-300,,],
+                 median_counts_array_R0highC[-300,,])
+
+```
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE, fig.align="center", fig.cap="Figure 3A."}
+
+plt <- cowplot::plot_grid(f_3_low , labels=c('A'), align = "h", nrow=1)
+print(plt)
+
+```
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE, fig.align="center", fig.cap="Figure 3B."}
+
+plt <- cowplot::plot_grid(f_3_high , labels=c('B'), align = "h", nrow=1)
+print(plt)
+
+```
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.align="center", fig.width=6, fig.height=10, fig.cap="Figure 4."}
+
+make_fig_4<- function(random_sample_1,random_sample_2,random_sample_3,
+                      cumulative_median_1,cumulative_median_2,cumulative_median_3,
+                      cumulative_data_1,cumulative_data_2,cumulative_data_3){
+ 
+cumulative_hosp_wide<- as.data.frame(cbind(cumulative_median_1[,1,2],
+                            apply(cumulative_median_1[,-1,2],1,sum),
+                            apply(cumulative_median_2[,-1,2],1,sum),
+                            apply(cumulative_median_3[,-1,2],1,sum)))
+
+colnames(cumulative_hosp_wide)<- c("Day", "R_0=1.7,median", "R_0=2.1,median", "R_0=2.5,median") 
+
+random_sims<- as.data.frame(cbind(cumulative_data_1[random_sample_1,1,2],
+                                apply(cumulative_data_1[random_sample_1,-1,2],1,sum),
+                                apply(cumulative_data_2[random_sample_2,-1,2],1,sum),
+                                apply(cumulative_data_3[random_sample_3,-1,2],1,sum)))
+
+colnames(random_sims)<- c("Day","R_0=1.7,Random", "R_0=2.1,Random", "R_0=2.5,Random")
+
+
+cumulative_hosp_long<- cumulative_hosp_wide%>%
+  gather(scenario, cumulative_hosp, "R_0=1.7,median":"R_0=2.5,median", factor_key = TRUE)
+
+random_sims_long<- random_sims%>%
+  gather(scenario, cumulative_hosp, "R_0=1.7,Random":"R_0=2.5,Random", factor_key=TRUE)
+
+
+cumulative_hosp_df<- as.data.frame(rbind(cumulative_hosp_long,random_sims_long))
+
+cumulative_hosp_df_sep<- cumulative_hosp_df%>%
+  separate(scenario, into=c("scenario", "summary_stat"), sep=",")%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=299),48))
+
+
+
+plt_cumulative_hosp<- ggplot(cumulative_hosp_df_sep)+ 
+  geom_line(aes(y= cumulative_hosp, x=Day,color=str_wrap(scenario,10),linetype=summary_stat))+
+  #geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
+  labs(title="Daily Hospital Bed Use",y="Hospital Beds in Use") +
+  labs(color="Strategy",linetype="Summary Statistic") 
+
+
+
+###########################
+ 
+cumulative_ICU_wide<- as.data.frame(cbind(cumulative_median_1[,1,3],
+                            apply(cumulative_median_1[,-1,3],1,sum),
+                            apply(cumulative_median_2[,-1,3],1,sum),
+                            apply(cumulative_median_3[,-1,3],1,sum)))
+
+colnames(cumulative_ICU_wide)<- c("Day", "R_0=1.7,median", "R_0=2.1,median", "R_0=2.5,median") 
+
+random_sims<- as.data.frame(cbind(cumulative_data_1[random_sample_1,1,3],
+                                apply(cumulative_data_1[random_sample_1,-1,3],1,sum),
+                                apply(cumulative_data_2[random_sample_2,-1,3],1,sum),
+                                apply(cumulative_data_3[random_sample_3,-1,3],1,sum)))
+
+colnames(random_sims)<- c("Day","R_0=1.7,Random", "R_0=2.1,Random", "R_0=2.5,Random")
+
+
+cumulative_ICU_long<- cumulative_ICU_wide%>%
+  gather(scenario, cumulative_ICU, "R_0=1.7,median":"R_0=2.5,median", factor_key = TRUE)
+
+random_sims_long<- random_sims%>%
+  gather(scenario, cumulative_ICU, "R_0=1.7,Random":"R_0=2.5,Random", factor_key=TRUE)
+
+
+cumulative_ICU_df<- as.data.frame(rbind(cumulative_ICU_long,random_sims_long))
+
+cumulative_ICU_df_sep<- cumulative_ICU_df%>%
+  separate(scenario, into=c("scenario", "summary_stat"), sep=",")%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=299),48))
+
+
+
+plt_cumulative_ICU<- ggplot(cumulative_ICU_df_sep)+ 
+  geom_line(aes(y= cumulative_ICU, x=Day,color=str_wrap(scenario,10),linetype=summary_stat))+
+  #geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
+  labs(title="Daily ICU Bed Use",y="ICU Beds in Use") +
+  labs(color="Strategy",linetype="Summary Statistic") 
+
+############################
+ 
+cumulative_vent_wide<- as.data.frame(cbind(cumulative_median_1[,1,4],
+                            apply(cumulative_median_1[,-1,4],1,sum),
+                            apply(cumulative_median_2[,-1,4],1,sum),
+                            apply(cumulative_median_3[,-1,4],1,sum)))
+
+colnames(cumulative_vent_wide)<- c("Day", "R_0=1.7,median", "R_0=2.1,median", "R_0=2.5,median") 
+
+random_sims<- as.data.frame(cbind(cumulative_data_1[random_sample_1,1,4],
+                                apply(cumulative_data_1[random_sample_1,-1,4],1,sum),
+                                apply(cumulative_data_2[random_sample_2,-1,4],1,sum),
+                                apply(cumulative_data_3[random_sample_3,-1,4],1,sum)))
+
+colnames(random_sims)<- c("Day","R_0=1.7,Random", "R_0=2.1,Random", "R_0=2.5,Random")
+
+
+cumulative_vent_long<- cumulative_vent_wide%>%
+  gather(scenario, cumulative_vent, "R_0=1.7,median":"R_0=2.5,median", factor_key = TRUE)
+
+random_sims_long<- random_sims%>%
+  gather(scenario, cumulative_vent, "R_0=1.7,Random":"R_0=2.5,Random", factor_key=TRUE)
+
+
+cumulative_vent_df<- as.data.frame(rbind(cumulative_vent_long,random_sims_long))
+
+cumulative_vent_df_sep<- cumulative_vent_df%>%
+  separate(scenario, into=c("scenario", "summary_stat"), sep=",")%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=299),48))
+
+
+
+plt_cumulative_vent<- ggplot(cumulative_vent_df_sep)+ 
+  geom_line(aes(y= cumulative_vent, x=Day,color=str_wrap(scenario,10),linetype=summary_stat))+
+  #geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
+  labs(title="Daily Vent Use",y="Vents in Use") +
+  labs(color="Strategy",linetype="Summary Statistic") 
+
+return(list(plt_cumulative_hosp,plt_cumulative_ICU,plt_cumulative_vent))
+
+}
+
+f_4_low<- make_fig_4(f_1_low[[2]],f_1_low[[3]],f_1_low[[4]],
+           median_cumulative_array_R0lowA[-300,,],
+           median_cumulative_array_R0lowB[-300,,],median_cumulative_array_R0lowC[-300,,],
+           cumulative_array_R0lowA,cumulative_array_R0lowB,cumulative_array_R0lowC)
+
+f_4_high<- make_fig_4(f_1_high[[2]],f_1_high[[3]],f_1_high[[4]],
+           median_cumulative_array_R0highA[-300,,],
+           median_cumulative_array_R0highB[-300,,],
+           median_cumulative_array_R0highC[-300,,],
+           cumulative_array_R0highA,cumulative_array_R0highB,cumulative_array_R0highC)
+
+```
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE, fig.align="center", fig.dim = c(6,10), fig.cap="Figure 4."}
+
+plt <- cowplot::plot_grid(f_4_low[[1]] , f_4_low[[2]], f_4_low[[3]], labels=c('A','B','C'), align = "h", nrow=3)
+print(plt)
+
+```
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE, fig.align="center",  fig.dim = c(6,10), fig.cap="Figure 5."}
+
+plt <- cowplot::plot_grid(f_4_high[[1]] , f_4_high[[2]], f_4_high[[3]], labels=c('A','B','C'), align = "h", nrow=3)
+print(plt)
+
+```
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.align="center", fig.width=6, fig.height=10, fig.cap="Figure 5."}
+
+make_fig_5<- function(combined_data_1,combined_data_2,combined_data_3,
+                      cumulative_data_1,cumulative_data_2,cumulative_data_3){
+daily_incident_cases<- matrix(NA,nrow(combined_data_1),ncol=4)
+
+daily_incident_cases[,1]<- combined_data_1[,1]
+daily_incident_cases[,2]<- apply(combined_data_1[,-1],1,sum)
+daily_incident_cases[,3]<- apply(combined_data_2[,-1],1,sum)
+daily_incident_cases[,4]<- apply(combined_data_3[,-1],1,sum)
+
+cumulative_cases_symptomatic<- matrix(NA, nrow(daily_incident_cases), ncol(daily_incident_cases))
+cumulative_cases_symptomatic[,1]<- combined_data_1[,1]
+cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==1),]<- 
+  daily_incident_cases[which(daily_incident_cases[,1]==1),]
+for(i in 2:n_days){
+  for(j in 2: ncol(daily_incident_cases)){
+    cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==i),j]<-
+      cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==(i-1)),j]+
+      daily_incident_cases[which(daily_incident_cases[,1]==i),j]
+  }
+  
+}
+
+median_cumulative_cases_symptomatic<- matrix(NA, 299, ncol= 4)
+
+median_cumulative_cases_symptomatic[,1]<- rep(1:299)
+for(i in 1:nrow(median_cumulative_cases_symptomatic)){
+  median_cumulative_cases_symptomatic[i,-1]<- 
+    apply(cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==i),-1],2,median)
+}
+
+cumulative_cases_symptomatic<- as.data.frame(median_cumulative_cases_symptomatic)
+colnames(cumulative_cases_symptomatic)<- c("Day", "Uncontrolled",
+                                          "Mildly restrictive", "Moderately restrictive")
+
+cumulative_cases_symptomatic_long<- cumulative_cases_symptomatic%>%
+  gather(scenario, cumulative_cases, "Uncontrolled": "Moderately restrictive", factor_key = T)%>%
+  mutate(Day= rep(seq(as.Date('2020/02/1'),by="day", length.out = 299),3))
+
+cumulative_symptomatic_cases_plt<- ggplot(cumulative_cases_symptomatic_long)+
+  geom_line(aes(x=Day, y= cumulative_cases, color=scenario))+
+  labs(y="Cumulative Symptomatic Cases", title= "Cumulative Symptomatic Cases",
+       color="Strategy")
+
+#cumulative deaths
+cumulative_deaths<- as.data.frame(cbind(rep(1:nrow(cumulative_data_1[,,5])),
+                    apply(cumulative_data_1[,-1,5],1,sum),
+                    apply(cumulative_data_2[,-1,5],1,sum),
+                    apply(cumulative_data_3[,-1,5],1,sum)))
+
+
+median_cumulative_deaths<- matrix(NA, 299, 4)
+median_cumulative_deaths[,1]<- rep(1:299)
+for(i in 1:299){
+
+    median_cumulative_deaths[i,-1]<- 
+      apply(cumulative_deaths[which(cumulative_deaths[,1]==i),-1],2,median)
+  
+}
+
+median_cumulative_deaths<- as.data.frame(median_cumulative_deaths)
+colnames(median_cumulative_deaths)<- c("Day", "Uncontrolled",
+                                          "Mildly restrictive", "Moderately restrictive")
+
+median_cumulative_deaths_long<- median_cumulative_deaths%>%
+  gather(scenario, cumulative_death, "Uncontrolled": "Moderately restrictive", factor_key = T)%>%
+   mutate(Day= rep(seq(as.Date('2020/02/1'),by="day", length.out = 299),3))
+
+cumulative_deaths_plot<- ggplot(median_cumulative_deaths_long)+
+  geom_line(aes(x=Day, y= cumulative_death, color=scenario))+
+  labs(y= "Cumulative Deaths", title="Cumulative Deaths",color="Strategy")
+
+return(list(cumulative_symptomatic_cases_plt,cumulative_deaths_plot))
+}
+
+#max <- cumulative_cases_symptomatic_long %>% group_by(scenario) %>% dplyr::summarize(max=max(cumulative_cases,na.rm=TRUE)) %>% ungroup
+#max <- median_cumulative_deaths_long %>% group_by(scenario) %>% dplyr::summarize(max=max(cumulative_death,na.rm=TRUE)) %>% ungroup
+
+f_5_low<- make_fig_5(combined_incident_R0lowA,combined_incident_R0lowB,combined_incident_R0lowC,
+                 cumulative_array_R0lowA,cumulative_array_R0lowB,cumulative_array_R0lowC)
+
+f_5_high<- make_fig_5(combined_incident_R0highA,combined_incident_R0highB,combined_incident_R0highC,
+                 cumulative_array_R0highA,cumulative_array_R0highB,cumulative_array_R0highC)
+
+```
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE, fig.align="center", fig.dim = c(6,10), fig.cap="Figure 6."}
+
+plt <- cowplot::plot_grid(f_5_low[[1]] , f_5_low[[2]], labels=c('A','B'), align = "h", nrow=2)
+print(plt)
+
+```
+
+
+```{r,message=FALSE, echo=FALSE, warning=FALSE, fig.align="center",  fig.dim = c(6,10), fig.cap="Figure 7."}
+
+plt <- cowplot::plot_grid(f_5_high[[1]] , f_5_high[[2]], labels=c('A','B'), align = "h", nrow=2)
+print(plt)
+
+```
+
+```{r, include=FALSE, eval=FALSE}
+
+# Figure 5
+cumulative_hosp_R_017<- as.data.frame(cbind(rep(1:nrow(cumulative_array_median_R017_75[,,2])),
+                                        cumulative_array_median_R017_75[,,2]))
+
+
+colnames(cumulative_hosp_R_017)<- c('Day', "Age0-19",
+                                      "Age20-34", "Age35-59", "Age60-74", "Age75+",
+                                      "HCW", "Homeless")
+
+cumulative_hosp_R_017_long<- gather(cumulative_hosp_R_017, age_group, cumulative_hosp,
+                                      "Age0-19":"Homeless",factor_key=TRUE)
+
+cumulative_hosp_R_017_long<- cumulative_hosp_R_017_long%>%
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
+                      length.out=nrow(cumulative_array_median_R017_75[,,5])),times=7))
+
+
+plt_cumulative_hosp_by_R_017<- ggplot(cumulative_hosp_R_017_long)+
+  geom_line(aes(x=Day,y=cumulative_hosp,color=age_group))+
+  labs(y="Number of hospital beds in use per day", title="Low transmission") + ylim(0,360) + labs(color="Age group")
+
+plt_A<-plt_cumulative_hosp_by_R_017
+
+cumulative_hosp_R_021<- as.data.frame(cbind(rep(1:nrow(cumulative_array_median_R021_75[,,2])),
+                                        cumulative_array_median_R021_75[,,2]))
+
+
+colnames(cumulative_hosp_R_021)<- c('Day', "Age0-19",
+                                      "Age20-34", "Age35-59", "Age60-74", "Age75+",
+                                      "HCW", "Homeless")
+
+cumulative_hosp_R_021_long<- gather(cumulative_hosp_R_021, age_group, cumulative_hosp,
+                                      "Age0-19":"Homeless",factor_key=TRUE)
+
+cumulative_hosp_R_021_long<- cumulative_hosp_R_021_long%>%
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
+                      length.out=nrow(cumulative_array_median_R017_75[,,5])),times=7))
+
+
+
+plt_cumulative_hosp_by_R_021<- ggplot(cumulative_hosp_R_021_long)+
+  geom_line(aes(x=Day,y=cumulative_hosp,color=age_group))+
+  labs(y="Number of hospital beds in use per day", title="Moderate transmission") + ylim(0,360) + labs(color="Age group")
+
+plt_B<-plt_cumulative_hosp_by_R_021
+
+cumulative_hosp_R_025<- as.data.frame(cbind(rep(1:nrow(cumulative_array_median_R025_75[,,2])),
+                                        cumulative_array_median_R025_75[,,2]))
+
+
+colnames(cumulative_hosp_R_025)<- c('Day', "Age0-19",
+                                      "Age20-34", "Age35-59", "Age60-74", "Age75+",
+                                      "HCW", "Homeless")
+
+cumulative_hosp_R_025_long<- gather(cumulative_hosp_R_025, age_group, cumulative_hosp,
+                                      "Age0-19":"Homeless",factor_key=TRUE)
+
+cumulative_hosp_R_025_long<- cumulative_hosp_R_025_long%>%
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
+                      length.out=nrow(cumulative_array_median_R017_75[,,5])),times=7))
+
+
+plt_cumulative_hosp_by_R_025<- ggplot(cumulative_hosp_R_025_long)+
+  geom_line(aes(x=Day,y=cumulative_hosp,color=age_group))+
+  labs(y="Number of hospital beds in use per day", title="High transmission") + ylim(0,360) + labs(color="Age group")
+
+plt_C<-plt_cumulative_hosp_by_R_025
+
+############
+cumulative_ICU_R_017<- as.data.frame(cbind(rep(1:nrow(cumulative_array_median_R017_75[,,3])),
+                                        cumulative_array_median_R017_75[,,3]))
+
+
+colnames(cumulative_ICU_R_017)<- c('Day', "Age0-19",
+                                      "Age20-34", "Age35-59", "Age60-74", "Age75+",
+                                      "HCW", "Homeless")
+
+cumulative_ICU_R_017_long<- gather(cumulative_ICU_R_017, age_group, cumulative_ICU,
+                                      "Age0-19":"Homeless",factor_key=TRUE)
+
+cumulative_ICU_R_017_long<- cumulative_ICU_R_017_long%>%
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
+                      length.out=nrow(cumulative_array_median_R017_75[,,5])),times=7))
+
+
+plt_cumulative_ICU_by_R_017<- ggplot(cumulative_ICU_R_017_long)+
+  geom_line(aes(x=Day,y=cumulative_ICU,color=age_group))+
+  labs(y="Number of ICU beds in use per day", title="Low transmission") + ylim(0,200) + labs(color="Age group")
+
+plt_D<-plt_cumulative_ICU_by_R_017
+
+cumulative_ICU_R_021<- as.data.frame(cbind(rep(1:nrow(cumulative_array_median_R021_75[,,3])),
+                                        cumulative_array_median_R021_75[,,3]))
+
+
+colnames(cumulative_ICU_R_021)<- c('Day', "Age0-19",
+                                      "Age20-34", "Age35-59", "Age60-74", "Age75+",
+                                      "HCW", "Homeless")
+
+cumulative_ICU_R_021_long<- gather(cumulative_ICU_R_021, age_group, cumulative_ICU,
+                                      "Age0-19":"Homeless",factor_key=TRUE)
+
+
+cumulative_ICU_R_021_long<- cumulative_ICU_R_021_long%>%
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
+                      length.out=nrow(cumulative_array_median_R017_75[,,5])),times=7))
+
+
+plt_cumulative_ICU_by_R_021<- ggplot(cumulative_ICU_R_021_long)+
+  geom_line(aes(x=Day,y=cumulative_ICU,color=age_group))+
+  labs(y="Number of ICU beds in use per day", title="Moderate transmission") + ylim(0,200) + labs(color="Age group")
+
+plt_E<-plt_cumulative_ICU_by_R_021
+
+
+cumulative_ICU_R_025<- as.data.frame(cbind(rep(1:nrow(cumulative_array_median_R025_75[,,3])),
+                                        cumulative_array_median_R025_75[,,3]))
+
+
+colnames(cumulative_ICU_R_025)<- c('Day', "Age0-19",
+                                      "Age20-34", "Age35-59", "Age60-74", "Age75+",
+                                      "HCW", "Homeless")
+
+cumulative_ICU_R_025_long<- gather(cumulative_ICU_R_025, age_group, cumulative_ICU,
+                                      "Age0-19":"Homeless",factor_key=TRUE)
+
+
+cumulative_ICU_R_025_long<- cumulative_ICU_R_025_long%>%
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
+                      length.out=nrow(cumulative_array_median_R017_75[,,5])),times=7))
+
+
+plt_cumulative_ICU_by_R_025<- ggplot(cumulative_ICU_R_025_long)+
+  geom_line(aes(x=Day,y=cumulative_ICU,color=age_group))+
+  labs(y="Number of ICU beds in use per day", title="High transmission") + ylim(0,200) + labs(color="Age group")
+
+plt_F<-plt_cumulative_ICU_by_R_025
+##################
+
+cumulative_vent_R_017<- as.data.frame(cbind(rep(1:nrow(cumulative_array_median_R017_75[,,4])),
+                                        cumulative_array_median_R017_75[,,4]))
+
+
+colnames(cumulative_vent_R_017)<- c('Day', "Age0-19",
+                                      "Age20-34", "Age35-59", "Age60-74", "Age75+",
+                                      "HCW", "Homeless")
+
+cumulative_vent_R_017_long<- gather(cumulative_vent_R_017, age_group, cumulative_vent,
+                                      "Age0-19":"Homeless",factor_key=TRUE)
+
+
+cumulative_vent_R_017_long<- cumulative_vent_R_017_long%>%
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
+                      length.out=nrow(cumulative_array_median_R017_75[,,5])),times=7))
+
+
+plt_cumulative_vent_by_R_017<- ggplot(cumulative_vent_R_017_long)+
+  geom_line(aes(x=Day,y=cumulative_vent,color=age_group))+
+  labs(y="Number of vents in use per day", title="Low transmission") + ylim(0,150) + labs(color="Age group")
+
+plt_G <-plt_cumulative_vent_by_R_017
+
+cumulative_vent_R_021<- as.data.frame(cbind(rep(1:nrow(cumulative_array_median_R021_75[,,4])),
+                                        cumulative_array_median_R021_75[,,4]))
+
+
+colnames(cumulative_vent_R_021)<- c('Day', "Age0-19",
+                                      "Age20-34", "Age35-59", "Age60-74", "Age75+",
+                                      "HCW", "Homeless")
+
+cumulative_vent_R_021_long<- gather(cumulative_vent_R_021, age_group, cumulative_vent,
+                                      "Age0-19":"Homeless",factor_key=TRUE)
+cumulative_vent_R_021_long<- cumulative_vent_R_021_long%>%
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
+                      length.out=nrow(cumulative_array_median_R017_75[,,5])),times=7))
+
+plt_cumulative_vent_by_R_021<- ggplot(cumulative_vent_R_021_long)+
+  geom_line(aes(x=Day,y=cumulative_vent,color=age_group))+
+  labs(y="Number of vents in use per day", title="Moderate transmission") + ylim(0,150) + labs(color="Age group")
+
+plt_H <-plt_cumulative_vent_by_R_021
+
+cumulative_vent_R_025<- as.data.frame(cbind(rep(1:nrow(cumulative_array_median_R025_75[,,4])),
+                                        cumulative_array_median_R025_75[,,4]))
+
+
+colnames(cumulative_vent_R_025)<- c('Day', "Age0-19",
+                                      "Age20-34", "Age35-59", "Age60-74", "Age75+",
+                                      "HCW", "Homeless")
+
+cumulative_vent_R_025_long<- gather(cumulative_vent_R_025, age_group, cumulative_vent,
+                                      "Age0-19":"Homeless",factor_key=TRUE)
+cumulative_vent_R_025_long<- cumulative_vent_R_025_long%>%
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by='day', 
+                      length.out=nrow(cumulative_array_median_R017_75[,,5])),times=7))
+
+
+plt_cumulative_vent_by_R_025<- ggplot(cumulative_vent_R_025_long)+
+  geom_line(aes(x=Day,y=cumulative_vent,color=age_group))+
+  labs(y="Number of vents in use per day", title="High transmission") + ylim(0,150) + labs(color="Age group")
+
+plt_I <- plt_cumulative_vent_by_R_025
+
+fig_nums(name = paste0("fig-five"), caption = paste("A,B,C. Plots of daily hospital beds needed by transmission scenario and population category. D,E,F. Plots of daily ICU beds needed by transmission scenario and population category. G,H,I. Plots of daily ventilators needed by transmission scenario and population category."), display = "false")
+
+plt <- cowplot::plot_grid(plt_A, plt_B, plt_C, plt_D, plt_E, plt_F, plt_G, plt_H, plt_I, labels=c('A', 'B','C','D','E','F','G','H','I'), align = "h", nrow=3)
+print(plt)
+```
+
+
+```{r, cache=FALSE, warning=FALSE, echo=TRUE, message=FALSE}
+#surplus figure: 
+#how much are we over the available hospital bed, ICU bed, ventilator bed capacity each day?
+make_figure_6<- function(cumulative_median_1,cumulative_median_2, cumulative_median_3,
+                         max_hosp_bed, max_ICU_bed, max_vent){
+ 
+  
+   
+cumulative_hosp_wide<- as.data.frame(cbind(cumulative_median_1[,1,2],
+                            apply(cumulative_median_1[,-1,2],1,sum)-max_hosp_bed,
+                            apply(cumulative_median_2[,-1,2],1,sum)-max_hosp_bed,
+                            apply(cumulative_median_3[,-1,2],1,sum)-max_hosp_bed))
+
+
+colnames(cumulative_hosp_wide)<- c("Day", "R_0=1.7,median", "R_0=2.1,median", "R_0=2.5,median") 
+
+
+
+cumulative_hosp_long<- cumulative_hosp_wide%>%
+  gather(scenario, cumulative_hosp, "R_0=1.7,median":"R_0=2.5,median", factor_key = TRUE)
+
+cumulative_hosp_df<- as.data.frame(cumulative_hosp_long)
+
+cumulative_hosp_df_sep<- cumulative_hosp_df%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7,median", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1,median", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=300),3))%>%
+  mutate(cumulative_hosp=ifelse(cumulative_hosp < 0,0,cumulative_hosp))
+
+
+
+plt_cumulative_hosp<- ggplot(cumulative_hosp_df_sep)+ 
+  geom_line(aes(y= cumulative_hosp, x=Day,color=scenario))+
+  #geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
+  labs(title="Daily Hospital Bed Needs Over Maximum Number Avialbale",y="Number Hospital Beds Needed Over the Maximum Number Available") +
+  labs(color="Strategy") 
+
+  
+cumulative_ICU_wide<- as.data.frame(cbind(cumulative_median_1[,1,3],
+                            apply(cumulative_median_1[,-1,3],1,sum)-max_ICU_bed,
+                            apply(cumulative_median_2[,-1,3],1,sum)-max_ICU_bed,
+                            apply(cumulative_median_3[,-1,3],1,sum)-max_ICU_bed))
+
+
+colnames(cumulative_ICU_wide)<- c("Day", "R_0=1.7,median", "R_0=2.1,median", "R_0=2.5,median") 
+
+
+
+cumulative_ICU_long<- cumulative_ICU_wide%>%
+  gather(scenario, cumulative_ICU, "R_0=1.7,median":"R_0=2.5,median", factor_key = TRUE)
+
+cumulative_ICU_df<- as.data.frame(cumulative_ICU_long)
+
+cumulative_ICU_df_sep<- cumulative_ICU_df%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7,median", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1,median", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=300),3))%>%
+  mutate(cumulative_ICU=ifelse(cumulative_ICU<0,0,cumulative_ICU))
+
+
+
+plt_cumulative_ICU<- ggplot(cumulative_ICU_df_sep)+ 
+  geom_line(aes(y= cumulative_ICU, x=Day,color=scenario))+
+  #geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
+  labs(title="Daily ICU Bed Needs Over Maximum Number Avialbale",y="Number Vents Needed Over the Maximum Number Available") +
+  labs(color="Strategy",linetype="Summary Statistic") 
+
+    
+cumulative_vent_wide<- as.data.frame(cbind(cumulative_median_1[,1,4],
+                            apply(cumulative_median_1[,-1,4],1,sum)-max_vent,
+                            apply(cumulative_median_2[,-1,4],1,sum)-max_vent,
+                            apply(cumulative_median_3[,-1,4],1,sum)-max_vent))
+
+
+colnames(cumulative_vent_wide)<- c("Day", "R_0=1.7,median", "R_0=2.1,median", "R_0=2.5,median") 
+
+
+
+cumulative_vent_long<- cumulative_vent_wide%>%
+  gather(scenario, cumulative_vent, "R_0=1.7,median":"R_0=2.5,median", factor_key = TRUE)
+
+cumulative_vent_df<- as.data.frame(cumulative_vent_long)
+
+cumulative_vent_df_sep<- cumulative_vent_df%>%
+  mutate(scenario=ifelse(scenario=="R_0=1.7,median", "Uncontrolled",
+                         ifelse(scenario=="R_0=2.1,median", "Mildly restrictive", 
+                                "Moderately restrictive")))%>%
+  mutate(Day=rep(seq(as.Date('2020/02/1'),by='day',length.out=300),3))%>%
+  mutate(cumulative_vent=ifelse(cumulative_vent<0,0,cumulative_vent))
+
+
+
+plt_cumulative_vent<- ggplot(cumulative_vent_df_sep)+ 
+  geom_line(aes(y= cumulative_vent, x=Day,color=scenario))+
+  #geom_ribbon(aes(ymax=upper,ymin=lower,x=Day,fill=scenario), alpha=.5) +
+  labs(title="Daily Vent Needs Over Maximum Number Avialbale",y="Number Vents Needed Over the Maximum Number Available") +
+  labs(color="Strategy",linetype="Summary Statistic") 
+
+return(list(plt_cumulative_hosp,plt_cumulative_ICU,plt_cumulative_vent))
+
+  
+    }
+
+low_fig_6<- make_figure_6(median_cumulative_array_R0lowA,median_cumulative_array_R0lowB,
+                          median_cumulative_array_R0lowC,6000,600,60)
+
+low_fig_6[[1]]
+low_fig_6[[2]]
+low_fig_6[[3]]
+
+high_fig_6<- make_figure_6(median_cumulative_array_R0highA,median_cumulative_array_R0highB,median_cumulative_array_R0highC,6000,600,60)
+high_fig_6[[1]]
+high_fig_6[[2]]
+high_fig_6[[3]]
+```
