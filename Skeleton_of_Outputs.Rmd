@@ -185,7 +185,7 @@ Compute a running total of each category.
 ```{r,message=FALSE, warning=FALSE, echo=TRUE}
 #for now we are supposing we get a point estimate to determine how long people stay in each of the states. 
 
-length_of_stay<- c(NA,11,11,11,NA)
+length_of_stay<- c(NA,12,8,11,NA)
 
 #now we want a running total of how many severe cases, hospitalizations, ICU, vents, and deaths are occuring we are keeping people in hospital, or ICU, or on a vent for 11 days (i.e. fixed point estimate, this can be adapted to be a distribution). We do this for each day in each of the 500 sims, we will compute summary statistics seperately. 
 cumulative_counts<- function(data, R0val){
