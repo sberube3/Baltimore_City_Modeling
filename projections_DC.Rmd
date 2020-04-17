@@ -53,16 +53,12 @@ In this document, we show the three potential transmission scenarios for plannin
 ```{r, message=FALSE, echo=TRUE, warning=FALSE}
 
 ##load data
-setwd("~/Dropbox/Postdoc/COVID19/COVID-BaltimoreCity/Output_20200322_v2")
-complete_R017<- read.csv("SEIR_results__n500__r017__75.csv")
-complete_R021<- read.csv("SEIR_results__n500__r021__75.csv")
-complete_R025<- read.csv("SEIR_results__n500__r025__75.csv")
+setwd("~/Dropbox/Postdoc/COVID19/COVID-BaltimoreCity/output_20200405")
+complete_R017<- read.csv("scenario1A_lowR0_uncontrolled.csv")
+complete_R021<- read.csv("scenario1B_lowR0_MildDistancing.csv")
+complete_R025<- read.csv("scenario1C_lowR0_ModDistancing.csv")
 
 ##load_and_clean function to concatenate age categories
-complete_R017<- complete_R017[-182501,]
-complete_R021<- complete_R021[-182501,]
-complete_R025<- complete_R025[-182501,]
-
 load_and_clean<- function(data, r0val){
   complete_incident_r0val<- data%>%
     select(time,incid_I1,incid_I2,incid_I3,incid_I4,incid_I5,
@@ -83,7 +79,6 @@ load_and_clean<- function(data, r0val){
   
   return(combined_incident_r0val)
 }
-
 ##run the function on each transmission scenario
 combined_incident_R017<- load_and_clean(complete_R017,R017)  
 combined_incident_R021<- load_and_clean(complete_R021,R021)  
@@ -122,6 +117,8 @@ prob_dead_from_vent<- c(0,0.33,0.25,0.692,1.27,0.25,0.25)
 prob_matrix<- cbind(prob_severe,prob_hospitalized,prob_ICU,prob_dead_from_icu,
                      prob_vent_icu,prob_dead_from_vent)
 
+n_days <- 300
+
 ```
 
  -------------------------------
@@ -145,7 +142,7 @@ incident_classifications<- function(data, complete_data, R0val){
   
 for(i in 2:ncol(data)){
   
-  for(j in 1:365){
+  for(j in 1:n_days){
     if(j<=4){
 counts_array_R0val[which(complete_data$time==j),i,1]<- 
       data[complete_data$time==j,i,1]*prob_matrix[i-1,1]
@@ -159,7 +156,7 @@ counts_array_R0val[which(complete_data$time==j),i,1]<-
   }  
  counts_array_R0val[,i,2]<- counts_array_R0val[,i,1]*prob_matrix[i-1,2] 
  
-for(k in 1:365){
+for(k in 1:n_days){
      if(k<=4){      
 counts_array_R0val[which(complete_data$time==k),i,3]<- 
       counts_array_R0val[which(complete_data$time==k),i,2]*prob_matrix[i-1,3]
@@ -170,7 +167,7 @@ counts_array_R0val[which(complete_data$time==k),i,3]<-
   }
 }
  
- for(l in 1:365){
+ for(l in 1:n_days){
         if(l<=3){
 counts_array_R0val[which(complete_data$time==l),i,4]<- 
       counts_array_R0val[which(complete_data$time==(l)),i,3]*prob_matrix[i-1,5] 
@@ -181,19 +178,19 @@ counts_array_R0val[which(complete_data$time==l),i,4]<-
    }
  }
  
- for(m in 1:365){
-   if(m<=5){
+ for(m in 1:n_days){
+   if(m<=5){ ##this is time spent on a ventilator until death ##change 5 here (rounded up from 4.5 days)
      counts_array_R0val[which(complete_data$time==m),i,5]<- 
       (counts_array_R0val[which(complete_data$time==(m)),i,3]*prob_matrix[i-1,4])+(counts_array_R0val[which(complete_data$time==(m)),i,4]*prob_matrix[i-1,6])
    }
    
- else if(m>5&m<=8){
+ else if(m>5&m<=8){ ##you need to also change the 5 here to adjust the time spent on a ventilator until death; the 8 here represents the time spent in ICU until death - if you change this you need to also change the 8 below in line 193
    counts_array_R0val[which(complete_data$time==m),i,5]<- 
-      (counts_array_R0val[which(complete_data$time==(m)),i,3]*prob_matrix[i-1,4])+(counts_array_R0val[which(complete_data$time==(m-5)),i,4]*prob_matrix[i-1,6])
+      (counts_array_R0val[which(complete_data$time==(m)),i,3]*prob_matrix[i-1,4])+(counts_array_R0val[which(complete_data$time==(m-5)),i,4]*prob_matrix[i-1,6]) ##and you need to change the 5 here to adjust days spent on ventilator until death
  }
  else{
    counts_array_R0val[which(complete_data$time==m),i,5]<- 
-      (counts_array_R0val[which(complete_data$time==(m-8)),i,3]*prob_matrix[i-1,4])+(counts_array_R0val[which(complete_data$time==(m-5)),i,4]*prob_matrix[i-1,6])
+      (counts_array_R0val[which(complete_data$time==(m-8)),i,3]*prob_matrix[i-1,4])+(counts_array_R0val[which(complete_data$time==(m-5)),i,4]*prob_matrix[i-1,6]) ##and you need to change the 5 here to adjust days spent on ventilator until death
  }
  }
 }
@@ -226,7 +223,7 @@ cumulative_counts<- function(data, R0val){
     cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==1),j,]<-
       data[which(data[,1,1]==1),j,]
     
-    for(i in 2:365){
+    for(i in 2:n_days){
       cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==i),j,1]<-
         cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(i-1)),j,1]+
         data[which(data[,1,1]==i),j,1]
@@ -235,7 +232,7 @@ cumulative_counts<- function(data, R0val){
         data[which(data[,1,1]==i),j,5]
     }
 
-    for(k in 2:365){
+    for(k in 2:n_days){
       if(k<=length_of_stay[2]){
       cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==k),j,2]<-
         cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(k-1)),j,2]+
@@ -247,7 +244,7 @@ cumulative_counts<- function(data, R0val){
           data[which(data[,1,1]==k),j,2]-data[which(data[,1,1]==(k-length_of_stay[2])),j,2]
       }
     }
-  for(l in 2:365){
+  for(l in 2:n_days){
       if(l <= length_of_stay[3]){
         cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==l),j,3]<-
           cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(l-1)),j,3]+
@@ -259,7 +256,7 @@ cumulative_counts<- function(data, R0val){
           data[which(data[,1,1]==l),j,3]-data[which(data[,1,1]==(l-length_of_stay[3])),j,3]
     }
   }
-    for(m in 2:365){
+    for(m in 2:n_days){
     if(m<=length_of_stay[4]){
       cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==m),j,4]<-
         cumulative_array_R0val[which(cumulative_array_R0val[,1,1]==(m-1)),j,4]+
@@ -294,20 +291,20 @@ Here it is possible to improve uncertainty estimation methods and use bootstrapp
 ```{r, message=FALSE, warning-FALSE, echo=TRUE}
 
 median_incident_symptomatic<- function(data, R0val){
-  median_incident_combined_R0val<- matrix(NA,365,ncol(data))
+  median_incident_combined_R0val<- matrix(NA,n_days,ncol(data))
 
     for(i in 1:nrow(median_incident_combined_R0val)){
       median_incident_combined_R0val[i,]<-
         apply(data[which(data[,1]==i),],2,median)
     }
-  upper_incident_combined_R0val<- matrix(NA,365,ncol(data))
+  upper_incident_combined_R0val<- matrix(NA,n_days,ncol(data))
 
     for(i in 1:nrow(upper_incident_combined_R0val)){
       upper_incident_combined_R0val[i,]<-
         apply(data[which(data[,1]==i),],2,quantile, probs=(0.75), na.rm=TRUE)
     }
   
-  lower_incident_combined_R0val<- matrix(NA,365,ncol(data))
+  lower_incident_combined_R0val<- matrix(NA,n_days,ncol(data))
 
     for(i in 1:nrow(lower_incident_combined_R0val)){
       lower_incident_combined_R0val[i,]<-
@@ -338,7 +335,7 @@ lower_incident_symptomatic_R025<- incident_symptomatic_R025[[3]]
 ####################################################################
 
 median_counts_array<- function(data, R0val){
-  median_counts_array<- array(NA, dim=c(365,dim(data)[2], dim(data)[3]))
+  median_counts_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
   
   for(i in 1:dim(median_counts_array)[3]){
     for(j in 1:dim(median_counts_array)[1]){
@@ -346,7 +343,7 @@ median_counts_array<- function(data, R0val){
     }
   }
  
-   upper_counts_array<- array(NA, dim=c(365,dim(data)[2], dim(data)[3]))
+   upper_counts_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
   
   for(i in 1:dim(upper_counts_array)[3]){
     for(j in 1:dim(upper_counts_array)[1]){
@@ -354,7 +351,7 @@ median_counts_array<- function(data, R0val){
     }
   } 
    
-    lower_counts_array<- array(NA, dim=c(365,dim(data)[2], dim(data)[3]))
+    lower_counts_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
   
   for(i in 1:dim(lower_counts_array)[3]){
     for(j in 1:dim(lower_counts_array)[1]){
@@ -382,7 +379,7 @@ lower_counts_array_R025<- summary_counts_array_R025[[3]]
 ########################################
 
 median_cumulative_array<- function(data, R0val){
-  median_cumulative_array<- array(NA, dim=c(365,dim(data)[2], dim(data)[3]))
+  median_cumulative_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
   
   for(i in 1:dim(median_cumulative_array)[3]){
     for(j in 1:dim(median_cumulative_array)[1]){
@@ -390,7 +387,7 @@ median_cumulative_array<- function(data, R0val){
     }
   }
  
-   upper_cumulative_array<- array(NA, dim=c(365,dim(data)[2], dim(data)[3]))
+   upper_cumulative_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
   
   for(i in 1:dim(upper_cumulative_array)[3]){
     for(j in 1:dim(upper_cumulative_array)[1]){
@@ -398,7 +395,7 @@ median_cumulative_array<- function(data, R0val){
     }
   } 
    
-    lower_cumulative_array<- array(NA, dim=c(365,dim(data)[2], dim(data)[3]))
+    lower_cumulative_array<- array(NA, dim=c(n_days,dim(data)[2], dim(data)[3]))
   
   for(i in 1:dim(lower_cumulative_array)[3]){
     for(j in 1:dim(lower_cumulative_array)[1]){
@@ -480,7 +477,7 @@ symptomatic_df_sep<- symptomatic_df%>%
   mutate(scenario=ifelse(scenario=="R_0=1.7", "Low Transmission",
                          ifelse(scenario=="R_0=2.1", "Moderate Transmission", 
                                 "High Transmission")))%>%
-  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=365),48))
+  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=n_days),48))
 
 
 
@@ -540,7 +537,7 @@ hosp_df_sep<- hosp_df%>%
   mutate(scenario=ifelse(scenario=="R_0=1.7", "Low Transmission",
                          ifelse(scenario=="R_0=2.1", "Moderate Transmission", 
                                 "High Transmission")))%>%
-  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=365),48))
+  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=n_days),48))
 
 
 
@@ -598,7 +595,7 @@ death_df_sep<- death_df%>%
   mutate(scenario=ifelse(scenario=="R_0=1.7", "Low Transmission",
                          ifelse(scenario=="R_0=2.1", "Moderate Transmission", 
                                 "High Transmission")))%>%
-  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=365),48))
+  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=n_days),48))
 
 
 
@@ -657,7 +654,7 @@ cumulative_hosp_df_sep<- cumulative_hosp_df%>%
   mutate(scenario=ifelse(scenario=="R_0=1.7", "Low Transmission",
                          ifelse(scenario=="R_0=2.1", "Moderate Transmission", 
                                 "High Transmission")))%>%
-  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=365),48))
+  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=n_days),48))
 
 
 
@@ -700,7 +697,7 @@ cumulative_ICU_df_sep<- cumulative_ICU_df%>%
   mutate(scenario=ifelse(scenario=="R_0=1.7", "Low Transmission",
                          ifelse(scenario=="R_0=2.1", "Moderate Transmission", 
                                 "High Transmission")))%>%
-  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=365),48))
+  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=n_days),48))
 
 
 
@@ -741,7 +738,7 @@ cumulative_vent_df_sep<- cumulative_vent_df%>%
   mutate(scenario=ifelse(scenario=="R_0=1.7", "Low Transmission",
                          ifelse(scenario=="R_0=2.1", "Moderate Transmission", 
                                 "High Transmission")))%>%
-  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=365),48))
+  mutate(Day=rep(seq(as.Date('2020/03/1'),by='day',length.out=n_days),48))
 
 
 
@@ -784,7 +781,7 @@ cumulative_cases_symptomatic<- matrix(NA, nrow(daily_incident_cases), ncol(daily
 cumulative_cases_symptomatic[,1]<- combined_data_1[,1]
 cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==1),]<- 
   daily_incident_cases[which(daily_incident_cases[,1]==1),]
-for(i in 2:365){
+for(i in 2:n_days){
   for(j in 2: ncol(daily_incident_cases)){
     cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==i),j]<-
       cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==(i-1)),j]+
@@ -793,9 +790,9 @@ for(i in 2:365){
   
 }
 
-median_cumulative_cases_symptomatic<- matrix(NA, 365, ncol= 4)
+median_cumulative_cases_symptomatic<- matrix(NA, n_days, ncol= 4)
 
-median_cumulative_cases_symptomatic[,1]<- rep(1:365)
+median_cumulative_cases_symptomatic[,1]<- rep(1:n_days)
 for(i in 1:nrow(median_cumulative_cases_symptomatic)){
   median_cumulative_cases_symptomatic[i,-1]<- 
     apply(cumulative_cases_symptomatic[which(cumulative_cases_symptomatic[,1]==i),-1],2,median)
@@ -807,7 +804,7 @@ colnames(cumulative_cases_symptomatic)<- c("Day", "Low Transmission",
 
 cumulative_cases_symptomatic_long<- cumulative_cases_symptomatic%>%
   gather(scenario, cumulative_cases, "Low Transmission": "High Transmission", factor_key = T)%>%
-  mutate(Day= rep(seq(as.Date('2020/03/1'),by="day", length.out = 365),3))
+  mutate(Day= rep(seq(as.Date('2020/03/1'),by="day", length.out = n_days),3))
 
 
 
@@ -823,8 +820,8 @@ cumulative_deaths<- as.data.frame(cbind(rep(1:nrow(cumulative_data_1[,,5])),
                     apply(cumulative_data_3[,-1,5],1,sum)))
 
 
-median_cumulative_deaths<- matrix(NA, 365, 4)
-median_cumulative_deaths[,1]<- rep(1:365)
+median_cumulative_deaths<- matrix(NA, n_days, 4)
+median_cumulative_deaths[,1]<- rep(1:n_days)
 for(i in 1:nrow(median_cumulative_deaths)){
 
     median_cumulative_deaths[i,-1]<- 
@@ -839,7 +836,7 @@ median_cumulative_deaths<- as.data.frame(median_cumulative_deaths)
 
 median_cumulative_deaths_long<- median_cumulative_deaths%>%
   gather(scenario, cumulative_death, "Low Transmission": "High Transmission", factor_key = T)%>%
-   mutate(Day= rep(seq(as.Date('2020/03/1'),by="day", length.out = 365),3))
+   mutate(Day= rep(seq(as.Date('2020/03/1'),by="day", length.out = n_days),3))
 
 
 cumulative_deaths_plot<- ggplot(median_cumulative_deaths_long)+
