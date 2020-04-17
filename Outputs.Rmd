@@ -112,7 +112,7 @@ combined_incident_C<- load_and_clean(complete_scenarioC,C)[[1]]
 combined_incident_D<- load_and_clean(complete_scenarioD,D)[[1]]  
 combined_incident_E<- load_and_clean(complete_scenarioE,E)[[1]] 
 
-#to get incident asymptomatic cases
+#to get incident asymptomatic + symptomatic cases
 combined_incident_asymp_A<- load_and_clean(complete_scenarioA,A)[[2]]  
 combined_incident_asymp_B<- load_and_clean(complete_scenarioB,B)[[2]]   
 combined_incident_asymp_C<- load_and_clean(complete_scenarioC,C)[[2]]   
