@@ -173,7 +173,7 @@ return(counts_array_R0val)
 
 }
 
-counts_array_R017<- incident_classifications(combined_incident_R017,complete_R017,R017)
+counts_array_R017<- incident_classifications(trimcombined_incident_R017,complete_R017,R017)
 counts_array_R021<- incident_classifications(combined_incident_R021,complete_R021,R021)
 counts_array_R025<- incident_classifications(combined_incident_R025,complete_R025,R025)
 
