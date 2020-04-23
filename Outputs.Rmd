@@ -125,6 +125,13 @@ prob_matrix<- cbind(prob_severe,prob_hospitalized,prob_ICU,prob_dead_from_icu,
 n_days <- 300
 ```
 
+```{r, cache=FALSE, message=FALSE, echo=TRUE, warning=FALSE}
+#subset
+
+
+
+```
+
 
 ```{r, message=FALSE, echo=FALSE, warning=FALSE}
 
@@ -193,12 +200,12 @@ return(counts_array_R0val)
 
 }
 
-counts_array_R0lowA<- incident_classifications(combined_incident_R0lowA,complete_scenario1A,R0lowA)
-counts_array_R0lowB<- incident_classifications(combined_incident_R0lowB,complete_scenario1B,R0lowB)
-counts_array_R0lowC<- incident_classifications(combined_incident_R0lowC,complete_scenario1C,R0lowC)
-counts_array_R0highA<- incident_classifications(combined_incident_R0highA,complete_scenario2A,R0highA)
-counts_array_R0highB<- incident_classifications(combined_incident_R0highB,complete_scenario2B,R0highB)
-counts_array_R0highC<- incident_classifications(combined_incident_R0highC,complete_scenario2C,R0highC)
+counts_array_R0lowA<- incident_classifications( combined_incident_R0lowA, complete_R0lowA,R0lowA)
+counts_array_R0lowB<- incident_classifications( combined_incident_R0lowB, complete_R0lowB,R0lowB)
+counts_array_R0lowC<- incident_classifications( combined_incident_R0lowC, complete_R0lowC,R0lowC)
+counts_array_R0highA<- incident_classifications( combined_incident_R0highA, complete_R0highA,R0highA)
+counts_array_R0highB<- incident_classifications( combined_incident_R0highB, complete_R0highB,R0highB)
+counts_array_R0highC<- incident_classifications( combined_incident_R0highC, complete_R0highC,R0highC)
 
 ```
 
@@ -467,9 +474,9 @@ lower_cumulative_array_R0highC<- summary_cumulative_array_R0highC[[3]]
 make_fig_1<- function(complete_data_1,complete_data_2,complete_data_3,
                       median_data_1,median_data_2,median_data_3,
                       combined_data_1,combined_data_2,combined_data_3){
-random_sample_R017<- which(complete_data_1$run_index%in%sample(rep(1:500),15,replace=F))
-random_sample_R021<- which(complete_data_2$run_index%in%sample(rep(1:500), 15, replace=F))
-random_sample_R025<- which(complete_data_3$run_index%in%sample(rep(1:500), 15, replace = F))
+random_sample_R017<- which(complete_data_1$run_index%in%sample(rep(1:50),15,replace=F))
+random_sample_R021<- which(complete_data_2$run_index%in%sample(rep(1:50), 15, replace=F))
+random_sample_R025<- which(complete_data_3$run_index%in%sample(rep(1:50), 15, replace = F))
 
 
 incident_symptomatic_wide<- as.data.frame(cbind(median_data_1[,1],
@@ -517,9 +524,9 @@ return(list(plt_incident_cases,random_sample_R017,random_sample_R021,random_samp
 est_fig_1<- function(complete_data_1,complete_data_2,complete_data_3,
                       median_data_1,median_data_2,median_data_3,
                       combined_data_1,combined_data_2,combined_data_3){
-random_sample_R017<- which(complete_data_1$run_index%in%sample(rep(1:500),15,replace=F))
-random_sample_R021<- which(complete_data_2$run_index%in%sample(rep(1:500), 15, replace=F))
-random_sample_R025<- which(complete_data_3$run_index%in%sample(rep(1:500), 15, replace = F))
+random_sample_R017<- which(complete_data_1$run_index%in%sample(rep(1:50),15,replace=F))
+random_sample_R021<- which(complete_data_2$run_index%in%sample(rep(1:50), 15, replace=F))
+random_sample_R025<- which(complete_data_3$run_index%in%sample(rep(1:50), 15, replace = F))
 incident_symptomatic_wide<- as.data.frame(cbind(median_data_1[,1],
                             apply(median_data_1[,-1],1,sum),
                             apply(median_data_2[,-1],1,sum),
@@ -544,15 +551,15 @@ symptomatic_df_sep<- symptomatic_df%>%
   return(symptomatic_df_sep)
 }
 
-f_1_low<- make_fig_1(complete_scenario1A,complete_scenario1B,complete_scenario1C,
+f_1_low<- make_fig_1( complete_R0lowA, complete_R0lowB, complete_R0lowC,
            median_incident_symptomatic_R0lowA,median_incident_symptomatic_R0lowB,
            median_incident_symptomatic_R0lowC,
-           combined_incident_R0lowA,combined_incident_R0lowB,combined_incident_R0lowC)
+            combined_incident_R0lowA, combined_incident_R0lowB, combined_incident_R0lowC)
 
-f_1_high<- make_fig_1(complete_scenario2A,complete_scenario2B,complete_scenario2C,
+f_1_high<- make_fig_1( complete_R0highA, complete_R0highB, complete_R0highC,
            median_incident_symptomatic_R0highA,median_incident_symptomatic_R0highB,
            median_incident_symptomatic_R0highC,
-           combined_incident_R0highA,combined_incident_R0highB,combined_incident_R0highC)
+            combined_incident_R0highA, combined_incident_R0highB, combined_incident_R0highC)
 
 calc_1_low<- est_fig_1(complete_scenario1A,complete_scenario1B,complete_scenario1C,
            median_incident_symptomatic_R0lowA,median_incident_symptomatic_R0lowB,
@@ -1198,10 +1205,10 @@ return(list(cumulative_symptomatic_cases_plt,cumulative_deaths_plot))
 #max <- cumulative_cases_symptomatic_long %>% group_by(scenario) %>% dplyr::summarize(max=max(cumulative_cases,na.rm=TRUE)) %>% ungroup
 #max <- median_cumulative_deaths_long %>% group_by(scenario) %>% dplyr::summarize(max=max(cumulative_death,na.rm=TRUE)) %>% ungroup
 
-f_5_low<- make_fig_5(combined_incident_R0lowA,combined_incident_R0lowB,combined_incident_R0lowC,
+f_5_low<- make_fig_5( combined_incident_R0lowA, combined_incident_R0lowB, combined_incident_R0lowC,
                  cumulative_array_R0lowA,cumulative_array_R0lowB,cumulative_array_R0lowC)
 
-f_5_high<- make_fig_5(combined_incident_R0highA,combined_incident_R0highB,combined_incident_R0highC,
+f_5_high<- make_fig_5( combined_incident_R0highA, combined_incident_R0highB, combined_incident_R0highC,
                  cumulative_array_R0highA,cumulative_array_R0highB,cumulative_array_R0highC)
 
 ```
