@@ -96,19 +96,44 @@ prob_matrix<- cbind(prob_severe,prob_hospitalized,prob_ICU,prob_dead_from_icu,
 return(prob_matrix)
 
 }
-#cdc imputs
+#cdc imputs (4% death)
 
-symptomatic<- c(123,705,429,838,354,429,429)
-hosp<- c(3.08,146.64,121.41,307.05,224.5,121.41,121.41)
-ICU<-c(0,29.61,44.62,124.94,106.86,44.62,44.62)
-dead_ICU<- c(0, 1.16,2.93,22.19,32.86,2.93,2.93)
-vent<- c(0,1,2.5,22.01,51,2.5,2.5)
-dead_vent<- c(0,0.25,0.5,9,28.5,0.5,0.5)
+symptomatic_4<- c(123,705,429,838,354,429,429)
+hosp_4<- c(3.08,146.64,121.41,307.05,224.5,121.41,121.41)
+ICU_4<-c(0,29.61,44.62,124.94,106.86,44.62,44.62)
+dead_ICU_4<- c(0, 1.16,2.93,22.19,32.86,2.93,2.93)
+vent_4<- c(0,1,2.5,22.01,51,2.5,2.5)
+dead_vent_4<- c(0,0.25,0.5,9,28.5,0.5,0.5)
 
-prob_matrix<- make_prob_matrix(symptomatic,hosp,hosp,ICU,dead_ICU,vent,dead_vent)
-prob_matrix[1,c(4,5,6)]<- c(0,0,0)
+prob_matrix_4<- make_prob_matrix(symptomatic_4,hosp_4,hosp_4,ICU_4,dead_ICU_4,vent_4,dead_vent_4)
+prob_matrix_4[1,c(4,5,6)]<- c(0,0,0)
 
-prob_matrix
+#2% Death rate
+
+symptomatic_2<- c(123,705,429,838,354,429,429)
+hosp_2<- c(3.08,146.64,121.41,307.05,224.5,121.41,121.41)
+ICU_2<-c(0,29.61,44.62,124.94,106.86,44.62,44.62)
+dead_ICU_2<- c(0, 0.58,1.465,11.095,16.435,1.465,1.465)
+vent_2<- c(0,1,2.5,22.01,51,2.5,2.5)
+dead_vent_2<- c(0,0.125,0.25,4.5,14.25,0.25,0.25)
+
+prob_matrix_2<- make_prob_matrix(symptomatic_2,hosp_2,hosp_2,ICU_2,dead_ICU_2,vent_2,dead_vent_2)
+prob_matrix_2[1,c(4,5,6)]<- c(0,0,0)
+
+
+#1%death rate
+symptomatic_1<- c(123,705,429,838,354,429,429)
+hosp_1<- c(3.08,146.64,121.41,307.05,224.5,121.41,121.41)
+ICU_1<-c(0,29.61,44.62,124.94,106.86,44.62,44.62)
+dead_ICU_1<- c(0, 0.29,0.7325,5.5475,8.2175,0.7325,0.7325)
+vent_1<- c(0,1,2.5,22.01,51,2.5,2.5)
+dead_vent_1<- c(0,0.062,0.125,2.25,7.125,0.125,0.125)
+
+prob_matrix_1<- make_prob_matrix(symptomatic_1,hosp_1,hosp_1,ICU_1,dead_ICU_1,vent_1,dead_vent_1)
+prob_matrix_1[1,c(4,5,6)]<- c(0,0,0)
+
+
+
 #define number of days simulations run for
 n_days <- 300
 ```
@@ -158,7 +183,7 @@ trim_combined_incident_R0highC<- trim_combined_incident_R0highC[which(is.na(trim
 
 ##### Estimate number of hospitalizations, ICU admissions, ventilators used, and deaths
 
-incident_classifications<- function(data, complete_data, R0val){
+incident_classifications<- function(data, complete_data, R0val, prob_matrix){
   counts_array_R0val<- array(NA, dim=c(nrow(data),ncol(data),5))
   counts_array_R0val[,1,]<- data$time
   
@@ -241,12 +266,12 @@ return(counts_array_R0val)
 
 }
 
-counts_array_R0lowA<- incident_classifications(trim_combined_incident_R0lowA,trim_complete_R0lowA,R0lowA)
-counts_array_R0lowB<- incident_classifications(trim_combined_incident_R0lowB,trim_complete_R0lowB,R0lowB)
-counts_array_R0lowC<- incident_classifications(trim_combined_incident_R0lowC,trim_complete_R0lowC,R0lowC)
-counts_array_R0highA<- incident_classifications(trim_combined_incident_R0highA,trim_complete_R0highA,R0highA)
-counts_array_R0highB<- incident_classifications(trim_combined_incident_R0highB,trim_complete_R0highB,R0highB)
-counts_array_R0highC<- incident_classifications(trim_combined_incident_R0highC,trim_complete_R0highC,R0highC)
+counts_array_R0lowA<- incident_classifications(trim_combined_incident_R0lowA,trim_complete_R0lowA,R0lowA, prob_matrix_4)
+counts_array_R0lowB<- incident_classifications(trim_combined_incident_R0lowB,trim_complete_R0lowB,R0lowB,prob_matrix_4)
+counts_array_R0lowC<- incident_classifications(trim_combined_incident_R0lowC,trim_complete_R0lowC,R0lowC,prob_matrix_4)
+counts_array_R0highA<- incident_classifications(trim_combined_incident_R0highA,trim_complete_R0highA,R0highA,prob_matrix_4)
+counts_array_R0highB<- incident_classifications(trim_combined_incident_R0highB,trim_complete_R0highB,R0highB,prob_matrix_4)
+counts_array_R0highC<- incident_classifications(trim_combined_incident_R0highC,trim_complete_R0highC,R0highC,prob_matrix_4)
 
 ```
 
