@@ -47,17 +47,16 @@ require(ggplot2)
 require(tidyr)
 require(xtable)
 require(cowplot)
-require(stringr)
 require(wesanderson)
 
 ##load data
-setwd("~/Dropbox/Postdoc/COVID19/COVID-BaltimoreCity/output_20200413")
+setwd("~/Desktop/Hopkins/Hopkins/COVID_baltimore/Baltimore_City_Modeling")
 complete_scenarioA <- read.csv("scenarioA_moderate.csv")
 complete_scenarioB <- read.csv("scenarioB_mod_degrading.csv")
 complete_scenarioC <- read.csv("scenarioC_mod_degrading_scl.csv")
 complete_scenarioD <- read.csv("scenarioD_total_reopen.csv")
 
-setwd("~/Dropbox/Postdoc/COVID19/COVID-BaltimoreCity/output_20200408")
+#setwd("~/Dropbox/Postdoc/COVID19/COVID-BaltimoreCity/output_20200408")
 complete_scenarioE <- read.csv("scenario1A_lowR0_uncontrolled.csv")
 
 ##load_and_clean function to concatenate age categories
@@ -631,7 +630,13 @@ plt_incident_cases<- ggplot() +
   #theme(axis.text.x = element_text(face="bold", color="#993333", size=20, angle=45),axis.text.y = element_text(face="bold",size=20)) + 
   theme_bw() + facet_grid(.~scenario) + guides(color=FALSE) + scale_x_date(date_labels = "%b", date_breaks = "2 month", date_minor_breaks = "1 month",limits = as.Date(c(NA,end_date))) +
   theme(strip.background = element_blank(), strip.text.x = element_text(size = 12,face = "bold.italic")) + scale_color_brewer(palette="Dark2") #+ ylim(0,100) #+ scale_y_sqrt(breaks = c(100, 1000, 2500, 5000, 7500)) 
-  
+
+f_1[[6]]<- as.data.frame(cbind(f_1[[6]], rep(0,nrow(f_1[[6]]))))
+colnames(f_1[[6]])<- c("Time", "scenario", "summary_stat", "incident_symptomatic",
+                       "number")
+incident_cases_df<- as.data.frame(rbind(f_1[[6]],f_1[[7]]))
+write.csv(incident_cases_df, "Figure_1_incident_cases.csv")
+
 
 plt_incident_cases_E<- ggplot() + 
   geom_line(data=f_1[[6]] %>% dplyr::filter(scenario=="Uncontrolled"),aes(y = incident_symptomatic, x=Time,color=str_wrap(scenario,10)), size=1.2)+
@@ -647,7 +652,14 @@ plt_incident_cases_total<- ggplot() +
   labs(y="Incident Cases (Asymp + Symp)",x="Time in Days") + theme(text = element_text(size=20)) +
   theme_bw() + facet_grid(.~scenario) + guides(color=FALSE) + scale_x_date(date_labels = "%b", date_breaks = "2 month", date_minor_breaks = "1 month",limits = as.Date(c(NA,end_date))) +
   theme(strip.background = element_blank(), strip.text.x = element_text(size = 12,face = "bold.italic")) + scale_color_brewer(palette="Dark2") #+ ylim(0,100) #+ scale_y_sqrt(breaks = c(100, 1000, 2500, 5000, 7500,10000)) 
-  
+ 
+
+f_1_asymp[[6]]<- as.data.frame(cbind(f_1_asymp[[6]],rep(0,nrow(f_1_asymp[[6]]))))
+colnames(f_1_asymp[[6]])<- c("Time", "scenario", "summary_stat", "incident_symptomatic",
+                       "number")
+incident_cases_asymp_df<- as.data.frame(rbind(f_1_asymp[[6]],f_1_asymp[[7]]))
+write.csv(incident_cases_asymp_df, "Figure_1_incident_cases_asymp.csv")
+ 
 
 plt_incident_cases_total_E<- ggplot() + 
   geom_line(data=f_1_asymp[[6]] %>% dplyr::filter(scenario=="Uncontrolled"),aes(y = incident_symptomatic, x=Time,color=str_wrap(scenario,10)), size=1.2)+
@@ -767,6 +779,13 @@ plt_hosp_cases<- ggplot() +
   theme(axis.text.x = element_text(face="bold", color="#993333", size=20, angle=45),
           axis.text.y = element_text(face="bold",size=20)) + theme_bw() + facet_grid(.~scenario) + guides(color=FALSE) + scale_x_date(date_labels = "%b", date_breaks = "2 months", date_minor_breaks = "1 month",limits = as.Date(c(NA,end_date))) +
   theme(strip.background = element_blank(), strip.text.x = element_text(size = 12,face = "bold.italic")) + scale_color_brewer(palette="Dark2") #+ ylim(0,100) #+ scale_y_sqrt(breaks = c(100, 1000, 2500)) 
+
+
+f_2[[1]]<- as.data.frame(cbind(f_2[[1]], rep(0,nrow(f_2[[1]]))))
+colnames(f_2[[1]])<- c("Time", "scenario", "summary_stat", "incident_hosp",
+                       "number")
+hosp_cases_df<- as.data.frame(rbind(f_2[[1]],f_2[[2]]))
+write.csv(hosp_cases_df, "Figure_2_incident_hosp.csv")
 
 
 plt_hosp_cases_E<- ggplot() + 
@@ -894,6 +913,11 @@ plt_deaths<- ggplot() +
           axis.text.y = element_text(face="bold",size=20)) + theme_bw() + facet_grid(.~scenario) + guides(color=FALSE) + scale_x_date(date_labels = "%b", date_breaks = "2 months", date_minor_breaks = "1 month",limits = as.Date(c(NA,end_date))) +
   theme(strip.background = element_blank(), strip.text.x = element_text(size = 12,face = "bold.italic")) + scale_color_brewer(palette="Dark2") #+ ylim(0,25) #+ scale_y_sqrt(breaks = c(100, 1000, 2500)) 
 
+f_3[[1]]<- as.data.frame(cbind(f_3[[1]], rep(0,nrow(f_3[[1]]))))
+colnames(f_3[[1]])<- c("Time", "scenario", "summary_stat", "incident_death",
+                       "number")
+death_cases_df<- as.data.frame(rbind(f_3[[1]],f_3[[2]]))
+write.csv(death_cases_df, "Figure_3_incident_death.csv")
 
 plt_deaths_E<- ggplot() + 
   geom_line(data=f_3[[1]] %>% dplyr::filter(scenario=="Uncontrolled"),aes(y = incident_death, x=Time,color=str_wrap(scenario,10)), size=1.2)+
@@ -1008,11 +1032,11 @@ random_df_sep<- random_sims_long %>%
          number=c(rep(1:15,each=n_days),rep(1:15,each=n_days),rep(1:15,each=n_days),
                   rep(1:15,each=n_days),rep(1:15,each=n_days)))
 
-df_notE <- df_sep %>% dplyr::filter(scenario!="Uncontrolled")
-random_df_notE <- random_df_sep %>% dplyr::filter(scenario!="Uncontrolled")
+df_notE_hosp <- df_sep %>% dplyr::filter(scenario!="Uncontrolled")
+random_df_notE_hosp <- random_df_sep %>% dplyr::filter(scenario!="Uncontrolled")
 plt_cumulative_hosp<- ggplot() + 
-  geom_line(data=df_notE,aes(y = cumulative_hosp, x=Time,color=str_wrap(scenario,10)), size=1.2)+
-  geom_line(data=random_df_notE,aes(y = cumulative_hosp, x=Time, group=number,color=str_wrap(scenario,10)),alpha=0.2, size=0.75)+
+  geom_line(data=df_notE_hosp,aes(y = cumulative_hosp, x=Time,color=str_wrap(scenario,10)), size=1.2)+
+  geom_line(data=random_df_notE_hosp,aes(y = cumulative_hosp, x=Time, group=number,color=str_wrap(scenario,10)),alpha=0.2, size=0.75)+
   labs(y="Hospital Beds in Use",x="Time in Days") +
   #labs(color="Strategy",linetype="Summary Statistic") +
   theme(axis.text.x = element_text(face="bold", color="#993333", size=20, angle=45),
@@ -1059,11 +1083,11 @@ random_df_sep<- random_sims_long %>%
          number=c(rep(1:15,each=n_days),rep(1:15,each=n_days),rep(1:15,each=n_days),
                   rep(1:15,each=n_days),rep(1:15,each=n_days)))
 
-df_notE <- df_sep %>% dplyr::filter(scenario!="Uncontrolled")
-random_df_notE <- random_df_sep %>% dplyr::filter(scenario!="Uncontrolled")
+df_notE_ICU <- df_sep %>% dplyr::filter(scenario!="Uncontrolled")
+random_df_notE_ICU <- random_df_sep %>% dplyr::filter(scenario!="Uncontrolled")
 plt_cumulative_ICU<- ggplot() + 
-  geom_line(data=df_notE,aes(y = cumulative_ICU, x=Time,color=str_wrap(scenario,10)), size=1.2)+
-  geom_line(data=random_df_notE,aes(y = cumulative_ICU, x=Time, group=number,color=str_wrap(scenario,10)),alpha=0.2, size=0.75)+
+  geom_line(data=df_notE_ICU,aes(y = cumulative_ICU, x=Time,color=str_wrap(scenario,10)), size=1.2)+
+  geom_line(data=random_df_notE_ICU,aes(y = cumulative_ICU, x=Time, group=number,color=str_wrap(scenario,10)),alpha=0.2, size=0.75)+
   labs(y="ICU Beds in Use",x="Time in Days") +
   #labs(color="Strategy",linetype="Summary Statistic") +
   theme(axis.text.x = element_text(face="bold", color="#993333", size=20, angle=45),
@@ -1108,11 +1132,11 @@ random_df_sep<- random_sims_long %>%
          number=c(rep(1:15,each=n_days),rep(1:15,each=n_days),rep(1:15,each=n_days),
                   rep(1:15,each=n_days),rep(1:15,each=n_days)))
 
-df_notE <- df_sep %>% dplyr::filter(scenario!="Uncontrolled")
-random_df_notE <- random_df_sep %>% dplyr::filter(scenario!="Uncontrolled")
+df_notE_vent <- df_sep %>% dplyr::filter(scenario!="Uncontrolled")
+random_df_notE_vent <- random_df_sep %>% dplyr::filter(scenario!="Uncontrolled")
 plt_cumulative_vent<- ggplot() + 
-  geom_line(data=df_notE,aes(y = cumulative_vent, x=Time,color=str_wrap(scenario,10)), size=1.2)+
-  geom_line(data=random_df_notE,aes(y = cumulative_vent, x=Time, group=number,color=str_wrap(scenario,10)),alpha=0.2, size=0.75)+
+  geom_line(data=df_notE_vent,aes(y = cumulative_vent, x=Time,color=str_wrap(scenario,10)), size=1.2)+
+  geom_line(data=random_df_notE_vent,aes(y = cumulative_vent, x=Time, group=number,color=str_wrap(scenario,10)),alpha=0.2, size=0.75)+
   labs(y="Ventilators in Use",x="Time in Days") +
   #labs(color="Strategy",linetype="Summary Statistic") +
   theme(axis.text.x = element_text(face="bold", color="#993333", size=20, angle=45),
@@ -1120,7 +1144,7 @@ plt_cumulative_vent<- ggplot() +
   theme(strip.background = element_blank(), strip.text.x = element_text(size = 12,face = "bold.italic")) + scale_color_brewer(palette="Dark2")  + scale_y_sqrt(breaks = c(100, 1000, 2500,5000, 10000, 15000, 20000, 25000,30000)) 
 
 
-return(list(plt_cumulative_hosp,plt_cumulative_ICU,plt_cumulative_vent))
+return(list(plt_cumulative_hosp,plt_cumulative_ICU,plt_cumulative_vent,df_notE_hosp,random_df_notE_hosp,df_notE_ICU,random_df_notE_ICU,df_notE_vent,random_df_notE_vent))
 
 }
 
@@ -1128,6 +1152,24 @@ f_4 <- make_fig_4(f_1[[1]],f_1[[2]],f_1[[3]],f_1[[4]],f_1[[5]],
                   median_cumulative_array_A,median_cumulative_array_B,median_cumulative_array_C,
                   median_cumulative_array_D,median_cumulative_array_E,
                   cumulative_array_A,cumulative_array_B,cumulative_array_C,cumulative_array_D,cumulative_array_E)
+
+f_4[[4]]<- as.data.frame(cbind(f_4[[4]], rep(0,nrow(f_4[[4]]))))
+colnames(f_4[[4]])<- c("Time", "scenario", "summary_stat", "cumulative_hosp",
+                       "number")
+cumulative_hosp_df<- as.data.frame(rbind(f_4[[4]],f_4[[5]]))
+write.csv(cumulative_hosp_df, "Figure_4_cumulative_hosp.csv")
+
+f_4[[6]]<- as.data.frame(cbind(f_4[[6]], rep(0,nrow(f_4[[6]]))))
+colnames(f_4[[6]])<- c("Time", "scenario", "summary_stat", "cumulative_ICU",
+                       "number")
+cumulative_ICU_df<- as.data.frame(rbind(f_4[[6]],f_4[[7]]))
+write.csv(cumulative_ICU_df, "Figure_4_cumulative_ICU.csv")
+
+f_4[[8]]<- as.data.frame(cbind(f_4[[8]], rep(0,nrow(f_4[[8]]))))
+colnames(f_4[[8]])<- c("Time", "scenario", "summary_stat", "cumulative_vent",
+                       "number")
+cumulative_vent_df<- as.data.frame(rbind(f_4[[8]],f_4[[9]]))
+write.csv(cumulative_vent_df, "Figure_4_cumulative_vent.csv")
 
 cowplot::plot_grid(f_4[[1]], labels=c('A'), align = "h", nrow=1)
 cowplot::plot_grid(f_4[[2]], labels=c('B'), align = "h", nrow=1)
@@ -1244,12 +1286,13 @@ plt_cum_cases<- ggplot() +
   labs(y="Cumulative Symptomatic Cases",x="Time in Days") + theme(text = element_text(size=20)) +
   theme_bw() + scale_x_date(date_labels = "%b", date_breaks = "2 month", date_minor_breaks = "1 month",limits = as.Date(c(NA,end_date))) + scale_color_brewer(palette="Dark2") + ylim(0,150000)
 
+write.csv(f_1[[8]],"Figure_5_cumulative_cases.csv")
 #cumsum deaths
 plt_cum_deaths<- ggplot() + 
   geom_line(data=f_3[[3]],aes(y = cum_death, x=Time,color=scenario), size=1.2)+
   labs(y="Cumulative Deaths",x="Time in Days") + theme(text = element_text(size=20)) +
   theme_bw() + scale_x_date(date_labels = "%b", date_breaks = "2 month", date_minor_breaks = "1 month",limits = as.Date(c(NA,end_date))) + scale_color_brewer(palette="Dark2") + ylim(0,5000)
-
+write.csv(f_3[[3]],"Figure_5_cumulative_deaths.csv")
 
 
 ########peak estimates table
