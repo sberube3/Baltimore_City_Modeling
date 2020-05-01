@@ -190,7 +190,7 @@ prob_matrix_1[1,c(4,5,6)]<- c(0,0,0)
 
 #define number of days simulations run for
 n_days <- 299 #number of days minus 1
-sims <- 1000
+sims <- 50
 start_date <- "2020-03-01"
 end_date <- "2020-08-02"
 prob_matrix <- prob_matrix_2
