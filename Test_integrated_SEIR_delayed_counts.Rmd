@@ -1,0 +1,600 @@
+---
+title: "Test_integrated_SIER_delayed_counts"
+output: pdf_document
+---
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+setwd("~/Dropbox/COVID-BaltimoreCity/output_20200405")
+
+require(socialmixr)
+require(xlsx)
+require(magrittr)
+require(stringr)
+require(reshape2)
+require(dplyr)
+require(ggplot2) 
+require(tidyr)
+require(xtable)
+require(cowplot)
+require(stringr)
+require(RcppRoll)
+##load data
+complete_scenario1A <- read.csv("scenario1A_lowR0_uncontrolled.csv")
+complete_scenario1B <- read.csv("scenario1B_lowR0_MildDistancing.csv")
+complete_scenario1C <- read.csv("scenario1C_lowR0_ModDistancing.csv")
+complete_scenario2A <- read.csv("scenario2A_highR0_uncontrolled.csv")
+complete_scenario2B <- read.csv("scenario2B_highR0_MildDistancing.csv")
+complete_scenario2C <- read.csv("scenario2C_highR0_ModDistancing.csv")
+
+##load_and_clean function to concatenate age categories
+
+load_and_clean<- function(data, r0val){
+  complete_incident_r0val<- data%>%
+    select(time,incid_I1,incid_I2,incid_I3,incid_I4,incid_I5,
+         incid_I6,incid_I7,incid_I8,incid_I9,
+         incid_I10,incid_I11,incid_I12,incid_I13,incid_I14)
+  
+  combined_incident_r0val<- complete_incident_r0val%>%
+        mutate(cat1=rowSums(.[2:5]))%>%
+        mutate(cat2=rowSums(.[6:8]))%>%
+        mutate(cat3=rowSums(.[9]))%>%
+        mutate(cat4=rowSums(.[10:12]))%>%
+        mutate(cat5=rowSums(.[13]))%>%
+        mutate(cat6=rowSums(.[14]))%>%
+        mutate(cat7=rowSums(.[15]))
+  
+  combined_incident_r0val<- combined_incident_r0val%>%
+    select(time, cat1, cat2, cat3, cat4, cat5, cat6, cat7)
+  
+  return(combined_incident_r0val)
+}
+
+##run the function on each transmission scenario
+combined_incident_R0lowA<- load_and_clean(complete_scenario1A,R0lowA)  
+combined_incident_R0lowB<- load_and_clean(complete_scenario1B,R0lowB)  
+combined_incident_R0lowC<- load_and_clean(complete_scenario1C,R0lowC)  
+combined_incident_R0highA<- load_and_clean(complete_scenario2A,R0highA)  
+combined_incident_R0highB<- load_and_clean(complete_scenario2B,R0highB)  
+combined_incident_R0highC<- load_and_clean(complete_scenario2C,R0highC)  
+
+
+```
+
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+
+#Here we create a probability matrix of working probabilities from the literature for the probability of becoming a hospitalized case, getting admitted to ICU, needing a ventilator and death. These are nested conditional probabilities that rely on the following assumptions:
+#The percentage of hospitalized cases in each category is obtained from the [CDC](https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm#T1_down) where we combined the 55-74 age groups and the 75-80 and 80+ age groups.
+#We assume the remainder of the nested probabilities from the [CDC](https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm#T1_down) and in each subsequent state (hospitalization to ICU, ICU to death) we shift the denominator to be the preceding state's total (e.g. the probability of getting admitted to the ICU is the number of ICU cases for the age group/number of hospitalized cases for the age group).
+#We assume a global probability that 25% of cases admitted to the ICU require a ventilator per [WHO reports](https://www.who.int/publications-detail/report-of-the-who-china-joint-mission-on-coronavirus-disease-2019-(covid-19)).  
+#We assume healthcare workers and the homeless population follow a similar nested probability scheme as those in the 45-54 year age group.
+#Note that this function takes the raw numbers of people in each disease state and converts it to a probability. 
+#importantly, if you look at your final probability matrix and you have a value that is strictly less than 0 or striclty greater than 1 you have made a mistake in entering your data!!
+
+#each num_diseaseState vector is an arugement of this function, these vectors should be numeric vectors of length 7 (for the seven age groups) and each value should correspond to the raw numbers of people in each disease state observed for each particular age group. 
+
+#also note that if you divide by 0, you will get NaN (not a number) as an entry, if that just means that 0 percent are in that disease state for age categories, you can manually replace NaN with 0. 
+make_prob_matrix<- function(num_symptomatic,num_severe, num_hospitalized, num_ICU, num_deadFromICU,num_vent, num_deadFromVent){
+
+prob_severe<- num_severe/num_symptomatic
+
+prob_hospitalized<- num_hospitalized/num_severe
+
+prob_ICU<- num_ICU/num_hospitalized
+
+prob_dead_from_icu<-num_deadFromICU/num_ICU
+
+prob_vent_icu<- num_vent/num_ICU
+
+prob_dead_from_vent<- num_deadFromVent/num_vent
+
+prob_matrix<- cbind(prob_severe,prob_hospitalized,prob_ICU,prob_dead_from_icu,
+                     prob_vent_icu,prob_dead_from_vent)
+
+return(prob_matrix)
+
+}
+#cdc imputs (4% death)
+
+symptomatic_4<- c(123,705,429,838,354,429,429)
+hosp_4<- c(3.08,146.64,121.41,307.05,224.5,121.41,121.41)
+ICU_4<-c(0,29.61,44.62,124.94,106.86,44.62,44.62)
+dead_ICU_4<- c(0, 1.16,2.93,22.19,32.86,2.93,2.93)
+vent_4<- c(0,1,2.5,22.01,51,2.5,2.5)
+dead_vent_4<- c(0,0.25,0.5,9,28.5,0.5,0.5)
+
+prob_matrix_4<- make_prob_matrix(symptomatic_4,hosp_4,hosp_4,ICU_4,dead_ICU_4,vent_4,dead_vent_4)
+prob_matrix_4[1,c(4,5,6)]<- c(0,0,0)
+
+#2% Death rate
+
+symptomatic_2<- c(123,705,429,838,354,429,429)
+hosp_2<- c(3.08,146.64,121.41,307.05,224.5,121.41,121.41)
+ICU_2<-c(0,29.61,44.62,124.94,106.86,44.62,44.62)
+dead_ICU_2<- c(0, 0.58,1.465,11.095,16.435,1.465,1.465)
+vent_2<- c(0,1,2.5,22.01,51,2.5,2.5)
+dead_vent_2<- c(0,0.125,0.25,4.5,14.25,0.25,0.25)
+
+prob_matrix_2<- make_prob_matrix(symptomatic_2,hosp_2,hosp_2,ICU_2,dead_ICU_2,vent_2,dead_vent_2)
+prob_matrix_2[1,c(4,5,6)]<- c(0,0,0)
+
+
+#1%death rate
+symptomatic_1<- c(123,705,429,838,354,429,429)
+hosp_1<- c(3.08,146.64,121.41,307.05,224.5,121.41,121.41)
+ICU_1<-c(0,29.61,44.62,124.94,106.86,44.62,44.62)
+dead_ICU_1<- c(0, 0.29,0.7325,5.5475,8.2175,0.7325,0.7325)
+vent_1<- c(0,1,2.5,22.01,51,2.5,2.5)
+dead_vent_1<- c(0,0.062,0.125,2.25,7.125,0.125,0.125)
+
+prob_matrix_1<- make_prob_matrix(symptomatic_1,hosp_1,hosp_1,ICU_1,dead_ICU_1,vent_1,dead_vent_1)
+prob_matrix_1[1,c(4,5,6)]<- c(0,0,0)
+
+
+
+#define number of days simulations run for
+n_days <- 300
+n_sims<- 500
+start_date <- "2020-03-01"
+end_date <- "2020-08-02"
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+
+#get incidence across all timepoints for severe, hosp, ICU, death. 
+
+hosp_lag<- 4
+ICU_lag<- 4
+death_ICU_lag<- 8
+vent_lag<- 3
+death_vent_lag<- 5
+
+get_incidence<- function(incidence_data,prob_matrix,n_sims,n_days){
+  hosp<- cbind(rbinom(nrow(incidence_data),size=incidence_data[,2],prob_matrix[1,1]),rbinom(nrow(incidence_data),size=incidence_data[,3],prob_matrix[2,1]),rbinom(nrow(incidence_data),size=incidence_data[,4],prob_matrix[3,1]),rbinom(nrow(incidence_data),size=incidence_data[,5],prob_matrix[4,1]),rbinom(nrow(incidence_data),size=incidence_data[,6],prob_matrix[5,1]),rbinom(nrow(incidence_data),size=incidence_data[,7],prob_matrix[6,1]),rbinom(nrow(incidence_data),size=incidence_data[,8],prob_matrix[7,1]))
+               
+  ICU<-cbind(rbinom(nrow(hosp),size=hosp[,1],prob_matrix[1,3]),rbinom(nrow(hosp),size=hosp[,2],prob_matrix[2,3]),rbinom(nrow(hosp),size=hosp[,3],prob_matrix[3,3]),rbinom(nrow(hosp),size=hosp[,4],prob_matrix[4,3]),rbinom(nrow(hosp),size=hosp[,5],prob_matrix[5,3]),rbinom(nrow(hosp),size=hosp[,6],prob_matrix[6,3]),rbinom(nrow(hosp),size=hosp[,7],prob_matrix[7,3]))
+  
+  dead_ICU<-cbind(rbinom(nrow(ICU),size=ICU[,1],prob_matrix[1,4]),rbinom(nrow(ICU),size=ICU[,2],prob_matrix[2,4]),rbinom(nrow(ICU),size=ICU[,3],prob_matrix[3,4]),rbinom(nrow(ICU),size=ICU[,4],prob_matrix[4,4]),rbinom(nrow(ICU),size=ICU[,5],prob_matrix[5,4]),rbinom(nrow(ICU),size=ICU[,6],prob_matrix[6,4]),rbinom(nrow(ICU),size=ICU[,7],prob_matrix[7,4]))
+  
+  vent<- cbind(rbinom(nrow(ICU),size=ICU[,1],prob_matrix[1,5]),rbinom(nrow(ICU),size=ICU[,2],prob_matrix[2,5]),rbinom(nrow(ICU),size=ICU[,3],prob_matrix[3,5]),rbinom(nrow(ICU),size=ICU[,4],prob_matrix[4,5]),rbinom(nrow(ICU),size=ICU[,5],prob_matrix[5,5]),rbinom(nrow(ICU),size=ICU[,6],prob_matrix[6,5]),rbinom(nrow(ICU),size=ICU[,7],prob_matrix[7,5]))
+  
+  dead_vent<- cbind(rbinom(nrow(vent),size=vent[,1],prob_matrix[1,6]),rbinom(nrow(vent),size=vent[,2],prob_matrix[2,6]),rbinom(nrow(vent),size=vent[,3],prob_matrix[3,6]),rbinom(nrow(vent),size=vent[,4],prob_matrix[4,6]),rbinom(nrow(vent),size=vent[,5],prob_matrix[5,6]),rbinom(nrow(vent),size=vent[,6],prob_matrix[6,6]),rbinom(nrow(vent),size=vent[,7],prob_matrix[7,6]))
+  
+  hosp_matrix<- as.data.frame(cbind(rep(1:n_sims,each=n_days),rep(1:n_days,times=n_sims),hosp))
+  colnames(hosp_matrix)<- c("Sim_index","Day","cat1","cat2","cat3","cat4","cat5","cat6","cat7")
+  
+  ICU_matrix<- as.data.frame(cbind(rep(1:n_sims,each=n_days),rep(1:n_days,times=n_sims),ICU))
+  colnames(ICU_matrix)<- c("Sim_index","Day","cat1","cat2","cat3","cat4","cat5","cat6","cat7")
+  
+  dead_ICU_matrix<- as.data.frame(cbind(rep(1:n_sims,each=n_days),rep(1:n_days,times=n_sims),dead_ICU))
+  colnames(dead_ICU_matrix)<- c("Sim_index","Day","cat1","cat2","cat3","cat4","cat5","cat6","cat7")
+  
+  vent_matrix<- as.data.frame(cbind(rep(1:n_sims,each=n_days),rep(1:n_days,times=n_sims),vent))
+  colnames(vent_matrix)<- c("Sim_index","Day","cat1","cat2","cat3","cat4","cat5","cat6","cat7")
+  
+  dead_vent_matrix<- as.data.frame(cbind(rep(1:n_sims,each=n_days),rep(1:n_days,times=n_sims),dead_vent))
+  colnames(dead_vent_matrix)<- c("Sim_index","Day","cat1","cat2","cat3","cat4","cat5","cat6","cat7")
+  
+  return(list(hosp_matrix,ICU_matrix,dead_ICU_matrix,vent_matrix,dead_vent_matrix))
+  
+}
+
+incidence_1A<- get_incidence(combined_incident_R0lowA,prob_matrix_2,n_sims,n_days)
+incidence_1B<- get_incidence(combined_incident_R0lowB,prob_matrix_2,n_sims,n_days)
+incidence_1C<- get_incidence(combined_incident_R0lowC,prob_matrix_2,n_sims,n_days)
+incidence_2A<-get_incidence(combined_incident_R0highA,prob_matrix_2,n_sims,n_days)
+incidence_2B<-get_incidence(combined_incident_R0highB,prob_matrix_2,n_sims,n_days)
+incidence_2C<-get_incidence(combined_incident_R0highC,prob_matrix_2,n_sims,n_days)
+
+
+#for each sim draw a reasonable timelag from a truncated poisson distribution, do this for each condition i.e. hosp, to icu, icu to vent etc. etc. 
+
+draw_sim_timelags<- function(mean_time,low_bound_timelags,up_bound_timelags,data, n_days_sim){
+  hosp_timelags<- rtpois(nrow(data)/n_days_sim,mean_time[1],a=low_bound_timelags[1],b=up_bound_timelags[1])
+   ICU_timelags<- rtpois(nrow(data)/n_days_sim,mean_time[2],a=low_bound_timelags[2],b=up_bound_timelags[2])
+    ICU_death_timelags<- rtpois(nrow(data)/n_days_sim,mean_time[3],a=low_bound_timelags[3],b=up_bound_timelags[3])
+    vent_timelags<- rtpois(nrow(data)/n_days_sim,mean_time[4],a=low_bound_timelags[4],b=up_bound_timelags[4])
+     vent_death_timelags<- rtpois(nrow(data)/n_days_sim,mean_time[5],a=low_bound_timelags[5],b=up_bound_timelags[5])
+     
+     timelag_matrix<- as.data.frame(cbind(rep(1:(nrow(data)/n_days_sim),each=n_days),rep(hosp_timelags,each=n_days),rep(ICU_timelags,each=n_days),rep(ICU_death_timelags,each=n_days),rep(vent_timelags,each=n_days),rep(vent_death_timelags,each=n_days)))
+     colnames(timelag_matrix)<- c("Sim_index","Hosp","ICU","Death_ICU","Vent","Death_Vent")
+     
+     return(timelag_matrix)
+}
+
+mean_timelags<- c(4,4,8,3,5)
+lower_bound<- c(2,2,4,1,3)
+upper_bound<- c(6,6,12,5,7)
+
+timelag_matrix_1A<- draw_sim_timelags(mean_timelags, lower_bound,upper_bound,combined_incident_R0lowA,n_days)
+
+timelag_matrix_1B<- draw_sim_timelags(mean_timelags, lower_bound,upper_bound,combined_incident_R0lowB,n_days)
+
+timelag_matrix_1C<- draw_sim_timelags(mean_timelags, lower_bound,upper_bound,combined_incident_R0lowC,n_days)
+
+timelag_matrix_2A<- draw_sim_timelags(mean_timelags, lower_bound,upper_bound,combined_incident_R0highA,n_days)
+
+timelag_matrix_2B<- draw_sim_timelags(mean_timelags, lower_bound,upper_bound,combined_incident_R0highB,n_days)
+
+timelag_matrix_2C<- draw_sim_timelags(mean_timelags, lower_bound,upper_bound,combined_incident_R0highC,n_days)
+
+```
+
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+get_lagged_days<- function(timelag_matrix,combined_incidence_data){
+  lagged_matrix<-as.data.frame(cbind(combined_incidence_data[,1],combined_incidence_data[,1]+timelag_matrix[,2],combined_incidence_data[,1]+timelag_matrix[,2]+timelag_matrix[,3],combined_incidence_data[,1]+timelag_matrix[,2]+timelag_matrix[,3]+timelag_matrix[,4],combined_incidence_data[,1]+timelag_matrix[,2]+timelag_matrix[,3]+timelag_matrix[,5],combined_incidence_data[,1]+timelag_matrix[,2]+timelag_matrix[,3]+timelag_matrix[,5]+timelag_matrix[,6]))
+  
+  colnames(lagged_matrix)<- c("Original_Day","Hosp","ICU","Death_ICU","Vent","Death_Vent")
+  return(lagged_matrix)
+}
+
+lagged_days_1A<- get_lagged_days(timelag_matrix_1A,combined_incident_R0lowA)
+
+lagged_days_1B<- get_lagged_days(timelag_matrix_1B,combined_incident_R0lowB)
+
+lagged_days_1C<- get_lagged_days(timelag_matrix_1C,combined_incident_R0lowC)
+
+lagged_days_2A<- get_lagged_days(timelag_matrix_2A,combined_incident_R0highA)
+
+lagged_days_2B<- get_lagged_days(timelag_matrix_2B,combined_incident_R0highB)
+
+lagged_days_2C<- get_lagged_days(timelag_matrix_2C,combined_incident_R0highC)
+
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+incidence_1A[[1]]<- incidence_1A[[1]]%>%
+  mutate(New_day=lagged_days_1A[,2])
+
+incidence_1A[[2]]<- incidence_1A[[2]]%>%
+  mutate(New_day=lagged_days_1A[,3])
+
+incidence_1A[[3]]<- incidence_1A[[3]]%>%
+  mutate(New_day=lagged_days_1A[,4])
+
+incidence_1A[[4]]<- incidence_1A[[4]]%>%
+  mutate(New_day=lagged_days_1A[,5])
+
+incidence_1A[[5]]<- incidence_1A[[5]]%>%
+  mutate(New_day=lagged_days_1A[,6])
+####################################
+
+incidence_1B[[1]]<- incidence_1B[[1]]%>%
+  mutate(New_day=lagged_days_1B[,2])
+
+incidence_1B[[2]]<- incidence_1B[[2]]%>%
+  mutate(New_day=lagged_days_1B[,3])
+
+incidence_1B[[3]]<- incidence_1B[[3]]%>%
+  mutate(New_day=lagged_days_1B[,4])
+
+incidence_1B[[4]]<- incidence_1B[[4]]%>%
+  mutate(New_day=lagged_days_1A[,5])
+
+incidence_1B[[5]]<- incidence_1B[[5]]%>%
+  mutate(New_day=lagged_days_1B[,6])
+
+#####################################
+
+incidence_1C[[1]]<- incidence_1C[[1]]%>%
+  mutate(New_day=lagged_days_1C[,2])
+
+incidence_1C[[2]]<- incidence_1C[[2]]%>%
+  mutate(New_day=lagged_days_1C[,3])
+
+incidence_1C[[3]]<- incidence_1C[[3]]%>%
+  mutate(New_day=lagged_days_1C[,4])
+
+incidence_1C[[4]]<- incidence_1C[[4]]%>%
+  mutate(New_day=lagged_days_1C[,5])
+
+incidence_1C[[5]]<- incidence_1C[[5]]%>%
+  mutate(New_day=lagged_days_1C[,6])
+
+####################################
+
+incidence_2A[[1]]<- incidence_2A[[1]]%>%
+  mutate(New_day=lagged_days_2A[,2])
+
+incidence_2A[[2]]<- incidence_2A[[2]]%>%
+  mutate(New_day=lagged_days_2A[,3])
+
+incidence_2A[[3]]<- incidence_2A[[3]]%>%
+  mutate(New_day=lagged_days_2A[,4])
+
+incidence_2A[[4]]<- incidence_2A[[4]]%>%
+  mutate(New_day=lagged_days_2A[,5])
+
+incidence_2A[[5]]<- incidence_2A[[5]]%>%
+  mutate(New_day=lagged_days_2A[,6])
+
+###################################
+
+incidence_2B[[1]]<- incidence_2B[[1]]%>%
+  mutate(New_day=lagged_days_2B[,2])
+
+incidence_2B[[2]]<- incidence_2B[[2]]%>%
+  mutate(New_day=lagged_days_2B[,3])
+
+incidence_2B[[3]]<- incidence_2B[[3]]%>%
+  mutate(New_day=lagged_days_2B[,4])
+
+incidence_2B[[4]]<- incidence_2B[[4]]%>%
+  mutate(New_day=lagged_days_2B[,5])
+
+incidence_2B[[5]]<- incidence_2B[[5]]%>%
+  mutate(New_day=lagged_days_2B[,6])
+
+
+########################################
+
+incidence_2C[[1]]<- incidence_2C[[1]]%>%
+  mutate(New_day=lagged_days_2C[,2])
+
+incidence_2C[[2]]<- incidence_2C[[2]]%>%
+  mutate(New_day=lagged_days_2C[,3])
+
+incidence_2C[[3]]<- incidence_2C[[3]]%>%
+  mutate(New_day=lagged_days_2C[,4])
+
+incidence_2C[[4]]<- incidence_2C[[4]]%>%
+  mutate(New_day=lagged_days_2C[,5])
+
+incidence_2C[[5]]<- incidence_2C[[5]]%>%
+  mutate(New_day=lagged_days_2C[,6])
+#########################################
+
+combined_incident_R0highA<- combined_incident_R0highA%>%
+  mutate(Sim_index= rep(1:n_sims,each=n_days))
+
+combined_incident_R0highB<- combined_incident_R0highB%>%
+  mutate(Sim_index= rep(1:n_sims,each=n_days))
+
+combined_incident_R0highC<- combined_incident_R0highC%>%
+  mutate(Sim_index= rep(1:n_sims,each=n_days))
+
+combined_incident_R0lowA<- combined_incident_R0lowA%>%
+  mutate(Sim_index= rep(1:n_sims,each=n_days))
+
+combined_incident_R0lowB<- combined_incident_R0lowB%>%
+  mutate(Sim_index= rep(1:n_sims,each=n_days))
+
+combined_incident_R0lowC<- combined_incident_R0lowC%>%
+  mutate(Sim_index= rep(1:n_sims,each=n_days))
+
+
+```
+
+```{r,cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+combined_incident_1A<- left_join(combined_incident_R0lowA,
+                        incidence_1A[[1]],
+                        by=c("time"="New_day",
+                        "Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1A[[2]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1A[[3]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1A[[4]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1A[[5]],by=c("time"="New_day","Sim_index"="Sim_index"))
+
+combined_incident_1A<- combined_incident_1A%>%
+  select(!c(Day.x,Day.y,Day.x.x,Day.y.y,Day))
+
+colnames(combined_incident_1A)<- c("Day","Icid_Cat1","Icid_Cat2","Icid_Cat3","Icid_Cat4","Icid_Cat5","Icid_Cat6","Icid_Cat7","Sim_index","Hosp_Cat1","Hosp_Cat2","Hosp_Cat3","Hosp_Cat4","Hosp_Cat5","Hosp_Cat6","Hosp_Cat7","ICU_Cat1","ICU_Cat2","ICU_Cat3","ICU_Cat4","ICU_Cat5","ICU_Cat6","ICU_Cat7","Dead_ICU_Cat1","Dead_ICU_Cat2","Dead_ICU_Cat3","Dead_ICU_Cat4","Dead_ICU_Cat5","Dead_ICU_Cat6","Dead_ICU_Cat7","Vent_Cat1","Vent_Cat2","Vent_Cat3","Vent_Cat4","Vent_Cat5","Vent_Cat6","Vent_Cat7","Dead_Vent_Cat1","Dead_Vent_Cat2","Dead_Vent_Cat3","Dead_Vent_Cat4","Dead_Vent_Cat5","Dead_Vent_Cat6","Dead_Vent_Cat7")
+
+combined_incident_1A<- combined_incident_1A%>%
+  mutate(Dead_Cat1=Dead_ICU_Cat1+Dead_Vent_Cat1,Dead_ICU_Cat1=NULL,Dead_Vent_Cat1=NULL)%>%
+  mutate(Dead_Cat2=Dead_ICU_Cat2+Dead_Vent_Cat2,Dead_ICU_Cat2=NULL,Dead_Vent_Cat2=NULL)%>%
+  mutate(Dead_Cat3=Dead_ICU_Cat3+Dead_Vent_Cat3,Dead_ICU_Cat3=NULL,Dead_Vent_Cat3=NULL)%>%
+  mutate(Dead_Cat4=Dead_ICU_Cat4+Dead_Vent_Cat4,Dead_ICU_Cat4=NULL,Dead_Vent_Cat4=NULL)%>%
+  mutate(Dead_Cat5=Dead_ICU_Cat5+Dead_Vent_Cat5,Dead_ICU_Cat5=NULL,Dead_Vent_Cat5=NULL)%>%
+  mutate(Dead_Cat6=Dead_ICU_Cat6+Dead_Vent_Cat6,Dead_ICU_Cat6=NULL,Dead_Vent_Cat6=NULL)%>%
+  mutate(Dead_Cat7=Dead_ICU_Cat7+Dead_Vent_Cat7,Dead_ICU_Cat7=NULL,Dead_Vent_Cat7=NULL)
+  
+combined_incident_1B<- left_join(combined_incident_R0lowB,
+                        incidence_1B[[1]],
+                        by=c("time"="New_day",
+                        "Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1B[[2]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1B[[3]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1B[[4]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1B[[5]],by=c("time"="New_day","Sim_index"="Sim_index"))
+
+combined_incident_1B<- combined_incident_1B%>%
+  select(!c(Day.x,Day.y,Day.x.x,Day.y.y,Day))
+
+colnames(combined_incident_1B)<- c("Day","Icid_Cat1","Icid_Cat2","Icid_Cat3","Icid_Cat4","Icid_Cat5","Icid_Cat6","Icid_Cat7","Sim_index","Hosp_Cat1","Hosp_Cat2","Hosp_Cat3","Hosp_Cat4","Hosp_Cat5","Hosp_Cat6","Hosp_Cat7","ICU_Cat1","ICU_Cat2","ICU_Cat3","ICU_Cat4","ICU_Cat5","ICU_Cat6","ICU_Cat7","Dead_ICU_Cat1","Dead_ICU_Cat2","Dead_ICU_Cat3","Dead_ICU_Cat4","Dead_ICU_Cat5","Dead_ICU_Cat6","Dead_ICU_Cat7","Vent_Cat1","Vent_Cat2","Vent_Cat3","Vent_Cat4","Vent_Cat5","Vent_Cat6","Vent_Cat7","Dead_Vent_Cat1","Dead_Vent_Cat2","Dead_Vent_Cat3","Dead_Vent_Cat4","Dead_Vent_Cat5","Dead_Vent_Cat6","Dead_Vent_Cat7")
+
+combined_incident_1B<- combined_incident_1B%>%
+  mutate(Dead_Cat1=Dead_ICU_Cat1+Dead_Vent_Cat1,Dead_ICU_Cat1=NULL,Dead_Vent_Cat1=NULL)%>%
+  mutate(Dead_Cat2=Dead_ICU_Cat2+Dead_Vent_Cat2,Dead_ICU_Cat2=NULL,Dead_Vent_Cat2=NULL)%>%
+  mutate(Dead_Cat3=Dead_ICU_Cat3+Dead_Vent_Cat3,Dead_ICU_Cat3=NULL,Dead_Vent_Cat3=NULL)%>%
+  mutate(Dead_Cat4=Dead_ICU_Cat4+Dead_Vent_Cat4,Dead_ICU_Cat4=NULL,Dead_Vent_Cat4=NULL)%>%
+  mutate(Dead_Cat5=Dead_ICU_Cat5+Dead_Vent_Cat5,Dead_ICU_Cat5=NULL,Dead_Vent_Cat5=NULL)%>%
+  mutate(Dead_Cat6=Dead_ICU_Cat6+Dead_Vent_Cat6,Dead_ICU_Cat6=NULL,Dead_Vent_Cat6=NULL)%>%
+  mutate(Dead_Cat7=Dead_ICU_Cat7+Dead_Vent_Cat7,Dead_ICU_Cat7=NULL,Dead_Vent_Cat7=NULL)
+
+###################################
+
+combined_incident_1C<- left_join(combined_incident_R0lowC,
+                        incidence_1C[[1]],
+                        by=c("time"="New_day",
+                        "Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1C[[2]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1C[[3]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1C[[4]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_1C[[5]],by=c("time"="New_day","Sim_index"="Sim_index"))
+
+combined_incident_1C<- combined_incident_1C%>%
+  select(!c(Day.x,Day.y,Day.x.x,Day.y.y,Day))
+
+colnames(combined_incident_1C)<- c("Day","Icid_Cat1","Icid_Cat2","Icid_Cat3","Icid_Cat4","Icid_Cat5","Icid_Cat6","Icid_Cat7","Sim_index","Hosp_Cat1","Hosp_Cat2","Hosp_Cat3","Hosp_Cat4","Hosp_Cat5","Hosp_Cat6","Hosp_Cat7","ICU_Cat1","ICU_Cat2","ICU_Cat3","ICU_Cat4","ICU_Cat5","ICU_Cat6","ICU_Cat7","Dead_ICU_Cat1","Dead_ICU_Cat2","Dead_ICU_Cat3","Dead_ICU_Cat4","Dead_ICU_Cat5","Dead_ICU_Cat6","Dead_ICU_Cat7","Vent_Cat1","Vent_Cat2","Vent_Cat3","Vent_Cat4","Vent_Cat5","Vent_Cat6","Vent_Cat7","Dead_Vent_Cat1","Dead_Vent_Cat2","Dead_Vent_Cat3","Dead_Vent_Cat4","Dead_Vent_Cat5","Dead_Vent_Cat6","Dead_Vent_Cat7")
+
+combined_incident_1C<- combined_incident_1C%>%
+  mutate(Dead_Cat1=Dead_ICU_Cat1+Dead_Vent_Cat1,Dead_ICU_Cat1=NULL,Dead_Vent_Cat1=NULL)%>%
+  mutate(Dead_Cat2=Dead_ICU_Cat2+Dead_Vent_Cat2,Dead_ICU_Cat2=NULL,Dead_Vent_Cat2=NULL)%>%
+  mutate(Dead_Cat3=Dead_ICU_Cat3+Dead_Vent_Cat3,Dead_ICU_Cat3=NULL,Dead_Vent_Cat3=NULL)%>%
+  mutate(Dead_Cat4=Dead_ICU_Cat4+Dead_Vent_Cat4,Dead_ICU_Cat4=NULL,Dead_Vent_Cat4=NULL)%>%
+  mutate(Dead_Cat5=Dead_ICU_Cat5+Dead_Vent_Cat5,Dead_ICU_Cat5=NULL,Dead_Vent_Cat5=NULL)%>%
+  mutate(Dead_Cat6=Dead_ICU_Cat6+Dead_Vent_Cat6,Dead_ICU_Cat6=NULL,Dead_Vent_Cat6=NULL)%>%
+  mutate(Dead_Cat7=Dead_ICU_Cat7+Dead_Vent_Cat7,Dead_ICU_Cat7=NULL,Dead_Vent_Cat7=NULL)
+
+################################
+
+combined_incident_2A<- left_join(combined_incident_R0highA,
+                        incidence_2A[[1]],
+                        by=c("time"="New_day",
+                        "Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2A[[2]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2A[[3]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2A[[4]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2A[[5]],by=c("time"="New_day","Sim_index"="Sim_index"))
+
+combined_incident_2A<- combined_incident_2A%>%
+  select(!c(Day.x,Day.y,Day.x.x,Day.y.y,Day))
+
+colnames(combined_incident_2A)<- c("Day","Icid_Cat1","Icid_Cat2","Icid_Cat3","Icid_Cat4","Icid_Cat5","Icid_Cat6","Icid_Cat7","Sim_index","Hosp_Cat1","Hosp_Cat2","Hosp_Cat3","Hosp_Cat4","Hosp_Cat5","Hosp_Cat6","Hosp_Cat7","ICU_Cat1","ICU_Cat2","ICU_Cat3","ICU_Cat4","ICU_Cat5","ICU_Cat6","ICU_Cat7","Dead_ICU_Cat1","Dead_ICU_Cat2","Dead_ICU_Cat3","Dead_ICU_Cat4","Dead_ICU_Cat5","Dead_ICU_Cat6","Dead_ICU_Cat7","Vent_Cat1","Vent_Cat2","Vent_Cat3","Vent_Cat4","Vent_Cat5","Vent_Cat6","Vent_Cat7","Dead_Vent_Cat1","Dead_Vent_Cat2","Dead_Vent_Cat3","Dead_Vent_Cat4","Dead_Vent_Cat5","Dead_Vent_Cat6","Dead_Vent_Cat7")
+
+combined_incident_2A<- combined_incident_2A%>%
+  mutate(Dead_Cat1=Dead_ICU_Cat1+Dead_Vent_Cat1,Dead_ICU_Cat1=NULL,Dead_Vent_Cat1=NULL)%>%
+  mutate(Dead_Cat2=Dead_ICU_Cat2+Dead_Vent_Cat2,Dead_ICU_Cat2=NULL,Dead_Vent_Cat2=NULL)%>%
+  mutate(Dead_Cat3=Dead_ICU_Cat3+Dead_Vent_Cat3,Dead_ICU_Cat3=NULL,Dead_Vent_Cat3=NULL)%>%
+  mutate(Dead_Cat4=Dead_ICU_Cat4+Dead_Vent_Cat4,Dead_ICU_Cat4=NULL,Dead_Vent_Cat4=NULL)%>%
+  mutate(Dead_Cat5=Dead_ICU_Cat5+Dead_Vent_Cat5,Dead_ICU_Cat5=NULL,Dead_Vent_Cat5=NULL)%>%
+  mutate(Dead_Cat6=Dead_ICU_Cat6+Dead_Vent_Cat6,Dead_ICU_Cat6=NULL,Dead_Vent_Cat6=NULL)%>%
+  mutate(Dead_Cat7=Dead_ICU_Cat7+Dead_Vent_Cat7,Dead_ICU_Cat7=NULL,Dead_Vent_Cat7=NULL)
+
+##########################################
+
+combined_incident_2B<- left_join(combined_incident_R0highB,
+                        incidence_2B[[1]],
+                        by=c("time"="New_day",
+                        "Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2B[[2]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2B[[3]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2B[[4]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2B[[5]],by=c("time"="New_day","Sim_index"="Sim_index"))
+
+combined_incident_2B<- combined_incident_2B%>%
+  select(!c(Day.x,Day.y,Day.x.x,Day.y.y,Day))
+
+colnames(combined_incident_2B)<- c("Day","Icid_Cat1","Icid_Cat2","Icid_Cat3","Icid_Cat4","Icid_Cat5","Icid_Cat6","Icid_Cat7","Sim_index","Hosp_Cat1","Hosp_Cat2","Hosp_Cat3","Hosp_Cat4","Hosp_Cat5","Hosp_Cat6","Hosp_Cat7","ICU_Cat1","ICU_Cat2","ICU_Cat3","ICU_Cat4","ICU_Cat5","ICU_Cat6","ICU_Cat7","Dead_ICU_Cat1","Dead_ICU_Cat2","Dead_ICU_Cat3","Dead_ICU_Cat4","Dead_ICU_Cat5","Dead_ICU_Cat6","Dead_ICU_Cat7","Vent_Cat1","Vent_Cat2","Vent_Cat3","Vent_Cat4","Vent_Cat5","Vent_Cat6","Vent_Cat7","Dead_Vent_Cat1","Dead_Vent_Cat2","Dead_Vent_Cat3","Dead_Vent_Cat4","Dead_Vent_Cat5","Dead_Vent_Cat6","Dead_Vent_Cat7")
+
+combined_incident_2B<- combined_incident_2B%>%
+  mutate(Dead_Cat1=Dead_ICU_Cat1+Dead_Vent_Cat1,Dead_ICU_Cat1=NULL,Dead_Vent_Cat1=NULL)%>%
+  mutate(Dead_Cat2=Dead_ICU_Cat2+Dead_Vent_Cat2,Dead_ICU_Cat2=NULL,Dead_Vent_Cat2=NULL)%>%
+  mutate(Dead_Cat3=Dead_ICU_Cat3+Dead_Vent_Cat3,Dead_ICU_Cat3=NULL,Dead_Vent_Cat3=NULL)%>%
+  mutate(Dead_Cat4=Dead_ICU_Cat4+Dead_Vent_Cat4,Dead_ICU_Cat4=NULL,Dead_Vent_Cat4=NULL)%>%
+  mutate(Dead_Cat5=Dead_ICU_Cat5+Dead_Vent_Cat5,Dead_ICU_Cat5=NULL,Dead_Vent_Cat5=NULL)%>%
+  mutate(Dead_Cat6=Dead_ICU_Cat6+Dead_Vent_Cat6,Dead_ICU_Cat6=NULL,Dead_Vent_Cat6=NULL)%>%
+  mutate(Dead_Cat7=Dead_ICU_Cat7+Dead_Vent_Cat7,Dead_ICU_Cat7=NULL,Dead_Vent_Cat7=NULL)
+
+
+##################################
+
+
+combined_incident_2C<- left_join(combined_incident_R0highC,
+                        incidence_2C[[1]],
+                        by=c("time"="New_day",
+                        "Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2C[[2]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2C[[3]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2C[[4]],by=c("time"="New_day","Sim_index"="Sim_index"))%>%
+  left_join(.,incidence_2C[[5]],by=c("time"="New_day","Sim_index"="Sim_index"))
+
+combined_incident_2C<- combined_incident_2C%>%
+  select(!c(Day.x,Day.y,Day.x.x,Day.y.y,Day))
+
+colnames(combined_incident_2C)<- c("Day","Icid_Cat1","Icid_Cat2","Icid_Cat3","Icid_Cat4","Icid_Cat5","Icid_Cat6","Icid_Cat7","Sim_index","Hosp_Cat1","Hosp_Cat2","Hosp_Cat3","Hosp_Cat4","Hosp_Cat5","Hosp_Cat6","Hosp_Cat7","ICU_Cat1","ICU_Cat2","ICU_Cat3","ICU_Cat4","ICU_Cat5","ICU_Cat6","ICU_Cat7","Dead_ICU_Cat1","Dead_ICU_Cat2","Dead_ICU_Cat3","Dead_ICU_Cat4","Dead_ICU_Cat5","Dead_ICU_Cat6","Dead_ICU_Cat7","Vent_Cat1","Vent_Cat2","Vent_Cat3","Vent_Cat4","Vent_Cat5","Vent_Cat6","Vent_Cat7","Dead_Vent_Cat1","Dead_Vent_Cat2","Dead_Vent_Cat3","Dead_Vent_Cat4","Dead_Vent_Cat5","Dead_Vent_Cat6","Dead_Vent_Cat7")
+
+combined_incident_2C<- combined_incident_2C%>%
+  mutate(Dead_Cat1=Dead_ICU_Cat1+Dead_Vent_Cat1,Dead_ICU_Cat1=NULL,Dead_Vent_Cat1=NULL)%>%
+  mutate(Dead_Cat2=Dead_ICU_Cat2+Dead_Vent_Cat2,Dead_ICU_Cat2=NULL,Dead_Vent_Cat2=NULL)%>%
+  mutate(Dead_Cat3=Dead_ICU_Cat3+Dead_Vent_Cat3,Dead_ICU_Cat3=NULL,Dead_Vent_Cat3=NULL)%>%
+  mutate(Dead_Cat4=Dead_ICU_Cat4+Dead_Vent_Cat4,Dead_ICU_Cat4=NULL,Dead_Vent_Cat4=NULL)%>%
+  mutate(Dead_Cat5=Dead_ICU_Cat5+Dead_Vent_Cat5,Dead_ICU_Cat5=NULL,Dead_Vent_Cat5=NULL)%>%
+  mutate(Dead_Cat6=Dead_ICU_Cat6+Dead_Vent_Cat6,Dead_ICU_Cat6=NULL,Dead_Vent_Cat6=NULL)%>%
+  mutate(Dead_Cat7=Dead_ICU_Cat7+Dead_Vent_Cat7,Dead_ICU_Cat7=NULL,Dead_Vent_Cat7=NULL)
+
+########################
+#replae all NA with 0
+
+combined_incident_1A<- combined_incident_1A%>% mutate_all(~replace(., is.na(.), 0))
+
+combined_incident_1B<- combined_incident_1B%>% mutate_all(~replace(., is.na(.), 0))
+
+combined_incident_1C<- combined_incident_1C%>% mutate_all(~replace(., is.na(.), 0))
+
+combined_incident_2A<- combined_incident_2A%>% mutate_all(~replace(., is.na(.), 0))
+
+combined_incident_2B<- combined_incident_2B%>% mutate_all(~replace(., is.na(.), 0))
+
+combined_incident_2C<- combined_incident_2C%>% mutate_all(~replace(., is.na(.), 0))
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=TRUE}
+get_cumulative_sums<- function(combined_incident, n_sims,n_days){
+  
+  cumulative_sums<- matrix(NA, nrow=nrow(combined_incident),ncol=35)
+  
+  for(i in 1:n_sims){
+    cumulative_sums[which(combined_incident$Sim_index==i),1]<-cumsum(na.omit(combined_incident$Icid_Cat1[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),2]<-cumsum(na.omit(combined_incident$Icid_Cat2[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),3]<-cumsum(na.omit(combined_incident$Icid_Cat3[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),4]<-cumsum(na.omit(combined_incident$Icid_Cat4[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),5]<-cumsum(na.omit(combined_incident$Icid_Cat5[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),6]<-cumsum(na.omit(combined_incident$Icid_Cat6[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),7]<-cumsum(na.omit(combined_incident$Icid_Cat7[which(combined_incident$Sim_index==i)]))
+  ##################################################### 
+   
+    cumulative_sums[which(combined_incident$Sim_index==i),29]<-cumsum(na.omit(combined_incident$Dead_Cat1[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),30]<-cumsum(na.omit(combined_incident$Dead_Cat2[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),31]<-cumsum(na.omit(combined_incident$Dead_Cat3[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),32]<-cumsum(na.omit(combined_incident$Dead_Cat4[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),33]<-cumsum(na.omit(combined_incident$Dead_Cat5[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),34]<-cumsum(na.omit(combined_incident$Dead_Cat6[which(combined_incident$Sim_index==i)]))
+   cumulative_sums[which(combined_incident$Sim_index==i),35]<-cumsum(na.omit(combined_incident$Dead_Cat7[which(combined_incident$Sim_index==i)]))
+   #######################################
+      cumulative_sums[which(combined_incident$Sim_index==i),8]<-roll_sum(na.omit(combined_incident$Hosp_Cat1[which(combined_incident$Sim_index==i)]),12,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),9]<-roll_sum(na.omit(combined_incident$Hosp_Cat2[which(combined_incident$Sim_index==i)]),12,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),10]<-roll_sum(na.omit(combined_incident$Hosp_Cat3[which(combined_incident$Sim_index==i)]),12,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),11]<-roll_sum(na.omit(combined_incident$Hosp_Cat4[which(combined_incident$Sim_index==i)]),12,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),12]<-roll_sum(na.omit(combined_incident$Hosp_Cat5[which(combined_incident$Sim_index==i)]),12,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),13]<-roll_sum(na.omit(combined_incident$Hosp_Cat6[which(combined_incident$Sim_index==i)]),12,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),14]<-roll_sum(na.omit(combined_incident$Hosp_Cat7[which(combined_incident$Sim_index==i)]),12,fill=NA)
+   
+   ###############################################
+     cumulative_sums[which(combined_incident$Sim_index==i),15]<-roll_sum(na.omit(combined_incident$ICU_Cat1[which(combined_incident$Sim_index==i)]),8,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),16]<-roll_sum(na.omit(combined_incident$ICU_Cat2[which(combined_incident$Sim_index==i)]),8,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),17]<-roll_sum(na.omit(combined_incident$ICU_Cat3[which(combined_incident$Sim_index==i)]),8,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),18]<-roll_sum(na.omit(combined_incident$ICU_Cat4[which(combined_incident$Sim_index==i)]),8,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),19]<-roll_sum(na.omit(combined_incident$ICU_Cat5[which(combined_incident$Sim_index==i)]),8,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),20]<-roll_sum(na.omit(combined_incident$ICU_Cat6[which(combined_incident$Sim_index==i)]),8,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),21]<-roll_sum(na.omit(combined_incident$ICU_Cat7[which(combined_incident$Sim_index==i)]),8,fill=NA)
+   ########################################
+   
+    cumulative_sums[which(combined_incident$Sim_index==i),22]<-roll_sum(na.omit(combined_incident$Vent_Cat1[which(combined_incident$Sim_index==i)]),11,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),23]<-roll_sum(na.omit(combined_incident$Vent_Cat2[which(combined_incident$Sim_index==i)]),11,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),24]<-roll_sum(na.omit(combined_incident$Vent_Cat3[which(combined_incident$Sim_index==i)]),11,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),25]<-roll_sum(na.omit(combined_incident$Vent_Cat4[which(combined_incident$Sim_index==i)]),11,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),26]<-roll_sum(na.omit(combined_incident$Vent_Cat5[which(combined_incident$Sim_index==i)]),11,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),27]<-roll_sum(na.omit(combined_incident$Vent_Cat6[which(combined_incident$Sim_index==i)]),11,fill=NA)
+   cumulative_sums[which(combined_incident$Sim_index==i),28]<-roll_sum(na.omit(combined_incident$Vent_Cat7[which(combined_incident$Sim_index==i)]),11,fill=NA)
+   
+}
+  return(cumulative_sums)
+}
+
+cumulative_sums_1A<- get_cumulative_sums(combined_incident_1A,n_sims, n_days)
+
+
+cumulative_sums_1B<- get_cumulative_sums(combined_incident_1B,n_sims, n_days)
+
+cumulative_sums_1C<- get_cumulative_sums(combined_incident_1C,n_sims, n_days)
+
+cumulative_sums_2A<- get_cumulative_sums(combined_incident_2A,n_sims, n_days)
+
+cumulative_sums_2B<- get_cumulative_sums(combined_incident_2B,n_sims, n_days)
+
+cumulative_sums_2C<- get_cumulative_sums(combined_incident_2C,n_sims, n_days)
+
+```
