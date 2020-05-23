@@ -18,6 +18,7 @@ require(xtable)
 require(cowplot)
 require(stringr)
 require(RcppRoll)
+require(extraDistr)
 ##load data
 complete_scenario1A <- read.csv("scenario1A_lowR0_uncontrolled.csv")
 complete_scenario1B <- read.csv("scenario1B_lowR0_MildDistancing.csv")
@@ -579,8 +580,16 @@ get_cumulative_sums<- function(combined_incident, n_sims,n_days){
    cumulative_sums[which(combined_incident$Sim_index==i),26]<-roll_sum(na.omit(combined_incident$Vent_Cat5[which(combined_incident$Sim_index==i)]),11,fill=NA)
    cumulative_sums[which(combined_incident$Sim_index==i),27]<-roll_sum(na.omit(combined_incident$Vent_Cat6[which(combined_incident$Sim_index==i)]),11,fill=NA)
    cumulative_sums[which(combined_incident$Sim_index==i),28]<-roll_sum(na.omit(combined_incident$Vent_Cat7[which(combined_incident$Sim_index==i)]),11,fill=NA)
+  }
+   cumulative_sums<- as.data.frame(cumulative_sums)
+   cumulative_sums<- cumulative_sums%>% mutate_all(~replace(., is.na(.), 0))
+   colnames(cumulative_sums)<- c("Icid_Cat1","Icid_Cat2","Icid_Cat3","Icid_Cat4","Icid_Cat5","Icid_Cat6","Icid_Cat7","Hosp_Cat1","Hosp_Cat2","Hosp_Cat3","Hosp_Cat4","Hosp_Cat5","Hosp_Cat6","Hosp_Cat7","ICU_Cat1","ICU_Cat2","ICU_Cat3","ICU_Cat4","ICU_Cat5","ICU_Cat6","ICU_Cat7","Vent_Cat1","Vent_Cat2","Vent_Cat3","Vent_Cat4","Vent_Cat5","Vent_Cat6","Vent_Cat7","Dead_Cat1","Dead_Cat2","Dead_Cat3","Dead_Cat4","Dead_Cat5","Dead_Cat6","Dead_Cat7")
    
-}
+   cumulative_sums<- cumulative_sums%>%
+     mutate(Day= rep(1:n_days,times=n_sims))%>%
+     mutate(Sim_index=rep(1:n_sims,each=n_days))
+  
+  
   return(cumulative_sums)
 }
 
@@ -597,4 +606,162 @@ cumulative_sums_2B<- get_cumulative_sums(combined_incident_2B,n_sims, n_days)
 
 cumulative_sums_2C<- get_cumulative_sums(combined_incident_2C,n_sims, n_days)
 
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+
+get_median_incident<- function(combined_incident, n_sims,n_days){
+  median_combined_incident<- matrix(NA,nrow=n_days, ncol=35)
+  for(i in 1:n_days){
+    median_combined_incident[i,c(1:7)]<- apply(combined_incident[which(combined_incident$Day==i),c('Icid_Cat1','Icid_Cat2','Icid_Cat3','Icid_Cat4','Icid_Cat5','Icid_Cat6','Icid_Cat7')],2,median)
+    
+    
+    median_combined_incident[i,c(8:14)]<- apply(combined_incident[which(combined_incident$Day==i),c('Hosp_Cat1','Hosp_Cat2','Hosp_Cat3','Hosp_Cat4','Hosp_Cat5','Hosp_Cat6','Hosp_Cat7')],2,median)
+    
+    median_combined_incident[i,c(15:21)]<- apply(combined_incident[which(combined_incident$Day==i),c('ICU_Cat1','ICU_Cat2','ICU_Cat3','ICU_Cat4','ICU_Cat5','ICU_Cat6','ICU_Cat7')],2,median)
+    
+    median_combined_incident[i,c(22:28)]<- apply(combined_incident[which(combined_incident$Day==i),c('Vent_Cat1','Vent_Cat2','Vent_Cat3','Vent_Cat4','Vent_Cat5','Vent_Cat6','Vent_Cat7')],2,median)
+    
+    median_combined_incident[i,c(29:35)]<- apply(combined_incident[which(combined_incident$Day==i),c('Dead_Cat1','Dead_Cat2','Dead_Cat3','Dead_Cat4','Dead_Cat5','Dead_Cat6','Dead_Cat7')],2,median)
+  }
+  
+  median_combined_incident<- as.data.frame(median_combined_incident)
+  colnames(median_combined_incident)<- c('Icid_Cat1','Icid_Cat2','Icid_Cat3','Icid_Cat4','Icid_Cat5','Icid_Cat6','Icid_Cat7','Hosp_Cat1','Hosp_Cat2','Hosp_Cat3','Hosp_Cat4','Hosp_Cat5','Hosp_Cat6','Hosp_Cat7','ICU_Cat1','ICU_Cat2','ICU_Cat3','ICU_Cat4','ICU_Cat5','ICU_Cat6','ICU_Cat7','Vent_Cat1','Vent_Cat2','Vent_Cat3','Vent_Cat4','Vent_Cat5','Vent_Cat6','Vent_Cat7','Dead_Cat1','Dead_Cat2','Dead_Cat3','Dead_Cat4','Dead_Cat5','Dead_Cat6','Dead_Cat7')
+  
+  median_combined_incident<- median_combined_incident%>%
+    mutate(Day=rep(1:n_days))
+  return(median_combined_incident)
+}
+
+median_combined_incident_1A<- get_median_incident(combined_incident_1A,n_sims,n_days)
+median_combined_incident_1B<- get_median_incident(combined_incident_1B,n_sims,n_days)
+median_combined_incident_1C<- get_median_incident(combined_incident_1C,n_sims,n_days)
+median_combined_incident_2A<- get_median_incident(combined_incident_2A,n_sims,n_days)
+median_combined_incident_2B<- get_median_incident(combined_incident_2B,n_sims,n_days)
+median_combined_incident_2C<- get_median_incident(combined_incident_2C,n_sims,n_days)
+
+
+####################################
+
+get_median_cumulative<- function(cumulative_sums, n_sims,n_days){
+  median_cumulative_sums<- matrix(NA,nrow=n_days, ncol=35)
+  for(i in 1:n_days){
+    median_cumulative_sums[i,c(1:7)]<- apply(cumulative_sums[which(cumulative_sums$Day==i),c('Icid_Cat1','Icid_Cat2','Icid_Cat3','Icid_Cat4','Icid_Cat5','Icid_Cat6','Icid_Cat7')],2,median)
+    
+    
+    median_cumulative_sums[i,c(8:14)]<- apply(cumulative_sums[which(cumulative_sums$Day==i),c('Hosp_Cat1','Hosp_Cat2','Hosp_Cat3','Hosp_Cat4','Hosp_Cat5','Hosp_Cat6','Hosp_Cat7')],2,median)
+    
+    median_cumulative_sums[i,c(15:21)]<- apply(cumulative_sums[which(cumulative_sums$Day==i),c('ICU_Cat1','ICU_Cat2','ICU_Cat3','ICU_Cat4','ICU_Cat5','ICU_Cat6','ICU_Cat7')],2,median)
+    
+    median_cumulative_sums[i,c(22:28)]<- apply(cumulative_sums[which(cumulative_sums$Day==i),c('Vent_Cat1','Vent_Cat2','Vent_Cat3','Vent_Cat4','Vent_Cat5','Vent_Cat6','Vent_Cat7')],2,median)
+    
+    median_cumulative_sums[i,c(29:35)]<- apply(cumulative_sums[which(cumulative_sums$Day==i),c('Dead_Cat1','Dead_Cat2','Dead_Cat3','Dead_Cat4','Dead_Cat5','Dead_Cat6','Dead_Cat7')],2,median)
+  }
+  
+  median_cumulative_sums<- as.data.frame(median_cumulative_sums)
+  colnames(median_cumulative_sums)<- c('Icid_Cat1','Icid_Cat2','Icid_Cat3','Icid_Cat4','Icid_Cat5','Icid_Cat6','Icid_Cat7','Hosp_Cat1','Hosp_Cat2','Hosp_Cat3','Hosp_Cat4','Hosp_Cat5','Hosp_Cat6','Hosp_Cat7','ICU_Cat1','ICU_Cat2','ICU_Cat3','ICU_Cat4','ICU_Cat5','ICU_Cat6','ICU_Cat7','Vent_Cat1','Vent_Cat2','Vent_Cat3','Vent_Cat4','Vent_Cat5','Vent_Cat6','Vent_Cat7','Dead_Cat1','Dead_Cat2','Dead_Cat3','Dead_Cat4','Dead_Cat5','Dead_Cat6','Dead_Cat7')
+  
+  median_cumulative_sums<- median_cumulative_sums%>%
+    mutate(Day=rep(1:n_days))
+  return(median_cumulative_sums)
+}
+
+median_cumulative_sums_1A<- get_median_cumulative(cumulative_sums_1A,n_sims,n_days)
+median_cumulative_sums_1B<- get_median_cumulative(cumulative_sums_1B,n_sims,n_days)
+median_cumulative_sums_1C<- get_median_cumulative(cumulative_sums_1C,n_sims,n_days)
+median_cumulative_sums_2A<- get_median_cumulative(cumulative_sums_2A,n_sims,n_days)
+median_cumulative_sums_2B<- get_median_cumulative(cumulative_sums_2B,n_sims,n_days)
+median_cumulative_sums_2C<- get_median_cumulative(cumulative_sums_2C,n_sims,n_days)
+
+
+```
+
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+#using only cases, deaths and capacity as the metrics for now, decide when we are red,  yellow or green using Baltimore city (red is 1, yellow is 2, green is 3) there are 3 testing criteria, we take the minimum to determine your global criteria i.e. if you are red for one of the criteria you are considered globally red, same for yellow, for green you have to be green in all three categories. 
+
+#for individual sims: 
+
+get_status<- function(combined_incident, cumulative_sum, n_sims, n_days,ICU_bed_capacity){
+combined_sums_death_icid<- matrix(NA,nrow=(n_sims*n_days),ncol=4)
+  
+
+for(i in 1:n_sims){
+ combined_sums_death_icid[which(combined_incident$Sim_index==i),1]<-apply(combined_incident[which(combined_incident$Sim_index==i), c('Icid_Cat1','Icid_Cat2','Icid_Cat3','Icid_Cat4','Icid_Cat5','Icid_Cat6','Icid_Cat7')],1,sum)
+ 
+ combined_sums_death_icid[which(combined_incident$Sim_index==i),2]<-apply(combined_incident[which(combined_incident$Sim_index==i), c('Dead_Cat1','Dead_Cat2','Dead_Cat3','Dead_Cat4','Dead_Cat5','Dead_Cat6','Dead_Cat7')],1,sum)
+ 
+
+   combined_sums_death_icid[which(combined_incident$Sim_index==i),3]<-roll_sum(combined_sums_death_icid[which(combined_incident$Sim_index==i),1],3,fill=NA)
+
+      combined_sums_death_icid[which(combined_incident$Sim_index==i),4]<-roll_sum(combined_sums_death_icid[which(combined_incident$Sim_index==i),2],3,fill=NA)
+}
+
+combined_sums_death_icid<- as.data.frame(combined_sums_death_icid)
+colnames(combined_sums_death_icid)<- c("Icid_total","Death_total","Rolling_sum_Icid","Rolling_sum_Death")
+
+combined_sums_death_icid<- combined_sums_death_icid%>%
+  mutate_all(~replace(., is.na(.), 0))%>%
+  mutate(Rolling_mean_Icid=Rolling_sum_Icid/3)%>%
+  mutate(Rolling_mean_Death=Rolling_sum_Death/3)%>%
+  mutate(Day=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_index=rep(1:n_sims,each=n_days))
+
+  
+
+  
+  
+  #check for red status for death and incident cases
+  
+  shifted_combined_incident<- combined_sums_death_icid%>%
+    select(Sim_index,Day,Icid_total,Death_total)%>%
+    mutate(New_Day=Day+1)
+  
+  check_red_status_death_icid<- left_join(combined_sums_death_icid,shifted_combined_incident,by=c("Day"="New_Day","Sim_index"="Sim_index"))%>%
+    mutate_all(~replace(., is.na(.), 0))%>%
+    mutate(red_status_death=ifelse(Death_total.y<=Death_total.x,1,0))%>%
+             mutate(red_status_icid=ifelse(Icid_total.y<=Icid_total.x,1,0))%>%
+    mutate(decline_death=ifelse(Death_total.y>Death_total.x,1,0))%>%
+    mutate(decline_icid=ifelse(Icid_total.y>Icid_total.x,1,0))%>%
+    mutate(window_declining_death= roll_sum(decline_death,14,fill=NA))%>%
+    mutate(window_declining_icid=roll_sum(decline_icid,14,fill=NA))%>%
+    mutate_all(~replace(., is.na(.), 0))%>%
+    mutate(yellow_status_death= ifelse(red_status_death==0&window_declining_death<14,1,0))%>%
+    mutate(yellow_status_icid=ifelse(red_status_icid==0&window_declining_icid<14,1,0))%>%
+    mutate(green_status_death=ifelse(yellow_status_death==0&red_status_death==0,1,0))%>%
+    mutate(green_status_icid=ifelse(yellow_status_icid==0&red_status_icid==0,1,0))
+ 
+  cumulative_sum<- cumulative_sum%>%
+   select('ICU_Cat1','ICU_Cat2','ICU_Cat3','ICU_Cat4','ICU_Cat5','ICU_Cat6','ICU_Cat7') %>% 
+    mutate(ICU_total=rowSums(.,na.rm=TRUE))%>%
+    mutate(red_status_ICU=ifelse(ICU_total>0.85*ICU_bed_capacity,1,0))%>%
+             mutate(yellow_status_ICU=ifelse(ICU_total<=0.85*ICU_bed_capacity&ICU_total>0.8*ICU_bed_capacity,1,0))%>%
+    
+  mutate(green_status_ICU=ifelse(ICU_total<=0.8*ICU_bed_capacity,1,0))
+  
+status_matrix<- as.data.frame(cbind(check_red_status_death_icid$red_status_death,check_red_status_death_icid$red_status_icid,check_red_status_death_icid$yellow_status_death,check_red_status_death_icid$yellow_status_icid,check_red_status_death_icid$green_status_death,check_red_status_death_icid$green_status_icid,cumulative_sum$red_status_ICU,cumulative_sum$yellow_status_ICU,cumulative_sum$green_status_ICU))
+
+colnames(status_matrix)<- c("Red_Death","Red_Icid","Yellow_Death","Yellow_Icid","Green_Death","Green_Icid","Red_ICU","Yellow_ICU","Green_ICU")
+
+status_matrix<- status_matrix%>%
+  mutate(Death_status= ifelse(Red_Death==1,1,ifelse(Yellow_Death==1,2,ifelse(Green_Death==1,3,0))))%>%
+  mutate(Icid_status=ifelse(Red_Icid==1,1,ifelse(Yellow_Icid==1,2,ifelse(Green_Icid==1,3,0))))%>%
+  mutate(ICU_status=ifelse(Red_ICU==1,1,ifelse(Yellow_ICU==1,2,ifelse(Green_ICU==1,3,0))))%>%
+  mutate(Global_staus=min(Death_status,Icid_status,ICU_status))
+
+return(status_matrix)  
+
+}
+
+status_1A<-get_status(combined_incident_1A,cumulative_sums_1A,n_sims,n_days,600)
+
+status_1B<-get_status(combined_incident_1B,cumulative_sums_1B,n_sims,n_days,600)
+
+status_1C<-get_status(combined_incident_1C,cumulative_sums_1C,n_sims,n_days,600)
+
+status_2A<-get_status(combined_incident_2A,cumulative_sums_2A,n_sims,n_days,600)
+
+status_2B<-get_status(combined_incident_2B,cumulative_sums_2B,n_sims,n_days,600)
+
+status_2C<-get_status(combined_incident_2C,cumulative_sums_2C,n_sims,n_days,600)
 ```
