@@ -835,7 +835,7 @@ median_status_2A<-get_status_median(median_combined_incident_2A,median_cumulativ
 
 median_status_2B<-get_status_median(median_combined_incident_2B,median_cumulative_sums_2B,n_sims,n_days,600)
 
-status_2C<-get_status(combined_incident_2C,cumulative_sums_2C,n_sims,n_days,600)
+median_status_2C<-get_status_median(nedian_combined_incident_2C,median_cumulative_sums_2C,n_sims,n_days,600)
 
 
 ```
