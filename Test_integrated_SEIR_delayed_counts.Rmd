@@ -749,7 +749,7 @@ status_matrix<- status_matrix%>%
   mutate(ICU_status=ifelse(Red_ICU==1,1,ifelse(Yellow_ICU==1,2,ifelse(Green_ICU==1,3,0))))%>%
   mutate(Global_staus=min(Death_status,Icid_status,ICU_status))
 
-return(status_matrix)  
+return(list(status_matrix,check_red_status_death_icid,combined_sums_death_icid))  
 
 }
 
@@ -769,14 +769,22 @@ status_2C<-get_status(combined_incident_2C,cumulative_sums_2C,n_sims,n_days,600)
 ```{r, cache=TRUE, message=FALSE, echo=FALSE, warning=FALSE}
 get_status_median<- function(combined_incident_median, median_cumulative_sum, n_sims, n_days,ICU_bed_capacity){
 
+  median_incident_totals<- matrix(NA,nrow=n_days,ncol=2)
   
+  median_incident_totals[,1]<- apply(combined_incident_median[,c('Icid_Cat1','Icid_Cat2','Icid_Cat3','Icid_Cat4','Icid_Cat5','Icid_Cat6','Icid_Cat7')],1,sum)
+  median_incident_totals[,2]<- apply(combined_incident_median[,c('Dead_Cat1','Dead_Cat2','Dead_Cat3','Dead_Cat4','Dead_Cat5','Dead_Cat6','Dead_Cat7')],1,sum)
 
+median_incident_totals<- as.data.frame(median_incident_totals)
+colnames(median_incident_totals)<- c('Icid_total','Death_total')
 
- combined_incident_median<- combined_incident_median%>%
-   mutate(Icid_total= sum(Icid_Cat1,Icid_Cat2,Icid_Cat3,Icid_Cat4,Icid_Cat5,Icid_Cat6,Icid_Cat7))%>%
-   mutate(Death_total= sum(Dead_Cat1,Dead_Cat2,Dead_Cat3,Dead_Cat4,Dead_Cat5,Dead_Cat6,Dead_Cat7))%>%
-  mutate(Rolling_sum_Icid=roll_sum(Icid_total,3,fill=NA))%>%
-  mutate(Rolling_sum_Death=roll_sum(Death_total,3,fill=NA))%>%mutate_all(~replace(., is.na(.), 0))%>%
+median_incident_totals<- median_incident_totals%>%
+  mutate(Day=rep(1:n_days))
+
+ 
+ median_incident_totals<- median_incident_totals%>%
+      mutate(Rolling_sum_Icid=roll_sum(Icid_total,3,fill=NA),
+      Rolling_sum_Death=roll_sum(Death_total,3,fill=NA))%>%
+   mutate_all(~replace(., is.na(.), 0))%>%
   mutate(Rolling_mean_Icid=(Rolling_sum_Icid/3))%>%
   mutate(Rolling_mean_Death=(Rolling_sum_Death/3))
   
@@ -785,11 +793,11 @@ get_status_median<- function(combined_incident_median, median_cumulative_sum, n_
   #rolling 3 day check!!
   #check for red status for death and incident cases
   
-  shifted_combined_incident<- combined_incident_median%>%
+  shifted_combined_incident<- median_incident_totals%>%
     select(Day,Rolling_mean_Icid,Rolling_mean_Death)%>%
     mutate(New_Day=Day+1)
   
-  check_red_status_death_icid<- left_join(combined_incident_median,shifted_combined_incident,by=c("Day"="New_Day"))%>%
+  check_red_status_death_icid<- left_join(median_incident_totals,shifted_combined_incident,by=c("Day"="New_Day"))%>%
     mutate_all(~replace(., is.na(.), 0))%>%
     mutate(red_status_death=ifelse(Rolling_mean_Death.y<=Rolling_mean_Death.x,1,0))%>%
              mutate(red_status_icid=ifelse(Rolling_mean_Icid.y<=Rolling_mean_Icid.x,1,0))%>%
@@ -821,7 +829,7 @@ status_matrix<- status_matrix%>%
   mutate(ICU_status=ifelse(Red_ICU==1,1,ifelse(Yellow_ICU==1,2,ifelse(Green_ICU==1,3,0))))%>%
   mutate(Global_staus=min(Death_status,Icid_status,ICU_status))
 
-return(status_matrix)  
+return(list(status_matrix,check_red_status_death_icid,median_incident_totals))  
 
 }
 
@@ -835,7 +843,7 @@ median_status_2A<-get_status_median(median_combined_incident_2A,median_cumulativ
 
 median_status_2B<-get_status_median(median_combined_incident_2B,median_cumulative_sums_2B,n_sims,n_days,600)
 
-median_status_2C<-get_status_median(nedian_combined_incident_2C,median_cumulative_sums_2C,n_sims,n_days,600)
+median_status_2C<-get_status_median(median_combined_incident_2C,median_cumulative_sums_2C,n_sims,n_days,600)
 
 
 ```
