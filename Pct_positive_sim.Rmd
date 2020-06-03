@@ -2,6 +2,20 @@
 title: "Pct_positivity_sims"
 output: html_document
 ---
+
+
+Scenarios only testing Symptomatics: 
+
+assumptions- 
+10% of symptomatic COVID-19 cases are tested. Cases are only tested upon displaying symptoms. Symptoms show up 5 days after exposure event, tests results take 3 days to process, therefore test results are only counted in the fraction positive value 8 days after an individual's exposure event. 
+
+Test sensitivity (PCR) is 95%, test specificity is 98%. 
+
+After a person is exposed we assume they remain infectious for 10 days, whether they are symptomatic cases or asymptomatic cases.  
+
+The number of daily tests increases throughout the 300 days of the simulated epidemic and reaches a maximum of 2000 tests per day at day 200. This level of daily testing is sustained for the remainder of the epidemic. 
+
+
 ```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
 setwd("~/Dropbox/COVID-BaltimoreCity/output_20200413")
 
@@ -18,11 +32,15 @@ require(cowplot)
 require(stringr)
 require(RcppRoll)
 require(extraDistr)
+require(kableExtra)
+
 ##load data
 complete_scenarioA <- read.csv("scenarioA_moderate.csv")
 complete_scenarioB <- read.csv("scenarioB_mod_degrading.csv")
 complete_scenarioC <- read.csv("scenarioC_mod_degrading_scl.csv")
 complete_scenarioD <- read.csv("scenarioD_total_reopen.csv")
+
+
 
 n_sims<- 1000
 n_days<- 300
@@ -32,14 +50,12 @@ n_days<- 300
 
 
 get_complete_incid<- function(complete_scenario,n_days,n_sims){
-  summed_cat<- matrix(NA,nrow=n_sims*n_days,ncol=3) 
+  summed_cat<- matrix(NA,nrow=n_sims*n_days,ncol=2) 
   
   summed_cat[,1]<- apply(complete_scenario[,74:87],1,sum)
   summed_cat[,2]<- apply(complete_scenario[,88:101],1,sum)
-  summed_cat[,3]<- apply(complete_scenario[,74:101],1,sum)
-  
   summed_cat<- as.data.frame(summed_cat)
-  colnames(summed_cat)<- c("Incid_Asymp","Incid_Symp","Incid_Total")
+  colnames(summed_cat)<- c("Incid_Asymp","Incid_Symp")
   
   complete_incid<- summed_cat%>%
     mutate(Days= rep(1:n_days,times=n_sims))%>%
@@ -70,7 +86,7 @@ complete_incidentD<- get_complete_incid(complete_scenarioD,n_days,n_sims)
 
 #want to know how many tests are being run on symptomatic positives each day, build in a sens of 0.99- 0.95% to count the positive tests, then count person-days where people are infectious and not tested (we don't know about them).
 
-#suppose we manage to test 90% of symptomatic people
+
 
 
 
@@ -101,7 +117,7 @@ get_symptomatic_tests<- function(complete_incident, n_days, n_sims, sens, prop_t
   untested_person_time<- untested_person_time%>%
     mutate(Days=rep(1:n_days,times=n_sims))%>%
   mutate(Sim_Index=rep(1:n_sims,each=n_days))%>%
-    mutate(missing_person_time=Untested_person_time+symptomatic_testing$symp_untested_person_time)
+    mutate(missing_person_time=Untested_person_time+symptomatic_testing$symp_untested_person_time+complete_incident$Incid_Asymp)
   
   symptomatic_testing<- symptomatic_testing%>%
   mutate_all(~replace(., is.na(.), 0))
@@ -111,27 +127,25 @@ get_symptomatic_tests<- function(complete_incident, n_days, n_sims, sens, prop_t
 return(list(symptomatic_testing,untested_person_time))
 }
 
-symptomatic_testsA<- get_symptomatic_tests(complete_incidentA,n_days,n_sims,0.95,0.7)
+symptomatic_testsA<- get_symptomatic_tests(complete_incidentA,n_days,n_sims,0.95,0.1)
 
-symptomatic_testsB<- get_symptomatic_tests(complete_incidentB,n_days,n_sims,0.95,0.7)
-
-
-symptomatic_testsA_60<- get_symptomatic_tests(complete_incidentA,n_days,n_sims,0.95,0.6)
-
-symptomatic_testsB_60<- get_symptomatic_tests(complete_incidentB,n_days,n_sims,0.95,0.6)
+symptomatic_testsB<- get_symptomatic_tests(complete_incidentB,n_days,n_sims,0.95,0.1)
 
 
-symptomatic_testsC<- get_symptomatic_tests(complete_incidentC,n_days,n_sims,0.95,0.7)
 
-symptomatic_testsD<- get_symptomatic_tests(complete_incidentD,n_days,n_sims,0.95,0.7)
+symptomatic_testsC<- get_symptomatic_tests(complete_incidentC,n_days,n_sims,0.95,0.1)
 
+symptomatic_testsD<- get_symptomatic_tests(complete_incidentD,n_days,n_sims,0.95,0.1)
 
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
 #############################
 #now we need to simulate testing people who might have symptoms of COVID but its something else and not covid
 
-vector_num_tests<- rep(c(rep(10,10),rep(20,10),rep(40,20),rep(80,20),rep(120,20),
-                     rep(240,20),rep(480,20),rep(960,20),rep(1920,20),rep(3840,20),
-                     rep(7680,20),rep(11500,100)),times=n_sims)
+vector_num_tests<- rep(c(rep(10,10),rep(50,10),rep(100,20),rep(150,20),rep(200,20),
+                     rep(300,20),rep(400,20),rep(600,20),rep(800,20),rep(1000,20),
+                     rep(1500,20),rep(2000,100)),times=n_sims)
 get_false_positives<- function(complete_incident, sypmtomatic_tests,num_tests,n_days,n_sims,specificity){
   
   false_positives<- matrix(NA,nrow=n_sims*n_days, ncol=2)
@@ -151,14 +165,16 @@ false_positivesA<-get_false_positives(complete_incidentA,symptomatic_testsA[[1]]
 
 false_positivesB<-get_false_positives(complete_incidentB,symptomatic_testsB[[1]],vector_num_tests,n_days,n_sims,0.98)
 
-false_positivesA_60<-get_false_positives(complete_incidentA,symptomatic_testsA_60[[1]],vector_num_tests,n_days,n_sims,0.98)
-
-false_positivesB_60<-get_false_positives(complete_incidentB,symptomatic_testsB_60[[1]],vector_num_tests,n_days,n_sims,0.98)
 
 
 false_positivesC<-get_false_positives(complete_incidentC,symptomatic_testsC[[1]],vector_num_tests,n_days,n_sims,0.98)
 
 false_positivesD<-get_false_positives(complete_incidentD,symptomatic_testsD[[1]],vector_num_tests,n_days,n_sims,0.98)
+
+```
+
+
+```{r, cache=TRUE, message=FALSE, echo=FALSE, warning=FALSE}
 #################################
 
 #calculate positive rate: 
@@ -183,21 +199,22 @@ pos_rateA<- get_pos_rate(complete_incidentA,symptomatic_testsA[[1]],false_positi
 
 pos_rateB<- get_pos_rate(complete_incidentB,symptomatic_testsB[[1]],false_positivesB,vector_num_tests,n_days,n_sims)
 
-pos_rateA_60<- get_pos_rate(complete_incidentA,symptomatic_testsA_60[[1]],false_positivesA_60,vector_num_tests,n_days,n_sims)
-
-pos_rateB_60<- get_pos_rate(complete_incidentB,symptomatic_testsB_60[[1]],false_positivesB_60,vector_num_tests,n_days,n_sims)
 
 pos_rateC<- get_pos_rate(complete_incidentC,symptomatic_testsC[[1]],false_positivesC,vector_num_tests,n_days,n_sims)
 
 pos_rateD<- get_pos_rate(complete_incidentD,symptomatic_testsD[[1]],false_positivesD,vector_num_tests,n_days,n_sims)
 ################################
 
-#how many person hours of infectiousness are we missing?
+
+
+
+
+#how many person hours of infectiousness are we missing total over 300 days?
 
 total_missing_person_timeA<-matrix(NA,nrow=n_sims*n_days,ncol=1)
 
 for(i in 1:n_sims){
-total_missing_person_timeA[which(complete_incidentA$Sim_Index==i),1]<- cumsum(symptomatic_testsA[[2]]$missing_person_time[which(complete_incidentC$Sim_Index==i)])
+total_missing_person_timeA[which(complete_incidentA$Sim_Index==i),1]<- cumsum(symptomatic_testsA[[2]]$missing_person_time[which(complete_incidentA$Sim_Index==i)])
 }
 
 total_missing_person_timeA<- as.data.frame(total_missing_person_timeA)
@@ -205,21 +222,6 @@ total_missing_person_timeA<- as.data.frame(total_missing_person_timeA)
 colnames(total_missing_person_timeA)<- c("Missing_Person_Time")
 
 total_missing_person_timeA<- total_missing_person_timeA%>%
-  mutate(Day=rep(1:n_days,times=n_sims))%>%
-  mutate(Sim_Index=rep(1:n_sims,each=n_days))
-
-
-total_missing_person_timeA_60<-matrix(NA,nrow=n_sims*n_days,ncol=1)
-
-for(i in 1:n_sims){
-total_missing_person_timeA_60[which(complete_incidentA$Sim_Index==i),1]<- cumsum(symptomatic_testsA_60[[2]]$missing_person_time[which(complete_incidentC$Sim_Index==i)])
-}
-
-total_missing_person_timeA_60<- as.data.frame(total_missing_person_timeA_60)
-
-colnames(total_missing_person_timeA_60)<- c("Missing_Person_Time")
-
-total_missing_person_timeA_60<- total_missing_person_timeA_60%>%
   mutate(Day=rep(1:n_days,times=n_sims))%>%
   mutate(Sim_Index=rep(1:n_sims,each=n_days))
 
@@ -237,21 +239,6 @@ colnames(total_missing_person_timeB)<- c("Missing_Person_Time")
 total_missing_person_timeB<- total_missing_person_timeB%>%
   mutate(Day=rep(1:n_days,times=n_sims))%>%
   mutate(Sim_Index=rep(1:n_sims,each=n_days))
-
-total_missing_person_timeB_60<-matrix(NA,nrow=n_sims*n_days,ncol=1)
-
-for(i in 1:n_sims){
-total_missing_person_timeB_60[which(complete_incidentB$Sim_Index==i),1]<- cumsum(symptomatic_testsB_60[[2]]$missing_person_time[which(complete_incidentB$Sim_Index==i)])
-}
-
-total_missing_person_timeB_60<- as.data.frame(total_missing_person_timeB_60)
-
-colnames(total_missing_person_timeB_60)<- c("Missing_Person_Time")
-
-total_missing_person_timeB_60<- total_missing_person_timeB_60%>%
-  mutate(Day=rep(1:n_days,times=n_sims))%>%
-  mutate(Sim_Index=rep(1:n_sims,each=n_days))
-
 
 total_missing_person_timeC<-matrix(NA,nrow=n_sims*n_days,ncol=1)
 
@@ -283,7 +270,10 @@ colnames(total_missing_person_timeD)<- c("Missing_Person_Time")
 total_missing_person_timeD<- total_missing_person_timeD%>%
   mutate(Day=rep(1:n_days,times=n_sims))%>%
   mutate(Sim_Index=rep(1:n_sims,each=n_days))
+```
 
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
 
 ###################################
 
@@ -308,9 +298,6 @@ median_pos_rateA<- get_median_pos_rate(pos_rateA,n_days,n_sims)
 
 median_pos_rateB<- get_median_pos_rate(pos_rateB,n_days,n_sims)
 
-median_pos_rateA_60<- get_median_pos_rate(pos_rateA_60,n_days,n_sims)
-
-median_pos_rateB_60<- get_median_pos_rate(pos_rateB_60,n_days,n_sims)
 
 
 median_pos_rateC<- get_median_pos_rate(pos_rateC,n_days,n_sims)
@@ -318,36 +305,116 @@ median_pos_rateC<- get_median_pos_rate(pos_rateC,n_days,n_sims)
 median_pos_rateD<- get_median_pos_rate(pos_rateD,n_days,n_sims)
 
 
-median_df<- as.data.frame(rbind(median_pos_rateA,median_pos_rateB))
+median_df<- as.data.frame(rbind(median_pos_rateA,median_pos_rateB,median_pos_rateC,
+                                median_pos_rateD))
 
 median_df<- median_df%>%
-  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days)))
+  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days),rep("C",times=n_days),rep("D",times=n_days)))
 
 plot_pos_rate<- ggplot()+
   geom_line(data=median_df,aes(x=Day,y=Median_Test_Pos_Rate,color=Scenario))+
-  labs(y="Median Test Positivity Rate")+
+  labs(y="Median Test Positivity Rate",title="Daily Test Positivity Rate for Tests")+
   geom_hline(yintercept=0.2,col="red")+
   geom_hline(yintercept=0.1,col="purple")+
   geom_hline(yintercept=0.03,col="blue")
 
 plot_pos_rate
 
-
-median_df_60<- as.data.frame(rbind(median_pos_rateA_60,median_pos_rateB_60))
-
-median_df_60<- median_df_60%>%
-  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days)))
-
-plot_pos_rate_60<- ggplot()+
-  geom_line(data=median_df_60,aes(x=Day,y=Median_Test_Pos_Rate,color=Scenario))+
-  labs(y="Median Test Positivity Rate")+
-  geom_hline(yintercept=0.2,col="red")+
-  geom_hline(yintercept=0.1,col="purple")+
-  geom_hline(yintercept=0.03,col="blue")
-
-plot_pos_rate_60
+```
+Number of days over the 300 simulation days that are below test positivity rate indicated. 
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+###################################################################
+#how many days below the threshold are we
+get_days_below_thresholds<- function(median_pos_rate,n_days){
+  num_below_20<- length(which(median_pos_rate$Median_Test_Pos_Rate<=0.2))
+  num_below_10<- length(which(median_pos_rate$Median_Test_Pos_Rate<=0.1))
+  num_below_3<- length(which(median_pos_rate$Median_Test_Pos_Rate<=0.03))
+  
+  return(list(num_below_20,num_below_10,num_below_3))
+}
 
 
+days_below_20A<- get_days_below_thresholds(median_pos_rateA,n_days)[[1]]
+days_below_10A<- get_days_below_thresholds(median_pos_rateA,n_days)[[2]]
+days_below_3A<- get_days_below_thresholds(median_pos_rateA,n_days)[[3]]
+
+
+
+
+days_below_20B<- get_days_below_thresholds(median_pos_rateB,n_days)[[1]]
+days_below_10B<- get_days_below_thresholds(median_pos_rateB,n_days)[[2]]
+days_below_3B<- get_days_below_thresholds(median_pos_rateB,n_days)[[3]]
+
+
+days_below_20C<- get_days_below_thresholds(median_pos_rateC,n_days)[[1]]
+days_below_10C<- get_days_below_thresholds(median_pos_rateC,n_days)[[2]]
+days_below_3C<- get_days_below_thresholds(median_pos_rateC,n_days)[[3]]
+
+
+
+days_below_20D<- get_days_below_thresholds(median_pos_rateD,n_days)[[1]]
+days_below_10D<- get_days_below_thresholds(median_pos_rateD,n_days)[[2]]
+days_below_3D<- get_days_below_thresholds(median_pos_rateD,n_days)[[3]]
+
+
+
+days_below_df<- as.data.frame(rbind(c(days_below_20A,days_below_10A,days_below_3A),c(days_below_20B,days_below_10B,days_below_3B),c(days_below_20C,days_below_10C,days_below_3C),c(days_below_20D,days_below_10D,days_below_3D)))
+
+colnames(days_below_df)<- c("Days Below 20%", "Days Below 10%", "Days Below 3%")
+
+rownames(days_below_df)<- c("Scenario A", "Scenario B", "Scenario C", "Scenario D")
+
+kable(days_below_df)%>%
+  kable_styling()
+```
+
+```{r, cache=TRUE, message=FALSE, echo=FALSE, warning=FALSE}
+
+################################################################
+#each day, how many people are we missing? 
+
+get_median_num_missing<- function(symptomatic_tests,n_days,n_sims){
+  
+  median_num_missing<-matrix(NA,nrow=n_days,ncol=1)
+  
+  for(i in 1:n_days){
+    median_num_missing[i,1]<-median(symptomatic_tests[[2]]$missing_person_time[which(symptomatic_tests[[2]]$Days==i)])
+  }
+  median_num_missing<- as.data.frame(median_num_missing)
+  colnames(median_num_missing)<- c("Median_Number_Missing")
+  median_num_missing<- median_num_missing%>%
+    mutate(Day=rep(1:n_days))
+  
+  return(median_num_missing)
+}
+
+median_num_missingA<- get_median_num_missing(symptomatic_testsA,n_days,n_sims)
+
+median_num_missingB<- get_median_num_missing(symptomatic_testsB,n_days,n_sims)
+
+
+
+median_num_missingC<- get_median_num_missing(symptomatic_testsC,n_days,n_sims)
+
+median_num_missingD<- get_median_num_missing(symptomatic_testsD,n_days,n_sims)
+
+
+median_df<- as.data.frame(rbind(median_num_missingA,median_num_missingB,median_num_missingC,
+                                median_num_missingD))
+
+median_df<- median_df%>%
+  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days),rep("C",times=n_days),rep("D",times=n_days)))
+
+plot_missing<- ggplot()+
+  geom_line(data=median_df,aes(x=Day,y=Median_Number_Missing,color=Scenario))+
+  labs(y="Median Number of People Untested", title="Daily Number of Infectious People who are Untested")
+ 
+
+plot_missing
+```
+
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
 ############################################################
 
 get_median_missing_person_hours<- function(missing_person_time,n_days,n_sims){
@@ -370,32 +437,918 @@ median_missing_person_hoursA<- get_median_missing_person_hours(total_missing_per
 median_missing_person_hoursB<- get_median_missing_person_hours(total_missing_person_timeB,n_days,n_sims)
 
 
-median_missing_person_hoursA_60<- get_median_missing_person_hours(total_missing_person_timeA_60,n_days,n_sims)
+median_missing_person_hoursC<- get_median_missing_person_hours(total_missing_person_timeC,n_days,n_sims)
 
 
-median_missing_person_hoursB_60<- get_median_missing_person_hours(total_missing_person_timeB_60,n_days,n_sims)
+median_missing_person_hoursD<- get_median_missing_person_hours(total_missing_person_timeD,n_days,n_sims)
 
-
-median_df<- as.data.frame(rbind(median_missing_person_hoursA,median_missing_person_hoursB))
+median_df<- as.data.frame(rbind(median_missing_person_hoursA,median_missing_person_hoursB,median_missing_person_hoursC,median_missing_person_hoursD))
 
 median_df<- median_df%>%
-  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days)))
+  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days),rep("C",times=n_days),rep("D",times=n_days)))
 
 plot_missing_person<- ggplot()+
   geom_line(data=median_df,aes(x=Day,y=Missing_Person_Time,color=Scenario))+
-  labs(y="Median Person Time of Missed Infectious Days")
+  labs(y="Median Cumulative Person Time of Untested Infectious Days", title="Cumulative Person Days of Infectious Untested People")
 
 plot_missing_person
 
 
-median_df_60<- as.data.frame(rbind(median_missing_person_hoursA_60,median_missing_person_hoursB_60))
+```
 
-median_df_60<- median_df_60%>%
-  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days)))
 
-plot_missing_person_60<- ggplot()+
-  geom_line(data=median_df_60,aes(x=Day,y=Missing_Person_Time,color=Scenario))+
-  labs(y="Median Person Time of Missed Infectious Days")
+Scenarios testing Symptomatics and Asymptomatics: 
 
-plot_missing_person_60
+Assumptions- 
+7% of symptomatic COVID-19 cases are tested. Cases are only tested upon displaying symptoms. Symptoms show up 5 days after exposure event, tests results take 3 days to process, therefore test results are only counted in the fraction positive value 8 days after an individual's exposure event. 
+
+3/5% of asymptomatic COVID-19 cases are tested. Tests results take 3 days to process. 
+
+Test sensitivity (PCR) is 95%, test specificity is 98%. 
+
+After a person is exposed we assume they remain infectious for 10 days, whether they are symptomatic cases or asymptomatic cases.  
+
+The number of daily tests increases throughout the 300 days of the simulated epidemic and reaches a maximum of 2000 tests per day at day 200. This level of daily testing is sustained for the remainder of the epidemic. 
+
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+
+#now test some asymptomatics
+
+#keep testing symptomatics when they develop symptoms we would test when they developed symptoms, and assume that the test takes 3 days to come back. The denominator would be tests that have "come back" i.e. you wouldn't count a test in the denominator on the day it was conducted but rather on the day we got a result for it. 
+
+#want to know how many tests are being run on symptomatic positives each day, build in a sens of 0.99- 0.95% to count the positive tests, then count person-days where people are infectious and not tested (we don't know about them).
+
+#suppose we manage to test 70% of symptomatic people. Do another round where we suppose we manage to test 60% of symptomatic people. 
+
+
+
+get_symptomatic_tests<- function(complete_incident, n_days, n_sims, sens, prop_tested){
+  
+  untested_person_time<- matrix(NA, nrow=(n_days*n_sims),ncol=1)
+    
+    for(i in 1:n_sims){
+      untested_person_time[which(complete_incident$Sim_Index==i),1]<- 
+    roll_sum(complete_incident$Incid_Symp[which(complete_incident$Sim_Index==i)],8,fill=NA)
+    }
+  untested_person_time<- as.data.frame(untested_person_time)
+  colnames(untested_person_time)<- c('Untested_person_time')
+  
+  
+  
+  symptomatic_tests<- complete_incident%>%
+    mutate(Symp_Day=Days+5)%>%
+    mutate(Test_return_Day=Symp_Day+3)%>%
+    mutate(Num_tests=prop_tested*Incid_Symp)%>%
+    mutate(Num_pos_tests=sens*Num_tests)%>%
+    mutate(Num_false_neg_test= Num_tests-Num_pos_tests)%>%
+    mutate(False_neg_person_time= roll_sum(Num_false_neg_test,10,fill=NA))%>%
+    mutate(symp_untested_person_time=roll_sum(Incid_Symp-Num_tests,10,fill=NA))
+    
+  symptomatic_testing<- left_join(complete_incident,symptomatic_tests,by=c("Days"="Test_return_Day","Sim_Index"="Sim_Index"))
+  
+  untested_person_time<- untested_person_time%>%
+    mutate(Days=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))%>%
+    mutate(missing_person_time=Untested_person_time+symptomatic_testing$symp_untested_person_time+complete_incident$Incid_Asymp)
+  
+  symptomatic_testing<- symptomatic_testing%>%
+  mutate_all(~replace(., is.na(.), 0))
+  
+    untested_person_time<- untested_person_time%>%
+    mutate_all(~replace(., is.na(.), 0))
+return(list(symptomatic_testing,untested_person_time))
+}
+
+symptomatic_testsA<- get_symptomatic_tests(complete_incidentA,n_days,n_sims,0.95,0.07)
+
+symptomatic_testsB<- get_symptomatic_tests(complete_incidentB,n_days,n_sims,0.95,0.07)
+
+
+
+symptomatic_testsC<- get_symptomatic_tests(complete_incidentC,n_days,n_sims,0.95,0.07)
+
+symptomatic_testsD<- get_symptomatic_tests(complete_incidentD,n_days,n_sims,0.95,0.07)
+
+
+###############################
+#get asymptomatic tests
+##############################
+
+
+get_asymptomatic_tests<- function(complete_incident, n_days, n_sims, sens, prop_tested){
+
+  untested_person_time<- matrix(NA, nrow=(n_days*n_sims),ncol=1)
+    
+    for(i in 1:n_sims){
+      untested_person_time[which(complete_incident$Sim_Index==i),1]<- 
+    roll_sum(complete_incident$Incid_Asymp[which(complete_incident$Sim_Index==i)],3,fill=NA)
+    }
+  untested_person_time<- as.data.frame(untested_person_time)
+  colnames(untested_person_time)<- c('Untested_person_time')
+  
+ 
+  asymptomatic_tests<- complete_incident%>%
+    mutate(Test_return_Day=Days+3)%>%
+    mutate(Num_tests=prop_tested*Incid_Asymp)%>%
+    mutate(Num_pos_tests=sens*Num_tests)%>%
+    mutate(Num_false_neg_test= Num_tests-Num_pos_tests)%>%
+    mutate(False_neg_person_time= roll_sum(Num_false_neg_test,10,fill=NA))%>%
+    mutate(asymp_untested_person_time=roll_sum(Incid_Asymp-Num_tests,10,fill=NA))
+    
+  asymptomatic_testing<- left_join(complete_incident,asymptomatic_tests,by=c("Days"="Test_return_Day","Sim_Index"="Sim_Index"))
+  
+  untested_person_time<-untested_person_time%>%
+    mutate(Days=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))%>%
+    mutate(missing_person_time=Untested_person_time+asymptomatic_testing$asymp_untested_person_time)
+  
+  asymptomatic_testing<- asymptomatic_testing%>%
+  mutate_all(~replace(., is.na(.), 0))
+  
+    untested_person_time<- untested_person_time%>%
+    mutate_all(~replace(., is.na(.), 0))
+return(list(asymptomatic_testing,untested_person_time))
+}
+
+asymptomatic_testsA<- get_asymptomatic_tests(complete_incidentA,n_days,n_sims,0.95,0.035)
+
+asymptomatic_testsB<- get_asymptomatic_tests(complete_incidentB,n_days,n_sims,0.95,0.035)
+
+
+
+asymptomatic_testsC<- get_asymptomatic_tests(complete_incidentC,n_days,n_sims,0.95,0.035)
+
+asymptomatic_testsD<- get_asymptomatic_tests(complete_incidentD,n_days,n_sims,0.95,0.035)
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+#############################
+#now we need to simulate testing people who might have symptoms of COVID but its something else and not covid
+
+vector_num_tests<- rep(c(rep(10,10),rep(50,10),rep(100,20),rep(150,20),rep(200,20),
+                     rep(300,20),rep(400,20),rep(600,20),rep(800,20),rep(1000,20),
+                     rep(1500,20),rep(2000,100)),times=n_sims)
+get_false_positives<- function(complete_incident, sypmtomatic_tests,asymptomatic_tests,num_tests,n_days,n_sims,specificity){
+  
+  false_positives<- matrix(NA,nrow=n_sims*n_days, ncol=2)
+  
+ false_positives[,1]<- num_tests- (sypmtomatic_tests$Num_tests+asymptomatic_tests$Num_tests)
+  false_positives[,2]<- (1-specificity)*false_positives[,1]
+  
+  false_positives<-as.data.frame(false_positives)
+  
+  colnames(false_positives)<- c("Tests_done","Num_false_positive")
+  
+  return(false_positives)
+  
+}
+
+false_positivesA<-get_false_positives(complete_incidentA,symptomatic_testsA[[1]],asymptomatic_testsA[[1]],vector_num_tests,n_days,n_sims,0.98)
+
+false_positivesB<-get_false_positives(complete_incidentB,symptomatic_testsB[[1]],asymptomatic_testsB[[1]],vector_num_tests,n_days,n_sims,0.98)
+
+
+
+false_positivesC<-get_false_positives(complete_incidentC,symptomatic_testsC[[1]],asymptomatic_testsC[[1]],vector_num_tests,n_days,n_sims,0.98)
+
+false_positivesD<-get_false_positives(complete_incidentD,symptomatic_testsD[[1]],asymptomatic_testsD[[1]],vector_num_tests,n_days,n_sims,0.98)
+
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+#################################
+
+#calculate positive rate: 
+
+get_pos_rate<- function(complete_incident,symptomatic_tests,asymptomatic_tests,false_positives,num_tests,n_days,n_sims){
+  pos_rate<- matrix(NA,nrow=n_sims*n_days,ncol=1)
+  
+  pos_rate[,1]<- (symptomatic_tests$Num_pos_tests+false_positives$Num_false_positive+asymptomatic_tests$Num_pos_tests)/num_tests
+  
+  pos_rate<-as.data.frame(pos_rate)
+  
+  colnames(pos_rate)<- c("Test_Positive_rate")
+  
+  pos_rate<- pos_rate%>%
+    mutate(Date=rep(1:n_days,times=n_sims))%>%
+    mutate(Sim_Index=rep(1:n_sims,each=n_days))
+  
+  return(pos_rate)
+}
+
+pos_rateA<- get_pos_rate(complete_incidentA,symptomatic_testsA[[1]],asymptomatic_testsA[[1]],false_positivesA,vector_num_tests,n_days,n_sims)
+
+pos_rateB<- get_pos_rate(complete_incidentB,symptomatic_testsB[[1]],asymptomatic_testsB[[1]],false_positivesB,vector_num_tests,n_days,n_sims)
+
+
+pos_rateC<- get_pos_rate(complete_incidentC,symptomatic_testsC[[1]],asymptomatic_testsC[[1]],false_positivesC,vector_num_tests,n_days,n_sims)
+
+pos_rateD<- get_pos_rate(complete_incidentD,symptomatic_testsD[[1]],asymptomatic_testsD[[1]],false_positivesD,vector_num_tests,n_days,n_sims)
+################################
+
+
+```
+
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+
+
+#how many person hours of infectiousness are we missing total over 300 days?
+
+total_missing_person_timeA<-matrix(NA,nrow=n_sims*n_days,ncol=1)
+
+for(i in 1:n_sims){
+total_missing_person_timeA[which(complete_incidentA$Sim_Index==i),1]<- cumsum(symptomatic_testsA[[2]]$missing_person_time[which(complete_incidentA$Sim_Index==i)])+cumsum(asymptomatic_testsA[[2]]$missing_person_time[which(complete_incidentA$Sim_Index==i)])
+}
+
+total_missing_person_timeA<- as.data.frame(total_missing_person_timeA)
+
+colnames(total_missing_person_timeA)<- c("Missing_Person_Time")
+
+total_missing_person_timeA<- total_missing_person_timeA%>%
+  mutate(Day=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))
+
+
+total_missing_person_timeB<-matrix(NA,nrow=n_sims*n_days,ncol=1)
+
+for(i in 1:n_sims){
+total_missing_person_timeB[which(complete_incidentB$Sim_Index==i),1]<- cumsum(symptomatic_testsB[[2]]$missing_person_time[which(complete_incidentB$Sim_Index==i)])+cumsum(asymptomatic_testsB[[2]]$missing_person_time[which(complete_incidentB$Sim_Index==i)])
+}
+
+total_missing_person_timeB<- as.data.frame(total_missing_person_timeB)
+
+colnames(total_missing_person_timeB)<- c("Missing_Person_Time")
+
+total_missing_person_timeB<- total_missing_person_timeB%>%
+  mutate(Day=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))
+
+total_missing_person_timeC<-matrix(NA,nrow=n_sims*n_days,ncol=1)
+
+for(i in 1:n_sims){
+total_missing_person_timeC[which(complete_incidentC$Sim_Index==i),1]<- cumsum(symptomatic_testsC[[2]]$missing_person_time[which(complete_incidentC$Sim_Index==i)])+cumsum(asymptomatic_testsC[[2]]$missing_person_time[which(complete_incidentC$Sim_Index==i)])
+}
+
+total_missing_person_timeC<- as.data.frame(total_missing_person_timeC)
+
+colnames(total_missing_person_timeC)<- c("Missing_Person_Time")
+
+total_missing_person_timeC<- total_missing_person_timeC%>%
+  mutate(Day=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))
+
+
+
+
+total_missing_person_timeD<-matrix(NA,nrow=n_sims*n_days,ncol=1)
+
+for(i in 1:n_sims){
+total_missing_person_timeD[which(complete_incidentD$Sim_Index==i),1]<- cumsum(symptomatic_testsD[[2]]$missing_person_time[which(complete_incidentD$Sim_Index==i)])+cumsum(asymptomatic_testsD[[2]]$missing_person_time[which(complete_incidentD$Sim_Index==i)])
+}
+
+total_missing_person_timeD<- as.data.frame(total_missing_person_timeD)
+
+colnames(total_missing_person_timeD)<- c("Missing_Person_Time")
+
+total_missing_person_timeD<- total_missing_person_timeD%>%
+  mutate(Day=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))
+
+
+###################################
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+
+#get median pos rate and get median number of person days missing (take day-by-day median)
+
+get_median_pos_rate<- function(pos_rate,n_days,n_sims){
+  
+  median_pos_rate<-matrix(NA,nrow=n_days,ncol=1)
+  
+  for(i in 1:n_days){
+    median_pos_rate[i,1]<-median(pos_rate$Test_Positive_rate[which(pos_rate$Date==i)])
+  }
+  median_pos_rate<- as.data.frame(median_pos_rate)
+  colnames(median_pos_rate)<- c("Median_Test_Pos_Rate")
+  median_pos_rate<- median_pos_rate%>%
+    mutate(Day=rep(1:n_days))
+  
+  return(median_pos_rate)
+}
+
+median_pos_rateA<- get_median_pos_rate(pos_rateA,n_days,n_sims)
+
+median_pos_rateB<- get_median_pos_rate(pos_rateB,n_days,n_sims)
+
+
+
+median_pos_rateC<- get_median_pos_rate(pos_rateC,n_days,n_sims)
+
+median_pos_rateD<- get_median_pos_rate(pos_rateD,n_days,n_sims)
+
+
+median_df<- as.data.frame(rbind(median_pos_rateA,median_pos_rateB,median_pos_rateC,
+                                median_pos_rateD))
+
+median_df<- median_df%>%
+  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days),rep("C",times=n_days),rep("D",times=n_days)))
+
+plot_pos_rate<- ggplot()+
+  geom_line(data=median_df,aes(x=Day,y=Median_Test_Pos_Rate,color=Scenario))+
+  labs(y="Median Test Positivity Rate",title="Daily Test Positivity Rate for Tests")+
+  geom_hline(yintercept=0.2,col="red")+
+  geom_hline(yintercept=0.1,col="purple")+
+  geom_hline(yintercept=0.03,col="blue")
+
+plot_pos_rate
+
+```
+
+Number of days over the 300 simulation days that are below test positivity rate indicated. 
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+###################################################################
+#how many days below the threshold are we
+get_days_below_thresholds<- function(median_pos_rate,n_days){
+  num_below_20<- length(which(median_pos_rate$Median_Test_Pos_Rate<=0.2))
+  num_below_10<- length(which(median_pos_rate$Median_Test_Pos_Rate<=0.1))
+  num_below_3<- length(which(median_pos_rate$Median_Test_Pos_Rate<=0.03))
+  
+  return(list(num_below_20,num_below_10,num_below_3))
+}
+
+
+days_below_20A<- get_days_below_thresholds(median_pos_rateA,n_days)[[1]]
+days_below_10A<- get_days_below_thresholds(median_pos_rateA,n_days)[[2]]
+days_below_3A<- get_days_below_thresholds(median_pos_rateA,n_days)[[3]]
+
+
+
+
+days_below_20B<- get_days_below_thresholds(median_pos_rateB,n_days)[[1]]
+days_below_10B<- get_days_below_thresholds(median_pos_rateB,n_days)[[2]]
+days_below_3B<- get_days_below_thresholds(median_pos_rateB,n_days)[[3]]
+
+
+
+days_below_20C<- get_days_below_thresholds(median_pos_rateC,n_days)[[1]]
+days_below_10C<- get_days_below_thresholds(median_pos_rateC,n_days)[[2]]
+days_below_3C<- get_days_below_thresholds(median_pos_rateC,n_days)[[3]]
+
+
+days_below_20D<- get_days_below_thresholds(median_pos_rateD,n_days)[[1]]
+days_below_10D<- get_days_below_thresholds(median_pos_rateD,n_days)[[2]]
+days_below_3D<- get_days_below_thresholds(median_pos_rateD,n_days)[[3]]
+
+
+
+
+days_below_df<- as.data.frame(rbind(c(days_below_20A,days_below_10A,days_below_3A),c(days_below_20B,days_below_10B,days_below_3B),c(days_below_20C,days_below_10C,days_below_3C),c(days_below_20D,days_below_10D,days_below_3D)))
+
+colnames(days_below_df)<- c("Days Below 20%", "Days Below 10%", "Days Below 3%")
+
+rownames(days_below_df)<- c("Scenario A", "Scenario B", "Scenario C", "Scenario D")
+
+kable(days_below_df)%>%
+  kable_styling()
+
+```
+
+```{r, cache=TRUE, message=FALSE, echo=FALSE, warning=FALSE}
+################################################################
+#each day, how many people are we missing? 
+
+get_median_num_missing<- function(symptomatic_tests,asymptomatic_tests,n_days,n_sims){
+  
+  median_num_missing<-matrix(NA,nrow=n_days,ncol=1)
+  
+  for(i in 1:n_days){
+    median_num_missing[i,1]<-median(symptomatic_tests[[2]]$missing_person_time[which(symptomatic_tests[[2]]$Days==i)]+asymptomatic_tests[[2]]$missing_person_time[which(asymptomatic_tests[[2]]$Days==i)])
+  }
+  median_num_missing<- as.data.frame(median_num_missing)
+  colnames(median_num_missing)<- c("Median_Number_Missing")
+  median_num_missing<- median_num_missing%>%
+    mutate(Day=rep(1:n_days))
+  
+  return(median_num_missing)
+}
+
+median_num_missingA<- get_median_num_missing(symptomatic_testsA,asymptomatic_testsA,n_days,n_sims)
+
+median_num_missingB<- get_median_num_missing(symptomatic_testsB,asymptomatic_testsB,n_days,n_sims)
+
+
+
+median_num_missingC<- get_median_num_missing(symptomatic_testsC,asymptomatic_testsC,n_days,n_sims)
+
+median_num_missingD<- get_median_num_missing(symptomatic_testsD,asymptomatic_testsD,n_days,n_sims)
+
+
+median_df<- as.data.frame(rbind(median_num_missingA,median_num_missingB,median_num_missingC,
+                                median_num_missingD))
+
+median_df<- median_df%>%
+  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days),rep("C",times=n_days),rep("D",times=n_days)))
+
+plot_missing<- ggplot()+
+  geom_line(data=median_df,aes(x=Day,y=Median_Number_Missing,color=Scenario))+
+  labs(y="Median Number of People Untested", title="Daily Number of Infectious People who are Untested")
+ 
+
+plot_missing
+
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+############################################################
+
+get_median_missing_person_hours<- function(missing_person_time,n_days,n_sims){
+  median_missing_person_time<- matrix(NA,nrow=n_days,ncol=1)
+  for(i in 1:n_days){
+    median_missing_person_time[i,1]<- median(missing_person_time$Missing_Person_Time[which(missing_person_time$Day==i)])
+  }
+  
+  median_missing_person_time<- as.data.frame(median_missing_person_time)
+  colnames(median_missing_person_time)<-c("Missing_Person_Time")
+  median_missing_person_time<- median_missing_person_time%>%
+    mutate(Day=rep(1:n_days))
+  
+  return(median_missing_person_time)
+}
+
+median_missing_person_hoursA<- get_median_missing_person_hours(total_missing_person_timeA,n_days,n_sims)
+
+
+median_missing_person_hoursB<- get_median_missing_person_hours(total_missing_person_timeB,n_days,n_sims)
+
+
+median_missing_person_hoursC<- get_median_missing_person_hours(total_missing_person_timeC,n_days,n_sims)
+
+
+median_missing_person_hoursD<- get_median_missing_person_hours(total_missing_person_timeD,n_days,n_sims)
+
+median_df<- as.data.frame(rbind(median_missing_person_hoursA,median_missing_person_hoursB,median_missing_person_hoursC,median_missing_person_hoursD))
+
+median_df<- median_df%>%
+  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days),rep("C",times=n_days),rep("D",times=n_days)))
+
+plot_missing_person<- ggplot()+
+  geom_line(data=median_df,aes(x=Day,y=Missing_Person_Time,color=Scenario))+
+  labs(y="Median Cumulative Person Time of Untested Infectious Days", title="Cumulative Person Days of Infectious Untested People")
+
+plot_missing_person
+
+
+```
+
+
+
+Scenarios testing Symptomatics and Asymptomatics with lower sensitivity and specificity: 
+
+Assumptions- 
+7% of symptomatic COVID-19 cases are tested. Cases are only tested upon displaying symptoms. Symptoms show up 5 days after exposure event, tests results take 3 days to process, therefore test results are only counted in the fraction positive value 8 days after an individual's exposure event. 
+
+3/5% of asymptomatic COVID-19 cases are tested. Tests results take 3 days to process. 
+
+Test sensitivity (PCR) is 90%, test specificity is 95%. 
+
+After a person is exposed we assume they remain infectious for 10 days, whether they are symptomatic cases or asymptomatic cases.  
+
+The number of daily tests increases throughout the 300 days of the simulated epidemic and reaches a maximum of 2000 tests per day at day 200. This level of daily testing is sustained for the remainder of the epidemic. 
+
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+
+#now test some asymptomatics
+
+#keep testing symptomatics when they develop symptoms we would test when they developed symptoms, and assume that the test takes 3 days to come back. The denominator would be tests that have "come back" i.e. you wouldn't count a test in the denominator on the day it was conducted but rather on the day we got a result for it. 
+
+#want to know how many tests are being run on symptomatic positives each day, build in a sens of 0.99- 0.95% to count the positive tests, then count person-days where people are infectious and not tested (we don't know about them).
+
+#suppose we manage to test 70% of symptomatic people. Do another round where we suppose we manage to test 60% of symptomatic people. 
+
+
+
+get_symptomatic_tests<- function(complete_incident, n_days, n_sims, sens, prop_tested){
+  
+  untested_person_time<- matrix(NA, nrow=(n_days*n_sims),ncol=1)
+    
+    for(i in 1:n_sims){
+      untested_person_time[which(complete_incident$Sim_Index==i),1]<- 
+    roll_sum(complete_incident$Incid_Symp[which(complete_incident$Sim_Index==i)],8,fill=NA)
+    }
+  untested_person_time<- as.data.frame(untested_person_time)
+  colnames(untested_person_time)<- c('Untested_person_time')
+  
+  
+  
+  symptomatic_tests<- complete_incident%>%
+    mutate(Symp_Day=Days+5)%>%
+    mutate(Test_return_Day=Symp_Day+3)%>%
+    mutate(Num_tests=prop_tested*Incid_Symp)%>%
+    mutate(Num_pos_tests=sens*Num_tests)%>%
+    mutate(Num_false_neg_test= Num_tests-Num_pos_tests)%>%
+    mutate(False_neg_person_time= roll_sum(Num_false_neg_test,10,fill=NA))%>%
+    mutate(symp_untested_person_time=roll_sum(Incid_Symp-Num_tests,10,fill=NA))
+    
+  symptomatic_testing<- left_join(complete_incident,symptomatic_tests,by=c("Days"="Test_return_Day","Sim_Index"="Sim_Index"))
+  
+  untested_person_time<- untested_person_time%>%
+    mutate(Days=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))%>%
+    mutate(missing_person_time=Untested_person_time+symptomatic_testing$symp_untested_person_time+complete_incident$Incid_Asymp)
+  
+  symptomatic_testing<- symptomatic_testing%>%
+  mutate_all(~replace(., is.na(.), 0))
+  
+    untested_person_time<- untested_person_time%>%
+    mutate_all(~replace(., is.na(.), 0))
+return(list(symptomatic_testing,untested_person_time))
+}
+
+symptomatic_testsA<- get_symptomatic_tests(complete_incidentA,n_days,n_sims,0.9,0.07)
+
+symptomatic_testsB<- get_symptomatic_tests(complete_incidentB,n_days,n_sims,0.9,0.07)
+
+
+
+symptomatic_testsC<- get_symptomatic_tests(complete_incidentC,n_days,n_sims,0.9,0.07)
+
+symptomatic_testsD<- get_symptomatic_tests(complete_incidentD,n_days,n_sims,0.9,0.07)
+
+
+###############################
+#get asymptomatic tests
+##############################
+
+
+get_asymptomatic_tests<- function(complete_incident, n_days, n_sims, sens, prop_tested){
+
+  untested_person_time<- matrix(NA, nrow=(n_days*n_sims),ncol=1)
+    
+    for(i in 1:n_sims){
+      untested_person_time[which(complete_incident$Sim_Index==i),1]<- 
+    roll_sum(complete_incident$Incid_Asymp[which(complete_incident$Sim_Index==i)],3,fill=NA)
+    }
+  untested_person_time<- as.data.frame(untested_person_time)
+  colnames(untested_person_time)<- c('Untested_person_time')
+  
+ 
+  asymptomatic_tests<- complete_incident%>%
+    mutate(Test_return_Day=Days+3)%>%
+    mutate(Num_tests=prop_tested*Incid_Asymp)%>%
+    mutate(Num_pos_tests=sens*Num_tests)%>%
+    mutate(Num_false_neg_test= Num_tests-Num_pos_tests)%>%
+    mutate(False_neg_person_time= roll_sum(Num_false_neg_test,10,fill=NA))%>%
+    mutate(asymp_untested_person_time=roll_sum(Incid_Asymp-Num_tests,10,fill=NA))
+    
+  asymptomatic_testing<- left_join(complete_incident,asymptomatic_tests,by=c("Days"="Test_return_Day","Sim_Index"="Sim_Index"))
+  
+  untested_person_time<-untested_person_time%>%
+    mutate(Days=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))%>%
+    mutate(missing_person_time=Untested_person_time+asymptomatic_testing$asymp_untested_person_time)
+  
+  asymptomatic_testing<- asymptomatic_testing%>%
+  mutate_all(~replace(., is.na(.), 0))
+  
+    untested_person_time<- untested_person_time%>%
+    mutate_all(~replace(., is.na(.), 0))
+return(list(asymptomatic_testing,untested_person_time))
+}
+
+asymptomatic_testsA<- get_asymptomatic_tests(complete_incidentA,n_days,n_sims,0.9,0.035)
+
+asymptomatic_testsB<- get_asymptomatic_tests(complete_incidentB,n_days,n_sims,0.9,0.035)
+
+
+
+asymptomatic_testsC<- get_asymptomatic_tests(complete_incidentC,n_days,n_sims,0.9,0.035)
+
+asymptomatic_testsD<- get_asymptomatic_tests(complete_incidentD,n_days,n_sims,0.9,0.035)
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+#############################
+#now we need to simulate testing people who might have symptoms of COVID but its something else and not covid
+
+vector_num_tests<- rep(c(rep(10,10),rep(50,10),rep(100,20),rep(150,20),rep(200,20),
+                     rep(300,20),rep(400,20),rep(600,20),rep(800,20),rep(1000,20),
+                     rep(1500,20),rep(2000,100)),times=n_sims)
+get_false_positives<- function(complete_incident, sypmtomatic_tests,asymptomatic_tests,num_tests,n_days,n_sims,specificity){
+  
+  false_positives<- matrix(NA,nrow=n_sims*n_days, ncol=2)
+  
+ false_positives[,1]<- num_tests- (sypmtomatic_tests$Num_tests+asymptomatic_tests$Num_tests)
+  false_positives[,2]<- (1-specificity)*false_positives[,1]
+  
+  false_positives<-as.data.frame(false_positives)
+  
+  colnames(false_positives)<- c("Tests_done","Num_false_positive")
+  
+  return(false_positives)
+  
+}
+
+false_positivesA<-get_false_positives(complete_incidentA,symptomatic_testsA[[1]],asymptomatic_testsA[[1]],vector_num_tests,n_days,n_sims,0.95)
+
+false_positivesB<-get_false_positives(complete_incidentB,symptomatic_testsB[[1]],asymptomatic_testsB[[1]],vector_num_tests,n_days,n_sims,0.95)
+
+
+
+false_positivesC<-get_false_positives(complete_incidentC,symptomatic_testsC[[1]],asymptomatic_testsC[[1]],vector_num_tests,n_days,n_sims,0.95)
+
+false_positivesD<-get_false_positives(complete_incidentD,symptomatic_testsD[[1]],asymptomatic_testsD[[1]],vector_num_tests,n_days,n_sims,0.95)
+
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+#################################
+
+#calculate positive rate: 
+
+get_pos_rate<- function(complete_incident,symptomatic_tests,asymptomatic_tests,false_positives,num_tests,n_days,n_sims){
+  pos_rate<- matrix(NA,nrow=n_sims*n_days,ncol=1)
+  
+  pos_rate[,1]<- (symptomatic_tests$Num_pos_tests+false_positives$Num_false_positive+asymptomatic_tests$Num_pos_tests)/num_tests
+  
+  pos_rate<-as.data.frame(pos_rate)
+  
+  colnames(pos_rate)<- c("Test_Positive_rate")
+  
+  pos_rate<- pos_rate%>%
+    mutate(Date=rep(1:n_days,times=n_sims))%>%
+    mutate(Sim_Index=rep(1:n_sims,each=n_days))
+  
+  return(pos_rate)
+}
+
+pos_rateA<- get_pos_rate(complete_incidentA,symptomatic_testsA[[1]],asymptomatic_testsA[[1]],false_positivesA,vector_num_tests,n_days,n_sims)
+
+pos_rateB<- get_pos_rate(complete_incidentB,symptomatic_testsB[[1]],asymptomatic_testsB[[1]],false_positivesB,vector_num_tests,n_days,n_sims)
+
+
+pos_rateC<- get_pos_rate(complete_incidentC,symptomatic_testsC[[1]],asymptomatic_testsC[[1]],false_positivesC,vector_num_tests,n_days,n_sims)
+
+pos_rateD<- get_pos_rate(complete_incidentD,symptomatic_testsD[[1]],asymptomatic_testsD[[1]],false_positivesD,vector_num_tests,n_days,n_sims)
+################################
+
+
+```
+
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+
+
+#how many person hours of infectiousness are we missing total over 300 days?
+
+total_missing_person_timeA<-matrix(NA,nrow=n_sims*n_days,ncol=1)
+
+for(i in 1:n_sims){
+total_missing_person_timeA[which(complete_incidentA$Sim_Index==i),1]<- cumsum(symptomatic_testsA[[2]]$missing_person_time[which(complete_incidentA$Sim_Index==i)])+cumsum(asymptomatic_testsA[[2]]$missing_person_time[which(complete_incidentA$Sim_Index==i)])
+}
+
+total_missing_person_timeA<- as.data.frame(total_missing_person_timeA)
+
+colnames(total_missing_person_timeA)<- c("Missing_Person_Time")
+
+total_missing_person_timeA<- total_missing_person_timeA%>%
+  mutate(Day=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))
+
+
+total_missing_person_timeB<-matrix(NA,nrow=n_sims*n_days,ncol=1)
+
+for(i in 1:n_sims){
+total_missing_person_timeB[which(complete_incidentB$Sim_Index==i),1]<- cumsum(symptomatic_testsB[[2]]$missing_person_time[which(complete_incidentB$Sim_Index==i)])+cumsum(asymptomatic_testsB[[2]]$missing_person_time[which(complete_incidentB$Sim_Index==i)])
+}
+
+total_missing_person_timeB<- as.data.frame(total_missing_person_timeB)
+
+colnames(total_missing_person_timeB)<- c("Missing_Person_Time")
+
+total_missing_person_timeB<- total_missing_person_timeB%>%
+  mutate(Day=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))
+
+total_missing_person_timeC<-matrix(NA,nrow=n_sims*n_days,ncol=1)
+
+for(i in 1:n_sims){
+total_missing_person_timeC[which(complete_incidentC$Sim_Index==i),1]<- cumsum(symptomatic_testsC[[2]]$missing_person_time[which(complete_incidentC$Sim_Index==i)])+cumsum(asymptomatic_testsC[[2]]$missing_person_time[which(complete_incidentC$Sim_Index==i)])
+}
+
+total_missing_person_timeC<- as.data.frame(total_missing_person_timeC)
+
+colnames(total_missing_person_timeC)<- c("Missing_Person_Time")
+
+total_missing_person_timeC<- total_missing_person_timeC%>%
+  mutate(Day=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))
+
+
+
+
+total_missing_person_timeD<-matrix(NA,nrow=n_sims*n_days,ncol=1)
+
+for(i in 1:n_sims){
+total_missing_person_timeD[which(complete_incidentD$Sim_Index==i),1]<- cumsum(symptomatic_testsD[[2]]$missing_person_time[which(complete_incidentD$Sim_Index==i)])+cumsum(asymptomatic_testsD[[2]]$missing_person_time[which(complete_incidentD$Sim_Index==i)])
+}
+
+total_missing_person_timeD<- as.data.frame(total_missing_person_timeD)
+
+colnames(total_missing_person_timeD)<- c("Missing_Person_Time")
+
+total_missing_person_timeD<- total_missing_person_timeD%>%
+  mutate(Day=rep(1:n_days,times=n_sims))%>%
+  mutate(Sim_Index=rep(1:n_sims,each=n_days))
+
+
+###################################
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+
+#get median pos rate and get median number of person days missing (take day-by-day median)
+
+get_median_pos_rate<- function(pos_rate,n_days,n_sims){
+  
+  median_pos_rate<-matrix(NA,nrow=n_days,ncol=1)
+  
+  for(i in 1:n_days){
+    median_pos_rate[i,1]<-median(pos_rate$Test_Positive_rate[which(pos_rate$Date==i)])
+  }
+  median_pos_rate<- as.data.frame(median_pos_rate)
+  colnames(median_pos_rate)<- c("Median_Test_Pos_Rate")
+  median_pos_rate<- median_pos_rate%>%
+    mutate(Day=rep(1:n_days))
+  
+  return(median_pos_rate)
+}
+
+median_pos_rateA<- get_median_pos_rate(pos_rateA,n_days,n_sims)
+
+median_pos_rateB<- get_median_pos_rate(pos_rateB,n_days,n_sims)
+
+
+
+median_pos_rateC<- get_median_pos_rate(pos_rateC,n_days,n_sims)
+
+median_pos_rateD<- get_median_pos_rate(pos_rateD,n_days,n_sims)
+
+
+median_df<- as.data.frame(rbind(median_pos_rateA,median_pos_rateB,median_pos_rateC,
+                                median_pos_rateD))
+
+median_df<- median_df%>%
+  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days),rep("C",times=n_days),rep("D",times=n_days)))
+
+plot_pos_rate<- ggplot()+
+  geom_line(data=median_df,aes(x=Day,y=Median_Test_Pos_Rate,color=Scenario))+
+  labs(y="Median Test Positivity Rate",title="Daily Test Positivity Rate for Tests")+
+  geom_hline(yintercept=0.2,col="red")+
+  geom_hline(yintercept=0.1,col="purple")+
+  geom_hline(yintercept=0.03,col="blue")
+
+plot_pos_rate
+
+```
+
+Number of days over the 300 simulation days that are below test positivity rate indicated. 
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+###################################################################
+#how many days below the threshold are we
+get_days_below_thresholds<- function(median_pos_rate,n_days){
+  num_below_20<- length(which(median_pos_rate$Median_Test_Pos_Rate<=0.2))
+  num_below_10<- length(which(median_pos_rate$Median_Test_Pos_Rate<=0.1))
+  num_below_3<- length(which(median_pos_rate$Median_Test_Pos_Rate<=0.03))
+  
+  return(list(num_below_20,num_below_10,num_below_3))
+}
+
+
+days_below_20A<- get_days_below_thresholds(median_pos_rateA,n_days)[[1]]
+days_below_10A<- get_days_below_thresholds(median_pos_rateA,n_days)[[2]]
+days_below_3A<- get_days_below_thresholds(median_pos_rateA,n_days)[[3]]
+
+
+
+
+days_below_20B<- get_days_below_thresholds(median_pos_rateB,n_days)[[1]]
+days_below_10B<- get_days_below_thresholds(median_pos_rateB,n_days)[[2]]
+days_below_3B<- get_days_below_thresholds(median_pos_rateB,n_days)[[3]]
+
+
+
+days_below_20C<- get_days_below_thresholds(median_pos_rateC,n_days)[[1]]
+days_below_10C<- get_days_below_thresholds(median_pos_rateC,n_days)[[2]]
+days_below_3C<- get_days_below_thresholds(median_pos_rateC,n_days)[[3]]
+
+
+days_below_20D<- get_days_below_thresholds(median_pos_rateD,n_days)[[1]]
+days_below_10D<- get_days_below_thresholds(median_pos_rateD,n_days)[[2]]
+days_below_3D<- get_days_below_thresholds(median_pos_rateD,n_days)[[3]]
+
+
+
+
+days_below_df<- as.data.frame(rbind(c(days_below_20A,days_below_10A,days_below_3A),c(days_below_20B,days_below_10B,days_below_3B),c(days_below_20C,days_below_10C,days_below_3C),c(days_below_20D,days_below_10D,days_below_3D)))
+
+colnames(days_below_df)<- c("Days Below 20%", "Days Below 10%", "Days Below 3%")
+
+rownames(days_below_df)<- c("Scenario A", "Scenario B", "Scenario C", "Scenario D")
+
+kable(days_below_df)%>%
+  kable_styling()
+
+```
+
+```{r, cache=TRUE, message=FALSE, echo=FALSE, warning=FALSE}
+################################################################
+#each day, how many people are we missing? 
+
+get_median_num_missing<- function(symptomatic_tests,asymptomatic_tests,n_days,n_sims){
+  
+  median_num_missing<-matrix(NA,nrow=n_days,ncol=1)
+  
+  for(i in 1:n_days){
+    median_num_missing[i,1]<-median(symptomatic_tests[[2]]$missing_person_time[which(symptomatic_tests[[2]]$Days==i)]+asymptomatic_tests[[2]]$missing_person_time[which(asymptomatic_tests[[2]]$Days==i)])
+  }
+  median_num_missing<- as.data.frame(median_num_missing)
+  colnames(median_num_missing)<- c("Median_Number_Missing")
+  median_num_missing<- median_num_missing%>%
+    mutate(Day=rep(1:n_days))
+  
+  return(median_num_missing)
+}
+
+median_num_missingA<- get_median_num_missing(symptomatic_testsA,asymptomatic_testsA,n_days,n_sims)
+
+median_num_missingB<- get_median_num_missing(symptomatic_testsB,asymptomatic_testsB,n_days,n_sims)
+
+
+
+median_num_missingC<- get_median_num_missing(symptomatic_testsC,asymptomatic_testsC,n_days,n_sims)
+
+median_num_missingD<- get_median_num_missing(symptomatic_testsD,asymptomatic_testsD,n_days,n_sims)
+
+
+median_df<- as.data.frame(rbind(median_num_missingA,median_num_missingB,median_num_missingC,
+                                median_num_missingD))
+
+median_df<- median_df%>%
+  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days),rep("C",times=n_days),rep("D",times=n_days)))
+
+plot_missing<- ggplot()+
+  geom_line(data=median_df,aes(x=Day,y=Median_Number_Missing,color=Scenario))+
+  labs(y="Median Number of People Untested", title="Daily Number of Infectious People who are Untested")
+ 
+
+plot_missing
+
+```
+
+```{r, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+############################################################
+
+get_median_missing_person_hours<- function(missing_person_time,n_days,n_sims){
+  median_missing_person_time<- matrix(NA,nrow=n_days,ncol=1)
+  for(i in 1:n_days){
+    median_missing_person_time[i,1]<- median(missing_person_time$Missing_Person_Time[which(missing_person_time$Day==i)])
+  }
+  
+  median_missing_person_time<- as.data.frame(median_missing_person_time)
+  colnames(median_missing_person_time)<-c("Missing_Person_Time")
+  median_missing_person_time<- median_missing_person_time%>%
+    mutate(Day=rep(1:n_days))
+  
+  return(median_missing_person_time)
+}
+
+median_missing_person_hoursA<- get_median_missing_person_hours(total_missing_person_timeA,n_days,n_sims)
+
+
+median_missing_person_hoursB<- get_median_missing_person_hours(total_missing_person_timeB,n_days,n_sims)
+
+
+median_missing_person_hoursC<- get_median_missing_person_hours(total_missing_person_timeC,n_days,n_sims)
+
+
+median_missing_person_hoursD<- get_median_missing_person_hours(total_missing_person_timeD,n_days,n_sims)
+
+median_df<- as.data.frame(rbind(median_missing_person_hoursA,median_missing_person_hoursB,median_missing_person_hoursC,median_missing_person_hoursD))
+
+median_df<- median_df%>%
+  mutate(Scenario=c(rep("A",times=n_days),rep("B",times=n_days),rep("C",times=n_days),rep("D",times=n_days)))
+
+plot_missing_person<- ggplot()+
+  geom_line(data=median_df,aes(x=Day,y=Missing_Person_Time,color=Scenario))+
+  labs(y="Median Cumulative Person Time of Untested Infectious Days", title="Cumulative Person Days of Infectious Untested People")
+
+plot_missing_person
+
+
 ```
